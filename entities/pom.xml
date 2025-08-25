@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>il.cshaifasweng</groupId>
-    <artifactId>OCSFMediatorExample</artifactId>
+    <artifactId>EngneeringFightClub</artifactId>
     <version>0.0.1-SNAPSHOT</version>
   </parent>
   <groupId>il.cshaifasweng.OCSFMediatorExample</groupId>
