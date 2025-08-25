@@ -4,7 +4,7 @@
 		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<artifactId>OCSFMediatorExample</artifactId>
+		<artifactId>EngneeringFightClub</artifactId>
 		<groupId>il.cshaifasweng</groupId>
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
@@ -41,6 +41,12 @@
 			<groupId>${groupId}</groupId>
 			<artifactId>entities</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>33.2.1-jre</version>
+		</dependency>
+
 	</dependencies>
 	<build>
 		<plugins>

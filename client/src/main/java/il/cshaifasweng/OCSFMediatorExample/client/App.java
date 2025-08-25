@@ -5,68 +5,45 @@ import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 import javafx.stage.Stage;
 
+import il.cshaifasweng.OCSFMediatorExample.client.net.ClientBridge;
+import il.cshaifasweng.OCSFMediatorExample.client.bus.ClientBus;
+import il.cshaifasweng.OCSFMediatorExample.client.bus.events.SendMessageEvent;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Ping;
+
 import java.io.IOException;
+import java.net.URL;
 
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-
-/**
- * JavaFX App
- */
 public class App extends Application {
-
     private static Scene scene;
-    private SimpleClient client;
+    private static ClientBridge NET;
 
     @Override
     public void start(Stage stage) throws IOException {
-    	EventBus.getDefault().register(this);
-    	client = SimpleClient.getClient();
-    	client.openConnection();
         scene = new Scene(loadFXML("primary"), 640, 480);
         stage.setScene(scene);
+        stage.setTitle("FlowerShop Client");
         stage.show();
+
+        NET = new ClientBridge("127.0.0.1", 3000);
+
+        Platform.runLater(() -> {
+            System.out.println("[CLIENT] posting Ping");
+            ClientBus.get().post(new SendMessageEvent(new Ping("smoke")));
+        });
+        ClientBus.get().post(new SendMessageEvent(
+                new il.cshaifasweng.OCSFMediatorExample.entities.messages.LoginRequest("alice","alice123")
+        ));
     }
 
-    static void setRoot(String fxml) throws IOException {
-        scene.setRoot(loadFXML(fxml));
+    public static void setRoot(String fxml) throws IOException { scene.setRoot(loadFXML(fxml)); }
+
+    private static Parent loadFXML(String name) throws IOException {
+        URL url = App.class.getResource(name + ".fxml");
+        if (url == null) throw new IOException("FXML not found: " + name + ".fxml");
+        return new FXMLLoader(url).load();
     }
 
-    private static Parent loadFXML(String fxml) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource(fxml + ".fxml"));
-        return fxmlLoader.load();
-    }
-    
-    
-
-    @Override
-	public void stop() throws Exception {
-		// TODO Auto-generated method stub
-    	EventBus.getDefault().unregister(this);
-        client.sendToServer("remove client");
-        client.closeConnection();
-		super.stop();
-	}
-    
-    @Subscribe
-    public void onWarningEvent(WarningEvent event) {
-    	Platform.runLater(() -> {
-    		Alert alert = new Alert(AlertType.WARNING,
-        			String.format("Message: %s\nTimestamp: %s\n",
-        					event.getWarning().getMessage(),
-        					event.getWarning().getTime().toString())
-        	);
-        	alert.show();
-    	});
-    	
-    }
-
-	public static void main(String[] args) {
-        launch();
-    }
-
+    public static void main(String[] args) { launch(args); }
 }

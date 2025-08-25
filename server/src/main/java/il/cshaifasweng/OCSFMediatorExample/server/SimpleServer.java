@@ -1,4 +1,20 @@
 package il.cshaifasweng.OCSFMediatorExample.server;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
+import com.google.common.eventbus.Subscribe;
+
+
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Ping;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.PingReceived;
+import il.cshaifasweng.OCSFMediatorExample.server.handlers.PingHandler;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.LoginRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Ping;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.LoginRequested;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.PingReceived;
+import il.cshaifasweng.OCSFMediatorExample.server.handlers.LoginHandler;
+import il.cshaifasweng.OCSFMediatorExample.server.handlers.PingHandler;
+
 
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.AbstractServer;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ConnectionToClient;
@@ -14,39 +30,32 @@ public class SimpleServer extends AbstractServer {
 
 	public SimpleServer(int port) {
 		super(port);
-		
+
+		ServerBus.get().register(new PingHandler());
+		ServerBus.get().register(new LoginHandler());
+
+
+		// Temporary: subscribe a tiny logger to the bus to prove wiring works
+		ServerBus.get().register(new Object() {
+			@Subscribe
+			public void any(Object ev) {
+				System.out.println("[BUS] event: " + ev.getClass().getSimpleName());
+			}
+		});
 	}
+
 
 	@Override
 	protected void handleMessageFromClient(Object msg, ConnectionToClient client) {
-		String msgString = msg.toString();
-		if (msgString.startsWith("#warning")) {
-			Warning warning = new Warning("Warning from server!");
-			try {
-				client.sendToClient(warning);
-				System.out.format("Sent warning to client %s\n", client.getInetAddress().getHostAddress());
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+		if (msg instanceof Ping) {
+			Ping p = (Ping) msg;
+			ServerBus.get().post(new PingReceived(p.getText(), client));
+			return;
 		}
-		else if(msgString.startsWith("add client")){
-			SubscribedClient connection = new SubscribedClient(client);
-			SubscribersList.add(connection);
-			try {
-				client.sendToClient("client added successfully");
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
-		else if(msgString.startsWith("remove client")){
-			if(!SubscribersList.isEmpty()){
-				for(SubscribedClient subscribedClient: SubscribersList){
-					if(subscribedClient.getClient().equals(client)){
-						SubscribersList.remove(subscribedClient);
-						break;
-					}
-				}
-			}
+		if (msg instanceof LoginRequest) {
+			LoginRequest lr = (LoginRequest) msg;
+			ServerBus.get().post(new LoginRequested(lr.getUsername(), lr.getPassword(), client));
+			return;
 		}
 	}
 	public void sendToAllClients(String message) {
