@@ -1,5 +1,6 @@
-package il.cshaifasweng.OCSFMediatorExample.client;
+package il.cshaifasweng.OCSFMediatorExample.client.Customer;
 
+import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.LoginRequest;
 
 import javafx.beans.binding.Bindings;

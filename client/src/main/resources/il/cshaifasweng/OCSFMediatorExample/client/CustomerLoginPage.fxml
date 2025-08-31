@@ -6,7 +6,7 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="185.0" prefWidth="323.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.CustomerLoginPageController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="185.0" prefWidth="323.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.Customer.CustomerLoginPageController">
     <Button fx:id="BackBtn" cancelButton="true" layoutX="72.0" layoutY="132.0" mnemonicParsing="false" onAction="#BackBtnOnAction" text="Back" />
     <Button fx:id="LoginBtn" defaultButton="true" layoutX="228.0" layoutY="132.0" mnemonicParsing="false" onAction="#LoginBtnOnAction" text="Login" />
     <Button fx:id="RegisterBtn" layoutX="140.0" layoutY="132.0" mnemonicParsing="false" onAction="#RegisterBtnOnAction" text="Register" />
