@@ -1,4 +1,4 @@
-package il.cshaifasweng.OCSFMediatorExample.client;
+package il.cshaifasweng.OCSFMediatorExample.client.employee;
 
 /**
  * Sample Skeleton for 'EmployeeEditor.fxml' Controller Class
