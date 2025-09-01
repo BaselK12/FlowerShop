@@ -1,71 +1,44 @@
 package il.cshaifasweng.OCSFMediatorExample.server;
+
 import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
-import com.google.common.eventbus.Subscribe;
-
-
-import il.cshaifasweng.OCSFMediatorExample.entities.messages.Ping;
-import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
-import il.cshaifasweng.OCSFMediatorExample.server.bus.events.PingReceived;
-import il.cshaifasweng.OCSFMediatorExample.server.handlers.PingHandler;
-import il.cshaifasweng.OCSFMediatorExample.entities.messages.LoginRequest;
-import il.cshaifasweng.OCSFMediatorExample.entities.messages.Ping;
-import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
-import il.cshaifasweng.OCSFMediatorExample.server.bus.events.LoginRequested;
-import il.cshaifasweng.OCSFMediatorExample.server.bus.events.PingReceived;
-import il.cshaifasweng.OCSFMediatorExample.server.handlers.LoginHandler;
-import il.cshaifasweng.OCSFMediatorExample.server.handlers.PingHandler;
-
-
-import il.cshaifasweng.OCSFMediatorExample.server.ocsf.AbstractServer;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.CustomerLoginNavEvent;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.LoginRequestedEvent;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.SendToClientEvent;
+import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ObservableServer;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ConnectionToClient;
 
-import java.io.IOException;
-import java.util.ArrayList;
+// your existing entities/messages
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.LoginRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.ErrorResponse;
 
-import il.cshaifasweng.OCSFMediatorExample.entities.Warning;
-import il.cshaifasweng.OCSFMediatorExample.server.ocsf.SubscribedClient;
+public class SimpleServer extends ObservableServer {
+	private final ServerBus bus;
 
-public class SimpleServer extends AbstractServer {
-	private static ArrayList<SubscribedClient> SubscribersList = new ArrayList<>();
-
-	public SimpleServer(int port) {
+	public SimpleServer(int port, ServerBus bus) {
 		super(port);
-
-		ServerBus.get().register(new PingHandler());
-		ServerBus.get().register(new LoginHandler());
-
-
-		// Temporary: subscribe a tiny logger to the bus to prove wiring works
-		ServerBus.get().register(new Object() {
-			@Subscribe
-			public void any(Object ev) {
-				System.out.println("[BUS] event: " + ev.getClass().getSimpleName());
-			}
-		});
+		this.bus = bus;
 	}
-
 
 	@Override
 	protected void handleMessageFromClient(Object msg, ConnectionToClient client) {
-		if (msg instanceof Ping) {
-			Ping p = (Ping) msg;
-			ServerBus.get().post(new PingReceived(p.getText(), client));
-			return;
-		}
-		if (msg instanceof LoginRequest) {
-			LoginRequest lr = (LoginRequest) msg;
-			ServerBus.get().post(new LoginRequested(lr.getUsername(), lr.getPassword(), client));
-			return;
-		}
-	}
-	public void sendToAllClients(String message) {
 		try {
-			for (SubscribedClient subscribedClient : SubscribersList) {
-				subscribedClient.getClient().sendToClient(message);
+			if (msg instanceof String s) {
+				switch (s) {
+					case "CustomerLoginPage Back" -> bus.publish(new CustomerLoginNavEvent("BACK", client));
+					case "CustomerLoginPage register" -> bus.publish(new CustomerLoginNavEvent("REGISTER", client));
+					default -> bus.publish(new SendToClientEvent(
+							new ErrorResponse("Unknown command: " + s), client));
+				}
+			} else if (msg instanceof LoginRequest lr) {
+				bus.publish(new LoginRequestedEvent(lr, client));
+			} else {
+				bus.publish(new SendToClientEvent(
+						new ErrorResponse("Unknown payload type: " + msg.getClass().getSimpleName()),
+						client));
 			}
-		} catch (IOException e1) {
-			e1.printStackTrace();
+		} catch (Exception e) {
+			bus.publish(new SendToClientEvent(
+					new ErrorResponse("Server error: " + e.getMessage()), client));
 		}
 	}
-
 }
