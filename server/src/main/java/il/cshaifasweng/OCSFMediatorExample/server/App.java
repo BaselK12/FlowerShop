@@ -1,18 +1,21 @@
 package il.cshaifasweng.OCSFMediatorExample.server;
 
-import java.io.IOException;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
+import il.cshaifasweng.OCSFMediatorExample.server.handlers.CustomerLoginNavHandler;
+import il.cshaifasweng.OCSFMediatorExample.server.handlers.OutboundSender;
 
-/**
- * Hello world!
- *
- */
-public class App 
-{
-	
-	private static SimpleServer server;
-    public static void main( String[] args ) throws IOException
-    {
-        server = new SimpleServer(3000);
+public class App {
+    public static void main(String[] args) throws Exception {
+        var bus = new ServerBus();
+        var server = new SimpleServer(3000, bus);
+
+        // infra
+        new OutboundSender(bus);
+
+        // handlers
+        new CustomerLoginNavHandler(bus);
+
         server.listen();
+        System.out.println("Server listening on 3000");
     }
 }

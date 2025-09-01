@@ -1,13 +1,22 @@
 package il.cshaifasweng.OCSFMediatorExample.server.bus;
 
-import com.google.common.eventbus.EventBus;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
-public final class ServerBus {
-    private static final EventBus BUS = new EventBus("server-bus");
+public class ServerBus {
+    private final Map<Class<?>, List<Consumer<?>>> subs = new ConcurrentHashMap<>();
 
-    private ServerBus() {}                // no instances, utility holder
+    public <T> void subscribe(Class<T> type, Consumer<T> handler) {
+        subs.computeIfAbsent(type, k -> Collections.synchronizedList(new ArrayList<>()))
+                .add(handler);
+    }
 
-    public static EventBus get() {        // global access point
-        return BUS;
+    @SuppressWarnings("unchecked")
+    public <T> void publish(T event) {
+        var list = subs.getOrDefault(event.getClass(), List.of());
+        synchronized (list) {
+            for (var h : list) ((Consumer<T>) h).accept(event);
+        }
     }
 }
