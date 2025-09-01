@@ -1,8 +1,10 @@
 package il.cshaifasweng.OCSFMediatorExample.server;
 
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.RegisterRequest;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.CustomerLoginNavEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.LoginRequestedEvent;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.RegisterRequestedEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.SendToClientEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ObservableServer;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ConnectionToClient;
@@ -31,6 +33,8 @@ public class SimpleServer extends ObservableServer {
 				}
 			} else if (msg instanceof LoginRequest lr) {
 				bus.publish(new LoginRequestedEvent(lr, client));
+			} else if (msg instanceof RegisterRequest rr) {
+				bus.publish(new RegisterRequestedEvent(rr, client));
 			} else {
 				bus.publish(new SendToClientEvent(
 						new ErrorResponse("Unknown payload type: " + msg.getClass().getSimpleName()),
