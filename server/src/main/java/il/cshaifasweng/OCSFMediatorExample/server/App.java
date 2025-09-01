@@ -1,9 +1,7 @@
 package il.cshaifasweng.OCSFMediatorExample.server;
 
 import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
-import il.cshaifasweng.OCSFMediatorExample.server.handlers.CustomerLoginNavHandler;
-import il.cshaifasweng.OCSFMediatorExample.server.handlers.OutboundSender;
-import il.cshaifasweng.OCSFMediatorExample.server.handlers.RegisterHandler;
+import il.cshaifasweng.OCSFMediatorExample.server.handlers.*;
 
 public class App {
     public static void main(String[] args) throws Exception {
@@ -16,6 +14,9 @@ public class App {
         // handlers
         new CustomerLoginNavHandler(bus);
         new RegisterHandler(bus);
+        new EmployeesFetchHandler(bus);
+        new EmployeesOpenEditorHandler(bus);
+        new EmployeesDeleteHandler(bus);
 
         server.listen();
         System.out.println("Server listening on 3000");
