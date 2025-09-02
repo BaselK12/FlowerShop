@@ -20,6 +20,9 @@ public class Order implements Serializable {
     private Payment payment;
     private Promotion appliedPromotion;
 
+    // NEW: store the richer domain GreetingCard on the order
+    private GreetingCard greetingCard;
+
     public Order() {}
 
     public String getId() { return id; }
@@ -57,4 +60,7 @@ public class Order implements Serializable {
 
     public Promotion getAppliedPromotion() { return appliedPromotion; }
     public void setAppliedPromotion(Promotion appliedPromotion) { this.appliedPromotion = appliedPromotion; }
+
+    public GreetingCard getGreetingCard() { return greetingCard; }
+    public void setGreetingCard(GreetingCard greetingCard) { this.greetingCard = greetingCard; }
 }

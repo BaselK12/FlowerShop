@@ -10,7 +10,6 @@ public class CartCommand implements Serializable {
     private List<CartItem> items;
 
     public CartCommand() {}
-
     public CartCommand(Op op, List<CartItem> items) {
         this.op = op;
         this.items = items;
