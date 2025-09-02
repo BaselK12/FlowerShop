@@ -8,7 +8,6 @@ public class CartState implements Serializable {
     private double total;
 
     public CartState() {}
-
     public CartState(List<CartItem> items, double total) {
         this.items = items;
         this.total = total;

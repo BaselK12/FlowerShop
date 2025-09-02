@@ -1,18 +1,14 @@
 package il.cshaifasweng.OCSFMediatorExample.entities.messages;
 
-import il.cshaifasweng.OCSFMediatorExample.entities.domain.Flower;
 import java.io.Serializable;
 import java.util.List;
 
 public class CatalogResponse implements Serializable {
-    private List<Flower> items;
+    private List<FlowerDTO> items;
 
     public CatalogResponse() {}
+    public CatalogResponse(List<FlowerDTO> items) { this.items = items; }
 
-    public CatalogResponse(List<Flower> items) {
-        this.items = items;
-    }
-
-    public List<Flower> getItems() { return items; }
-    public void setItems(List<Flower> items) { this.items = items; }
+    public List<FlowerDTO> getItems() { return items; }
+    public void setItems(List<FlowerDTO> items) { this.items = items; }
 }
