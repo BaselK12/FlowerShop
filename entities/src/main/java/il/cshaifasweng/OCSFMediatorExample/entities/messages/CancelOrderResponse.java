@@ -3,14 +3,14 @@ package il.cshaifasweng.OCSFMediatorExample.entities.messages;
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.Order;
 import java.io.Serializable;
 
-public class CreateOrderResponse implements Serializable {
-    private boolean ok;        // success flag
-    private String reason;     // failure explanation (null if ok)
-    private Order order;       // the created order (null if !ok)
+public class CancelOrderResponse implements Serializable {
+    private boolean ok;
+    private String reason;  // if failed
+    private Order order;    // the updated order (status should now be CANCELED)
 
-    public CreateOrderResponse() {}
+    public CancelOrderResponse() {}
 
-    public CreateOrderResponse(boolean ok, String reason, Order order) {
+    public CancelOrderResponse(boolean ok, String reason, Order order) {
         this.ok = ok;
         this.reason = reason;
         this.order = order;
