@@ -36,8 +36,8 @@ public class ManageEmployeesController {
 
     // Table and Columns
     @FXML private TableView<EmployeeVM> TableView;
-    @FXML private TableColumn<EmployeeVM, Number> IdCol;
-    @FXML private TableColumn<EmployeeVM, Number> SalaryCol; // the salary of the employee
+    @FXML private TableColumn<EmployeeVM, Number> IdCol;        // the id in the company
+    @FXML private TableColumn<EmployeeVM, Number> SalaryCol;    // the salary of the employee
 
     @FXML private TableColumn<EmployeeVM, String> NameCol;
     @FXML private TableColumn<EmployeeVM, String> PhoneCol;
