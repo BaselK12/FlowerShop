@@ -3,39 +3,90 @@
 		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
+
 	<parent>
-		<artifactId>EngneeringFightClub</artifactId>
 		<groupId>il.cshaifasweng</groupId>
+		<artifactId>EngneeringFightClub</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
 
 	<groupId>il.cshaifasweng.OCSFMediatorExample</groupId>
 	<artifactId>server</artifactId>
 	<packaging>jar</packaging>
-
 	<name>server</name>
-	<url>http://www.example.com</url>
 
 	<dependencies>
-		<!-- tests -->
+		<!-- Bean Validation API (annotations like @NotBlank, @Email, etc.) -->
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.13.1</version>
+			<groupId>jakarta.validation</groupId>
+			<artifactId>jakarta.validation-api</artifactId>
+			<version>3.0.2</version>
+		</dependency>
+
+		<!-- Implementation: Hibernate Validator (so runtime actually enforces constraints) -->
+		<dependency>
+			<groupId>org.hibernate.validator</groupId>
+			<artifactId>hibernate-validator</artifactId>
+			<version>8.0.1.Final</version>
+		</dependency>
+
+		<!-- EL needed by Hibernate Validator -->
+		<dependency>
+			<groupId>org.glassfish</groupId>
+			<artifactId>jakarta.el</artifactId>
+			<version>4.0.2</version>
+		</dependency>
+
+		<!-- Shared messages/entities -->
+		<dependency>
+			<groupId>il.cshaifasweng.OCSFMediatorExample</groupId>
+			<artifactId>entities</artifactId>
+			<!-- version inherited from root dependencyManagement -->
+		</dependency>
+
+		<!-- Hibernate + Jakarta -->
+		<dependency>
+			<groupId>org.hibernate.orm</groupId>
+			<artifactId>hibernate-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>jakarta.persistence</groupId>
+			<artifactId>jakarta.persistence-api</artifactId>
+			<!-- 3.2.0 via dependencyManagement -->
+		</dependency>
+
+		<!-- Pool + JDBC -->
+		<dependency>
+			<groupId>com.zaxxer</groupId>
+			<artifactId>HikariCP</artifactId>
+			<version>5.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.mysql</groupId>
+			<artifactId>mysql-connector-j</artifactId>
+		</dependency>
+
+		<!-- Flyway (optional, fine to keep) -->
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+			<version>10.15.0</version>
+		</dependency>
+
+
+		<!-- JUnit 5 -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<version>5.10.2</version>
 			<scope>test</scope>
 		</dependency>
 
-		<!-- shared messages/entities -->
-		<dependency>
-			<groupId>${groupId}</groupId>
-			<artifactId>entities</artifactId>
-		</dependency>
 
-		<!-- STEP 0: EventBus (Guava) for the server -->
+		<!-- EventBus / utils -->
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>33.2.1-jre</version>
 		</dependency>
 	</dependencies>
 
@@ -44,7 +95,7 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
-				<version>1.6.0</version>
+				<version>3.3.0</version>
 				<configuration>
 					<mainClass>il.cshaifasweng.OCSFMediatorExample.server.App</mainClass>
 				</configuration>
@@ -67,19 +118,9 @@
 					<execution>
 						<id>make-assembly</id>
 						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
+						<goals><goal>single</goal></goals>
 					</execution>
 				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<configuration>
-					<source>16</source>
-					<target>16</target>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>
