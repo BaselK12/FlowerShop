@@ -15,7 +15,7 @@ import org.greenrobot.eventbus.EventBus;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
-import static com.sun.org.apache.xerces.internal.util.XMLChar.trim;
+//import static com.sun.org.apache.xerces.internal.util.XMLChar.trim;
 
 public class EmployeeEditorController {
 
