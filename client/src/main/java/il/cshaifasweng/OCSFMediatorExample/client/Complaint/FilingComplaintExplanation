@@ -1,0 +1,98 @@
+==============================
+FilingComplaintController Flow
+==============================
+
+1. Initialization
+-----------------
+- When the FXML is loaded, the controller's initialize() method runs.
+- It registers the controller with EventBus so it can receive messages from the server.
+- It populates the CategoryBox with default complaint categories.
+- It configures SubjectTxt to limit input length to 120 characters.
+- It enables/disables Email/Phone fields when "Anonymous" is toggled.
+
+2. Validation
+-------------
+- Before submitting, validateForm() checks:
+  • Category is chosen.
+  • Subject and Message are not empty.
+  • If not anonymous: at least one contact method (email or phone) must be provided, and formats are validated.
+  • Consent checkbox must be selected.
+- Errors are collected in a list and displayed in ErrorLabel.
+
+3. Submitting
+-------------
+- If validation passes, onSubmit() builds a SubmitComplaintRequest DTO:
+  • customerId (for now "customer123")
+  • orderId (optional)
+  • category
+  • subject
+  • message
+  • anonymous flag
+  • email / phone (null if anonymous)
+- The request object is sent to the server using SimpleClient.getClient().sendToServer(req).
+
+4. Receiving Response
+---------------------
+- The server processes the request, saves it, and generates a complaintId.
+- The server sends back a SubmitComplaintResponse with:
+  • ok = true/false
+  • reason = error message if failed
+  • complaintId = generated ID if success
+- SimpleClient receives this response in handleMessageFromServer() and posts it to EventBus.
+- FilingComplaintController is subscribed with @Subscribe, so onComplaintResponse() is called.
+- If ok == true:
+  • Show an Alert with success and the complaint ID.
+  • Close the window.
+- If ok == false:
+  • Show the error in ErrorLabel.
+  • Re-enable the Submit button.
+
+5. Cancel
+---------
+- onCancel() closes the window and unregisters the controller from EventBus so it does not leak.
+
+=========================================
+How SimpleClient.handleMessageFromServer()
+=========================================
+
+- SimpleClient extends AbstractClient from OCSF.
+- Every time the server sends a message, handleMessageFromServer(Object msg) is called.
+- Inside it, you check the type of the message.
+- Example:
+
+@Override
+protected void handleMessageFromServer(Object msg) {
+    if (msg instanceof SubmitComplaintResponse) {
+        EventBus.getDefault().post((SubmitComplaintResponse) msg);
+        return;
+    }
+    // other message types...
+}
+
+- This way, when the server replies with a SubmitComplaintResponse, it is forwarded to EventBus.
+- The controller subscribed with @Subscribe automatically receives it.
+
+===========================
+DTO and Communication Flow
+===========================
+
+1. The Data Transfer Object (DTO) SubmitComplaintRequest carries the complaint details from the client UI to the server.
+
+2. The client builds the DTO in the controller and sends it via SimpleClient to the server.
+
+3. The server receives SubmitComplaintRequest in its handleMessageFromClient(Object msg):
+   - It extracts the details.
+   - Saves the complaint entity into the database.
+   - Generates a complaintId.
+   - Creates a SubmitComplaintResponse and sends it back to the client.
+
+4. The client’s SimpleClient receives SubmitComplaintResponse in handleMessageFromServer().
+   - Posts it to EventBus.
+   - The controller subscribed to EventBus handles it and updates the UI.
+
+This decouples:
+- UI logic (controller)
+- Network transport (SimpleClient / OCSF)
+- Persistence (server)
+- Message definitions (DTOs in shared package)
+

@@ -1,0 +1,383 @@
+Got it 👍 Here’s the full explanation in **copiable Markdown format**.
+It explains each controller, all key functions, how they connect to each other, and how to communicate with the server and handle messages on the client side.
+
+---
+
+````markdown
+# MyAccount System: Controllers and Communication
+
+This document explains the **MyAccount feature** in a JavaFX + OCSF client-server project.
+It covers:
+
+1. General structure
+2. Each controller (Profile, Coupons, Orders, Payments, MyAccount)
+3. Functions in each controller and how they are connected
+4. Communication flow between Client and Server
+5. Example message handling
+
+---
+
+## 1. General Structure
+
+The **MyAccount.fxml** acts as a container with a **sidebar** and a **content area**:
+
+- Sidebar: navigation buttons (Profile, Coupons, Orders, Payments)
+- Center: a `StackPane` (`ContentStack`) where the sub-views are loaded dynamically
+
+Each section (Profile, Coupons, Orders, Payments) is implemented as its own **FXML + Controller**.
+The **MyAccountController** is responsible for navigation and loading the correct sub-view.
+
+---
+
+## 2. MyAccountController
+
+### Role
+- Acts as **main navigator** for all account-related views.
+- Handles toggle buttons (Profile, Coupons, Orders, Payments).
+- Loads the corresponding view into `ContentStack`.
+- Handles **Logout** and **Close**.
+
+### Key Functions
+- `initialize()`: Sets up navigation and default view.
+- `loadView(path)`: Loads an FXML file into the content stack.
+- `handleLogout()`: Sends a logout request to the server.
+- `handleClose()`: Closes the current stage.
+
+### Code Snippet
+
+```java
+public class MyAccountController {
+
+    @FXML private ToggleGroup navGroup;
+    @FXML private ToggleButton ProfileBtn, CouponsBtn, OrdersBtn, PaymentsBtn;
+    @FXML private Button LogOutBtn, CloseBtn;
+    @FXML private StackPane ContentStack;
+
+    @FXML
+    private void initialize() {
+        // Default view
+        loadView("/il/cshaifasweng/OCSFMediatorExample/client/Account/ProfileView.fxml");
+
+        // Navigation
+        navGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
+            if (newToggle == ProfileBtn) {
+                loadView("/.../ProfileView.fxml");
+            } else if (newToggle == CouponsBtn) {
+                loadView("/.../CouponsView.fxml");
+            } else if (newToggle == OrdersBtn) {
+                loadView("/.../OrdersView.fxml");
+            } else if (newToggle == PaymentsBtn) {
+                loadView("/.../PaymentsView.fxml");
+            }
+        });
+
+        // Footer buttons
+        LogOutBtn.setOnAction(e -> handleLogout());
+        CloseBtn.setOnAction(e -> handleClose());
+    }
+
+    private void loadView(String fxmlPath) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
+            Node view = loader.load();
+            ContentStack.getChildren().setAll(view);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void handleLogout() {
+        SimpleClient.getClient().sendToServer(new LogoutRequest());
+    }
+
+    private void handleClose() {
+        Stage stage = (Stage) CloseBtn.getScene().getWindow();
+        stage.close();
+    }
+}
+````
+
+---
+
+## 3. ProfileViewController
+
+### Role
+
+* Displays user profile (name, email, phone).
+* Allows switching between **view mode** and **edit mode**.
+* Sends profile updates to the server.
+
+### Key Functions
+
+* `initialize()`: Sets up buttons (edit, cancel, save).
+* `toggleEdit(editing)`: Switches between view/edit mode.
+* `saveProfile()`: Sends updated user data to server.
+* `loadProfile(user)`: Loads user details into labels.
+
+### Code Snippet
+
+```java
+public class ProfileViewController {
+
+    @FXML private Label NameLabel, EmailLabel, PhoneLabel;
+    @FXML private TextField NameField, EmailField, PhoneField;
+    @FXML private Button EditBtn, SaveBtn, CancelBtn;
+    @FXML private AnchorPane CardProfileEditPane;
+
+    private User currentUser;
+
+    @FXML
+    private void initialize() {
+        EditBtn.setOnAction(e -> toggleEdit(true));
+        CancelBtn.setOnAction(e -> toggleEdit(false));
+        SaveBtn.setOnAction(e -> saveProfile());
+    }
+
+    private void toggleEdit(boolean editing) {
+        CardProfileEditPane.setVisible(editing);
+    }
+
+    private void saveProfile() {
+        currentUser.setName(NameField.getText());
+        currentUser.setEmail(EmailField.getText());
+        currentUser.setPhone(PhoneField.getText());
+
+        SimpleClient.getClient().sendToServer(new UpdateProfileRequest(currentUser));
+    }
+
+    public void loadProfile(User user) {
+        this.currentUser = user;
+        NameLabel.setText(user.getName());
+        EmailLabel.setText(user.getEmail());
+        PhoneLabel.setText(user.getPhone());
+    }
+}
+```
+
+---
+
+## 4. CouponsViewController
+
+### Role
+
+* Displays the list of user’s coupons.
+* Fetches data from server.
+* Handles empty state.
+
+### Key Functions
+
+* `initialize()`: Sends request to load coupons.
+* `setCoupons(list)`: Updates UI with coupon data.
+
+### Code Snippet
+
+```java
+public class CouponsViewController {
+
+    @FXML private VBox couponsBox;
+    @FXML private Label couponsCountLabel;
+
+    private final List<Coupon> coupons = new ArrayList<>();
+
+    @FXML
+    private void initialize() {
+        SimpleClient.getClient().sendToServer(new GetCouponsRequest());
+    }
+
+    public void setCoupons(List<Coupon> coupons) {
+        this.coupons.clear();
+        this.coupons.addAll(coupons);
+        couponsCountLabel.setText("(" + coupons.size() + ")");
+        couponsBox.getChildren().clear();
+
+        for (Coupon c : coupons) {
+            Label label = new Label(c.getCode() + " - " + c.getDiscount() + "% off");
+            couponsBox.getChildren().add(label);
+        }
+    }
+}
+```
+
+---
+
+## 5. OrdersViewController
+
+### Role
+
+* Displays user’s past orders in a table.
+* Shows order ID, date, total, and status.
+* Can display details for a selected order.
+
+### Key Functions
+
+* `initialize()`: Sets up table column bindings.
+* `setOrders(list)`: Updates UI with order data.
+* `showOrderDetails()`: Displays selected order’s details.
+
+### Code Snippet
+
+```java
+public class OrdersViewController {
+
+    @FXML private TableView<Order> ordersTable;
+    @FXML private TableColumn<Order, String> colOrderId, colOrderDate, colOrderTotal, colOrderStatus;
+    @FXML private Label ordersCountLabel;
+    @FXML private Button btnRefreshOrders, btnOrderDetails;
+
+    private final ObservableList<Order> orders = FXCollections.observableArrayList();
+
+    @FXML
+    private void initialize() {
+        colOrderId.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getId()));
+        colOrderDate.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getCreatedAt().toString()));
+        colOrderTotal.setCellValueFactory(data -> new SimpleStringProperty("$" + data.getValue().getTotal()));
+        colOrderStatus.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getStatus().name()));
+
+        ordersTable.setItems(orders);
+
+        btnRefreshOrders.setOnAction(e -> SimpleClient.getClient().sendToServer(new GetOrdersRequest()));
+        btnOrderDetails.setOnAction(e -> showOrderDetails());
+    }
+
+    public void setOrders(List<Order> orderList) {
+        orders.setAll(orderList);
+        ordersCountLabel.setText("(" + orders.size() + ")");
+    }
+
+    private void showOrderDetails() {
+        Order selected = ordersTable.getSelectionModel().getSelectedItem();
+        if (selected != null) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION,
+                "Order: " + selected.getId() + "\nStatus: " + selected.getStatus());
+            alert.showAndWait();
+        }
+    }
+}
+```
+
+---
+
+## 6. PaymentsViewController
+
+### Role
+
+* Displays user’s saved payment methods.
+* Allows adding/removing methods.
+* Fetches data from server.
+
+### Key Functions
+
+* `initialize()`: Binds columns and sets button actions.
+* `setPayments(list)`: Updates UI with payment data.
+* `handleAddPayment()`: Sends add request.
+* `handleRemovePayment()`: Sends remove request.
+
+### Code Snippet
+
+```java
+public class PaymentsViewController {
+
+    @FXML private TableView<Payment> paymentsTable;
+    @FXML private TableColumn<Payment, String> colCardType, colCardNumber, colExpiryDate;
+    @FXML private Label paymentsCountLabel;
+    @FXML private Button btnAddPayment, btnRemovePayment, btnRefreshPayments;
+
+    private final ObservableList<Payment> payments = FXCollections.observableArrayList();
+
+    @FXML
+    private void initialize() {
+        colCardType.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getMethod().name()));
+        colCardNumber.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getMaskedPan()));
+        colExpiryDate.setCellValueFactory(d -> new SimpleStringProperty("")); // no expiry in entity yet
+
+        paymentsTable.setItems(payments);
+
+        btnRefreshPayments.setOnAction(e -> SimpleClient.getClient().sendToServer(new GetPaymentsRequest()));
+        btnAddPayment.setOnAction(e -> handleAddPayment());
+        btnRemovePayment.setOnAction(e -> handleRemovePayment());
+    }
+
+    public void setPayments(List<Payment> paymentList) {
+        payments.setAll(paymentList);
+        paymentsCountLabel.setText("(" + payments.size() + ")");
+    }
+
+    private void handleAddPayment() {
+        SimpleClient.getClient().sendToServer(new AddPaymentRequest(/* data */));
+    }
+
+    private void handleRemovePayment() {
+        Payment selected = paymentsTable.getSelectionModel().getSelectedItem();
+        if (selected != null) {
+            SimpleClient.getClient().sendToServer(new RemovePaymentRequest(selected.getId()));
+        }
+    }
+}
+```
+
+---
+
+## 7. Communication: Client ↔ Server
+
+### Sending requests
+
+Every controller sends requests to the server through `SimpleClient`:
+
+```java
+SimpleClient.getClient().sendToServer(new GetOrdersRequest());
+```
+
+### Receiving responses
+
+On the client side, responses are handled with EventBus subscribers or `handleMessageFromServer`.
+
+Example:
+
+```java
+@Subscribe
+public void handleOrdersResponse(GetOrdersResponse response) {
+    Platform.runLater(() -> {
+        // Update the orders controller
+        ordersViewController.setOrders(response.getOrders());
+    });
+}
+```
+
+### Message flow
+
+1. Controller → sends request (`GetOrdersRequest`).
+2. Server → processes and returns response (`GetOrdersResponse`).
+3. Client → receives response and dispatches it.
+4. Controller → updates UI (table, labels, etc.).
+
+---
+
+## 8. How Controllers Connect to Each Other
+
+* **MyAccountController** is the central container.
+* It **loads one sub-controller at a time** (Profile, Coupons, Orders, Payments) into the content stack.
+* Sub-controllers do not directly call each other — they are independent.
+* Connection is through the shared **MyAccount navigation system**.
+* Data flows between controllers and the server, not between each other.
+
+---
+
+# Summary
+
+* **MyAccountController**: Navigation hub
+* **ProfileViewController**: View/edit profile
+* **CouponsViewController**: Show coupons
+* **OrdersViewController**: Show past orders
+* **PaymentsViewController**: Manage payment methods
+* All controllers use **SimpleClient** to send requests and receive responses.
+* UI is updated via EventBus or `Platform.runLater`.
+* Controllers are connected only through the **MyAccount container**.
+
+---
+
+```
+
+---
+
+Would you like me to also extend this with an **example server-side handler** (e.g., how `GetOrdersRequest` is processed and turned into a `GetOrdersResponse`)?
+```
