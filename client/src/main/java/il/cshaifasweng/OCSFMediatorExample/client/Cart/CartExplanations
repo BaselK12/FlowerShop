@@ -1,0 +1,123 @@
+CartController.java manages the cart screen in the flower shop application.
+
+1. FXML fields:
+   - CheckoutBtn: button for completing the purchase.
+   - ContinueBtn: button for going back to the shop to add more items.
+   - ItemsBox: VBox container where each cart item card (CartItemCard.fxml) is loaded.
+   - TotalLabel: label at the bottom that shows the total price.
+
+2. Data:
+   - cartItems: a local List<CartItem> that represents the items in the cart.
+   - In initialize(), two example items are added (Red Roses and Yellow Tulips). In the real app this will be filled from the server or user actions.
+
+3. initialize():
+   - Runs automatically when the FXML is loaded.
+   - Fills cartItems with sample items.
+   - Calls refreshCart() to build the UI.
+
+4. refreshCart():
+   - Clears ItemsBox (removes old item cards).
+   - Loops through each CartItem in the cartItems list.
+   - For each item:
+       a) Loads CartItemCard.fxml with FXMLLoader.
+       b) Gets its CartItemCardController.
+       c) Calls setData() on the controller, passing:
+          - The CartItem object itself.
+          - An onDelete callback that removes the item and refreshes the UI.
+          - An onUpdate callback that recalculates the total.
+       d) Adds the card node to the ItemsBox VBox.
+   - Finally calls updateTotal().
+
+5. updateTotal():
+   - Calculates the sum of all item subtotals (unitPrice * quantity).
+   - Updates the TotalLabel with the total in ₪.
+
+6. onContinue(ActionEvent):
+   - Called when the Continue button is pressed.
+   - Sends a ContinueShoppingRequest message to the server through SimpleClient.
+   - This tells the server that the user wants to go back to shopping.
+
+7. onCheckout(ActionEvent):
+   - Called when the Checkout button is pressed.
+   - Sends a CheckoutRequest message to the server, including the entire list of cartItems.
+   - This tells the server to process the order.
+
+8. handleCheckoutResponse(CheckoutResponse):
+   - Called when the server sends back a CheckoutResponse.
+   - Runs on the JavaFX UI thread (via Platform.runLater).
+   - Shows an Alert dialog with the result of the checkout.
+
+9. handleContinueResponse(ContinueShoppingResponse):
+   - Called when the server replies to ContinueShoppingRequest.
+   - For now it just prints the message to the console.
+   - Later it could switch the scene back to the product catalog.
+
+10. handleUpdateResponse(CartUpdateResponse):
+   - Called when the server confirms an update to the cart (like quantity change or item removal).
+   - For now it just prints a confirmation message.
+   - It could also update the local cartItems list to stay in sync.
+
+----------------------------------------------------------------
+Communication flow between client and server:
+
+- User presses Continue or Checkout → CartController sends a request message to the server using SimpleClient.sendToServer().
+- The server processes the request (for example: saves the order in the database, or prepares the catalog).
+- The server sends back a response object (CheckoutResponse, ContinueShoppingResponse, or CartUpdateResponse).
+- SimpleClient receives the message in handleMessageFromServer().
+- SimpleClient forwards the message to the CartController (because the cart is private to that client).
+- CartController’s handleXXXResponse methods are called.
+- The UI is updated accordingly (alerts, console logs, scene changes).
+
+In short:
+CartController manages the UI and sends requests → SimpleClient delivers them to the server → Server replies with responses → SimpleClient gives them back to CartController → UI updates.
+
+
+----------------------------------------------------------------
+
+
+How SimpleClient handles messages from the server:
+
+In your project, SimpleClient extends AbstractClient from OCSF.
+It overrides the method handleMessageFromServer(Object msg).
+This method is automatically called whenever the server sends a message to the client.
+
+Example implementation:
+
+@Override
+protected void handleMessageFromServer(Object msg) {
+    if (msg instanceof CheckoutResponse) {
+        if (cartController != null) {
+            cartController.handleCheckoutResponse((CheckoutResponse) msg);
+        }
+    } else if (msg instanceof ContinueShoppingResponse) {
+        if (cartController != null) {
+            cartController.handleContinueResponse((ContinueShoppingResponse) msg);
+        }
+    } else if (msg instanceof CartUpdateResponse) {
+        if (cartController != null) {
+            cartController.handleUpdateResponse((CartUpdateResponse) msg);
+        }
+    } else {
+        System.out.println("Unhandled message: " + msg);
+    }
+}
+
+Explanation of how this works:
+- Whenever the server sends an object back (like a CheckoutResponse), OCSF calls handleMessageFromServer().
+- The method checks the type of the message (using instanceof).
+- If it’s a CheckoutResponse → forward it to CartController.handleCheckoutResponse().
+- If it’s a ContinueShoppingResponse → forward it to CartController.handleContinueResponse().
+- If it’s a CartUpdateResponse → forward it to CartController.handleUpdateResponse().
+- If the message type is unknown, print it to the console.
+- The CartController then updates the UI on the JavaFX thread.
+
+----------------------------------------------------------------
+Full communication flow between client and server:
+
+1. User clicks a button in the UI (Checkout, Continue, or updates quantity).
+2. CartController sends a request object to the server with SimpleClient.sendToServer().
+3. The server processes the request and creates a response object (CheckoutResponse, ContinueShoppingResponse, CartUpdateResponse).
+4. The server sends the response object back to the client.
+5. OCSF delivers it to SimpleClient.handleMessageFromServer().
+6. SimpleClient checks the type and calls the correct handler method in CartController.
+7. CartController updates the UI (alerts, total label, scene navigation, etc.).

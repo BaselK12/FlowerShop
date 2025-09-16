@@ -1,7 +1,3 @@
-/**
- * Sample Skeleton for 'FilingComplaint.fxml' Controller Class
- */
-
 package il.cshaifasweng.OCSFMediatorExample.client.Complaint;
 
 import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;

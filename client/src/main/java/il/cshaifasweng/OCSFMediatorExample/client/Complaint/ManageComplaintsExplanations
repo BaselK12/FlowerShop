@@ -1,0 +1,203 @@
+================================================================
+MANAGECOMPLAINTSCONTROLLER – HOW IT WORKS
+================================================================
+
+1) Purpose
+   - Show a list of complaints with filters (scope/store/type/status).
+   - Fetch the list from the server.
+   - Update the table in real time when a new complaint is created on any client
+     (via ComplaintCreatedBroadcast).
+
+2) Key fields (FXML-injected)
+   - Buttons: ApplyBtn, BackBtn, CloseBtn
+   - Filters: ScopeCombo, StoreCombo, TypeCombo, StatusCombo, GroupBox (unused)
+   - Table + columns: ComplaintsTable, IDCol, StoreCol, DateCol, TypeCol, StatusCol, SummaryCol
+   - Backing list: rows (ObservableList<Complaint>)
+
+3) Initialization flow (initialize())
+   - Register to EventBus (so @Subscribe handlers can receive messages).
+   - Populate filter ComboBoxes and default selections:
+       Scope = "Whole Company", Status = "All" (enum-style values), Type = "All"
+       Store list is a placeholder demo list (replace with real store fetch).
+   - Table setup:
+       setItems(rows)
+       setPlaceholder("No complaints found")
+       each column uses a cell value factory pulling strings from Complaint getters
+   - First load: requestComplaintsFromServer() is called to populate the table.
+
+4) Requesting data (requestComplaintsFromServer)
+   - Reads UI filters.
+   - Maps "All" to null (normalizeAll) so the server won’t filter on that field.
+   - If scope = "Specific Store", passes the selected store; otherwise passes null
+     (meaning company-wide).
+   - Builds GetComplaintsRequest(storeOrNull, typeOrNull, statusOrNull).
+   - Sends it to the server via SimpleClient.getClient().sendToServer(req).
+
+5) Receiving the list (@Subscribe onGetComplaintsResponse)
+   - Runs on any thread; switches to the FX Application Thread with Platform.runLater.
+   - Replaces rows with the complaints from the response (rows.setAll(list)).
+   - Table updates automatically because it’s bound to rows.
+
+6) Live updates from other clients (@Subscribe onComplaintCreatedBroadcast)
+   - When the server broadcasts ComplaintCreatedBroadcast(Complaint),
+     this handler gets it.
+   - On the FX thread, it calls maybeAddIfMatchesFilters(complaint):
+       a) checks current filters (matchesActiveFilters),
+       b) deduplicates by id,
+       c) inserts new complaint at the top of rows.
+
+7) Filter logic (matchesActiveFilters)
+   - If scope = "Specific Store", ensure c.getStoreName() equals selected StoreCombo.
+   - If Type != "All", ensure c.getType() equals the selected type.
+   - If Status != "All", ensure c.getStatus() equals the selected status
+     (getStatus() returns enum-style string like "OPEN", "IN_PROGRESS", etc.).
+   - If any check fails, the complaint is not shown/inserted.
+
+8) Closing the view (safeClose)
+   - Unregisters this controller from EventBus.
+   - Hides the window (CloseBtn.getScene().getWindow().hide()).
+
+9) FXML wiring
+   - If you bind onAction via FXML, Scene Builder prefers handler names without parentheses:
+       ApplyBtn onAction="#requestComplaintsFromServer"
+       BackBtn  onAction="#safeClose"
+       CloseBtn onAction="#safeClose"
+   - To satisfy Scene Builder, add ActionEvent overloads that call your no-arg methods:
+       @FXML private void requestComplaintsFromServer(ActionEvent e) { requestComplaintsFromServer(); }
+       @FXML private void safeClose(ActionEvent e) { safeClose(); }
+   - fx:controller in the FXML must match the class name exactly:
+       il.cshaifasweng.OCSFMediatorExample.client.Complaint.ManageComplaintsController
+
+
+================================================================
+SIMPLECLIENT – HOW TO HANDLE MESSAGES FROM SERVER
+================================================================
+
+1) Role
+   - Outbound: send requests to server (sendToServer(req)).
+   - Inbound: receive server messages and dispatch them to the GUI via EventBus.
+
+2) Typical OCSF pattern (client side)
+   - Extend AbstractClient and override handleMessageFromServer(Object msg).
+   - In that method, post the incoming message to EventBus so any @Subscribe
+     method in your controllers gets called.
+
+3) Example handleMessageFromServer (client)
+   @Override
+   protected void handleMessageFromServer(Object msg) {
+       org.greenrobot.eventbus.EventBus.getDefault().post(msg);
+   }
+
+   Notes:
+   - Posting to EventBus decouples networking from UI.
+   - Never update JavaFX controls directly here; controllers will use Platform.runLater.
+
+4) Outbound flow from controller
+   - Controller builds a DTO (e.g., GetComplaintsRequest) and calls:
+       SimpleClient.getClient().sendToServer(request)
+   - The server responds with a DTO (e.g., GetComplaintsResponse).
+   - SimpleClient.handleMessageFromServer receives it and posts to EventBus.
+   - Controller’s @Subscribe onGetComplaintsResponse receives it and updates the UI.
+
+
+================================================================
+SERVER – COMMUNICATION FLOW OVERVIEW
+================================================================
+
+1) Messages involved (DTOs)
+   - GetComplaintsRequest(store, type, status)
+     Client → Server: “Give me the complaints filtered by these optional fields.”
+   - GetComplaintsResponse(List<Complaint>)
+     Server → Client: the list answering that request.
+   - SubmitComplaintResponse(ok, reason, complaintId)
+     Server → Requesting Client: ack of submit action (you already have this).
+   - ComplaintCreatedBroadcast(Complaint)  [chosen for real-time]
+     Server → All Clients: notify a new complaint has been created (full object).
+
+   Domain object:
+   - Complaint
+     Fields used in UI: id, storeName, type, text (summary computed), status (string), createdAt, etc.
+
+2) Typical OCSF server handler (sketch)
+   if (msg instanceof SubmitComplaintRequest req) {
+       Complaint c = complaintService.create(req);  // persist + enrich storeName/type/status
+       client.sendToClient(new SubmitComplaintResponse(true, null, c.getId()));  // ack to submitter
+       sendToAllClients(new ComplaintCreatedBroadcast(c));                        // real-time broadcast
+       return;
+   }
+
+   if (msg instanceof GetComplaintsRequest req) {
+       List<Complaint> list = complaintRepo.findByFilters(req.getStore(), req.getType(), req.getStatus());
+       client.sendToClient(new GetComplaintsResponse(list));
+       return;
+   }
+
+   Notes:
+   - In findByFilters, implement optional filters:
+       store/type/status = null → no filter for that field.
+   - Ensure Complaint objects returned already contain storeName/type/status
+     strings the UI expects.
+
+
+================================================================
+DTO CHEAT SHEET
+================================================================
+
+Client → Server
+- GetComplaintsRequest
+  String store;   // null = whole company
+  String type;    // null = all types
+  String status;  // null = all statuses ("OPEN"/"IN_PROGRESS"/"RESOLVED"/"REJECTED")
+
+Server → Client
+- GetComplaintsResponse
+  List<Complaint> complaints;
+
+- SubmitComplaintResponse (existing)
+  boolean ok;
+  String reason;
+  String complaintId;
+
+Broadcast (Server → All Clients)
+- ComplaintCreatedBroadcast
+  Complaint complaint;  // full object; no extra fetch needed
+
+
+================================================================
+THREADING AND EVENTS
+================================================================
+
+- Server thread → SimpleClient.handleMessageFromServer → EventBus → Controller
+- Controller @Subscribe methods are invoked off the FX thread; wrap UI updates in Platform.runLater.
+- Unregister from EventBus when closing the window (safeClose()) to avoid leaks/duplicate handlers.
+
+
+================================================================
+COMMON PITFALLS CHECKLIST
+================================================================
+
+[ ] fx:controller in FXML matches ManageComplaintsController exactly (package + class).
+[ ] onAction strings in FXML have leading # and no parentheses: "#requestComplaintsFromServer".
+[ ] ActionEvent overloads exist so Scene Builder recognizes handlers.
+[ ] SimpleClient.handleMessageFromServer posts incoming messages to EventBus.
+[ ] Server calls sendToAllClients(new ComplaintCreatedBroadcast(c)) on creation.
+[ ] Status values align end-to-end:
+    UI StatusCombo: "All", "OPEN", "IN_PROGRESS", "RESOLVED", "REJECTED"
+    Complaint.getStatus() returns one of those strings.
+    normalizeAll maps "All" to null before sending request.
+[ ] TableView columns have correct fx:id and value factories.
+[ ] maybeAddIfMatchesFilters deduplicates by id before inserting.
+[ ] Scope "Specific Store" enables StoreCombo and filters by storeName.
+
+
+================================================================
+END-TO-END FLOW SUMMARY
+================================================================
+
+1) User opens Manage Complaints → initialize() runs → first list request is sent.
+2) Server replies with GetComplaintsResponse → UI table shows rows.
+3) Any client creates a complaint → server replies ok to that client AND broadcasts
+   ComplaintCreatedBroadcast to all clients.
+4) Every open UI receives the broadcast → maybeAddIfMatchesFilters adds the new row
+   if it matches current filters (no manual refresh needed).
+5) User adjusts filters → clicks Apply → a new GetComplaintsRequest is sent → table refreshes.
