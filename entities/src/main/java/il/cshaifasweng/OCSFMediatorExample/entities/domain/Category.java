@@ -24,4 +24,5 @@ public enum Category implements Serializable {
     public String toString() {
         return displayName;
     }
+
 }

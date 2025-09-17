@@ -1,6 +1,7 @@
 package il.cshaifasweng.OCSFMediatorExample.client.Catalog;
 
 import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
+import il.cshaifasweng.OCSFMediatorExample.entities.domain.Category;
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.Flower;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.AddToCartRequest;
 import javafx.fxml.FXML;
@@ -100,5 +101,49 @@ public class ItemCardController {
         if (onDetails != null) {
             onDetails.run();
         }
+    }
+
+    ////// use this for the home page
+
+    public void setItem(Flower flower, Runnable onAddToCart, Runnable onDetails) {
+        this.item = flower;
+
+        // Fill UI with flower data
+        nameLabel.setText(flower.getName());
+        shortDescLabel.setText(
+                (flower.getShortDescription() != null && !flower.getShortDescription().isEmpty())
+                        ? flower.getShortDescription()
+                        : (flower.getDescription() != null ? flower.getDescription() : "")
+        );
+        priceLabel.setText(String.format("$%.2f", flower.getPrice()));
+
+        if (flower.getCategory() != null && !flower.getCategory().isEmpty()) {
+            Category firstCategory = flower.getCategory().get(0);
+            categoryChip.setText(firstCategory.getDisplayName());
+        } else {
+            categoryChip.setText("Uncategorized");
+        }
+
+        if (flower.getImageUrl() != null && !flower.getImageUrl().isEmpty()) {
+            try {
+                productImage.setImage(new Image(flower.getImageUrl(), true));
+            } catch (Exception e) {
+                System.err.println("Failed to load image: " + flower.getImageUrl());
+            }
+        }
+
+        promoRibbon.setVisible(flower.isPromo());
+
+        // Wire actions
+        addToCartBtn.setOnAction(e -> {
+            if (onAddToCart != null) onAddToCart.run();
+        });
+        detailsBtn.setOnAction(e -> {
+            if (onDetails != null) onDetails.run();
+        });
+    }
+
+    public Flower getFlower() {
+        return item;
     }
 }
