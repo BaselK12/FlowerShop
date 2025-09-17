@@ -1,0 +1,203 @@
+/* ================================
+   Global Root + Typography
+   ================================ */
+.catalog-root {
+    -fx-background-color: #ffffff;
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+    -fx-text-fill: #333333;
+}
+
+/* Muted helper text */
+.hint {
+    -fx-text-fill: #6b7280;
+    -fx-font-size: 0.9em;
+}
+
+/* ================================
+   Toolbar + Inputs
+   ================================ */
+.toolbar {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #f3e5f5;
+    -fx-border-width: 0 0 2 0;
+    -fx-padding: 8 12 8 12;
+    -fx-spacing: 12;
+}
+
+.pill-input {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #ffd6e5;
+    -fx-border-radius: 999px;
+    -fx-background-radius: 999px;
+    -fx-padding: 6 12;
+    -fx-font-size: 1em;
+}
+.pill-input:focused {
+    -fx-border-color: #f48fb1;
+    -fx-effect: dropshadow(three-pass-box, rgba(244,143,177,0.3), 6, 0, 0, 0);
+}
+
+/* ================================
+   Promotions Section
+   ================================ */
+.promotions-box {
+    -fx-background-color: #fff7ed;
+    -fx-border-color: #ffe1bf;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 10;
+    -fx-spacing: 8;
+}
+#promotionsTitle {
+    -fx-text-fill: #ff6f00;
+    -fx-font-weight: bold;
+    -fx-font-size: 1.1em;
+}
+
+/* horizontal row of promo cards */
+.promo-row {
+    -fx-spacing: 12;
+}
+
+/* Promo ribbon shown on promo items */
+.promo-ribbon {
+    -fx-background-color: linear-gradient(to right, #ff8a65, #ff7043);
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 2 8;
+    -fx-background-radius: 6;
+}
+
+/* ================================
+   Catalog Grid + Item Card
+   ================================ */
+.catalog-grid {
+    -fx-hgap: 16;
+    -fx-vgap: 16;
+    -fx-padding: 12;
+}
+
+.card {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #f3e5f5;
+    -fx-border-radius: 14;
+    -fx-background-radius: 14;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.06), 4, 0, 0, 2);
+}
+.card:hover {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 8, 0, 0, 4);
+}
+
+/* Content inside the card */
+.card-content {
+    -fx-padding: 10;
+    -fx-spacing: 6;
+}
+
+/* Title, description, price */
+.item-title {
+    -fx-text-fill: #ec407a;
+    -fx-font-size: 1.1em;
+    -fx-font-weight: bold;
+}
+.item-short {
+    -fx-text-fill: #555555;
+    -fx-font-size: 0.9em;
+}
+.item-price {
+    -fx-text-fill: #d81b60;
+    -fx-font-weight: bold;
+}
+
+/* Category chip */
+.category-chip {
+    -fx-background-color: #ffe6ef;
+    -fx-border-color: #ffd6e5;
+    -fx-border-radius: 999;
+    -fx-background-radius: 999;
+    -fx-text-fill: #9c2751;
+    -fx-font-size: 0.75em;
+    -fx-padding: 2 8;
+}
+
+/* ================================
+   Buttons
+   ================================ */
+.btn-primary {
+    -fx-background-color: linear-gradient(to right, #f48fb1, #ec407a);
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 999;
+    -fx-padding: 6 14;
+}
+.btn-primary:hover {
+    -fx-background-color: linear-gradient(to right, #ec407a, #f06292);
+}
+.btn-primary:disabled {
+    -fx-background-color: #cccccc;
+    -fx-text-fill: white;
+}
+
+.btn-outline {
+    -fx-background-color: white;
+    -fx-border-color: #ffd6e5;
+    -fx-border-radius: 999;
+    -fx-background-radius: 999;
+    -fx-text-fill: #ec407a;
+    -fx-font-weight: bold;
+    -fx-padding: 6 14;
+}
+.btn-outline:hover {
+    -fx-background-color: #fff0f5;
+}
+
+/* Plain button (like close) */
+.btn-plain {
+    -fx-background-color: transparent;
+    -fx-text-fill: #ec407a;
+    -fx-font-size: 1.2em;
+}
+
+/* ================================
+   Dialog / Modal
+   ================================ */
+.details-dialog {
+    -fx-background-color: #ffffff;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 12;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.25), 10, 0, 0, 4);
+}
+.dialog-header {
+    -fx-border-color: #f3e5f5;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 8;
+}
+.dialog-body {
+    -fx-padding: 12;
+    -fx-spacing: 8;
+}
+.dialog-footer {
+    -fx-padding: 8;
+    -fx-spacing: 10;
+    -fx-alignment: center-right;
+}
+
+/* ================================
+   Status Bar (optional bottom area)
+   ================================ */
+.status-bar {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #f3e5f5;
+    -fx-border-width: 1 0 0 0;
+    -fx-padding: 6 12;
+    -fx-spacing: 8;
+}
+.cart-pill {
+    -fx-background-color: #ffe6ef;
+    -fx-border-color: #ffd6e5;
+    -fx-border-radius: 999;
+    -fx-background-radius: 999;
+    -fx-text-fill: #9c2751;
+    -fx-font-weight: bold;
+    -fx-padding: 2 8;
+}

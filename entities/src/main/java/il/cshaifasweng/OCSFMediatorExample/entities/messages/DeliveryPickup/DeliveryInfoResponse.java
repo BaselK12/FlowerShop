@@ -1,0 +1,21 @@
+package il.cshaifasweng.OCSFMediatorExample.entities.messages.DeliveryPickup;
+
+import java.io.Serializable;
+
+public class DeliveryInfoResponse implements Serializable {
+    private boolean success;
+    private String message;
+
+    public DeliveryInfoResponse(boolean success, String message) {
+        this.success = success;
+        this.message = message;
+    }
+
+    public boolean isSuccess() {
+        return success;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+}

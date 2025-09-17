@@ -1,0 +1,407 @@
+## PickupDeliveryController – Full Explanation
+
+The `PickupDeliveryController` is responsible for guiding the user through a **step-by-step wizard** where they choose either **pickup** or **delivery**, enter the required details, review them, and finally confirm the order.
+
+At the end, the controller builds either a `PickupInfo` or a `DeliveryInfo` object, wraps it in a request message, and sends it to the server. The server processes the request, saves the data, and returns a response.
+
+---
+
+## Internal State
+
+```java
+private enum Method { PICKUP, DELIVERY }
+private Method chosenMethod = null;
+```
+
+* `Method` keeps track of whether the user chose **pickup** or **delivery** in Step 1.
+* This affects which step panes are shown and which object (`PickupInfo` or `DeliveryInfo`) is created at the end.
+
+---
+
+## Function Explanations
+
+### 1. initialize()
+
+```java
+@FXML
+public void initialize() {
+    giftCheck.selectedProperty().addListener((obs, oldVal, newVal) -> {
+        giftFieldsBox.setVisible(newVal);
+    });
+
+    pickupBranchBox.getItems().addAll("Haifa – Main", "Tel Aviv – Center", "Jerusalem – City");
+    cityBox.getItems().addAll("Haifa", "Tel Aviv", "Jerusalem");
+
+    highlightStep(1);
+}
+```
+
+* Runs automatically when the controller is loaded.
+* Configures:
+
+  * Gift checkbox toggles the visibility of the gift fields.
+  * Populates branch and city combo boxes with options.
+  * Highlights **Step 1** badge at the top.
+
+---
+
+### 2. highlightStep(int step)
+
+```java
+private void highlightStep(int step) { ... }
+```
+
+* Resets all step badges to gray.
+* Highlights the **active step** in green depending on where the user is in the wizard.
+
+---
+
+### 3. handleStep1Next()
+
+```java
+@FXML
+private void handleStep1Next() {
+    if (pickupRadio.isSelected()) {
+        chosenMethod = Method.PICKUP;
+        step2PickupPane.setVisible(true);
+    } else if (deliveryRadio.isSelected()) {
+        chosenMethod = Method.DELIVERY;
+        step2DeliveryPane.setVisible(true);
+    } else {
+        showAlert("Please choose Pickup or Delivery.");
+        return;
+    }
+    step1NextBtn.getParent().getParent().setVisible(false);
+    highlightStep(2);
+}
+```
+
+* Triggered when the user clicks **Next** in Step 1.
+* Sets the `chosenMethod` (pickup or delivery).
+* Hides Step 1 pane and shows either **Step 2 Pickup** or **Step 2 Delivery** pane.
+
+---
+
+### 4. handlePickupNext()
+
+```java
+@FXML
+private void handlePickupNext() {
+    if (pickupBranchBox.getValue() == null ||
+        pickupDatePicker.getValue() == null ||
+        pickupTimeField.getText().isEmpty()) {
+        showAlert("Please fill branch, date, and time.");
+        return;
+    }
+    step2PickupPane.setVisible(false);
+    reviewPane.setVisible(true);
+    reviewSummaryArea.setText(buildReviewSummary());
+    highlightStep(4);
+}
+```
+
+* Triggered by **Next** in Step 2a (Pickup).
+* Validates required fields (branch, date, time).
+* If valid, moves directly to **Review Pane** (Step 4) and shows a summary.
+
+---
+
+### 5. handlePickupBack()
+
+```java
+@FXML
+private void handlePickupBack() {
+    step2PickupPane.setVisible(false);
+    step1NextBtn.getParent().getParent().setVisible(true);
+    highlightStep(1);
+}
+```
+
+* Triggered by **Back** in Step 2a.
+* Hides Pickup pane and shows Step 1 again.
+
+---
+
+### 6. handleDeliveryNext()
+
+```java
+@FXML
+private void handleDeliveryNext() {
+    if (cityBox.getValue() == null || streetField.getText().isEmpty() ||
+        houseField.getText().isEmpty() || deliveryPhoneField.getText().isEmpty()) {
+        showAlert("Please fill city, street, house number, and phone.");
+        return;
+    }
+    step2DeliveryPane.setVisible(false);
+    step3DeliveryPane.setVisible(true);
+    highlightStep(3);
+}
+```
+
+* Triggered by **Next** in Step 2b (Delivery).
+* Validates required fields (city, street, house number, phone).
+* If valid, moves to **Step 3 Delivery Options**.
+
+---
+
+### 7. handleDeliveryBack()
+
+```java
+@FXML
+private void handleDeliveryBack() {
+    step2DeliveryPane.setVisible(false);
+    step1NextBtn.getParent().getParent().setVisible(true);
+    highlightStep(1);
+}
+```
+
+* Triggered by **Back** in Step 2b.
+* Returns to Step 1.
+
+---
+
+### 8. handleOptionsNext()
+
+```java
+@FXML
+private void handleOptionsNext() {
+    step3DeliveryPane.setVisible(false);
+    reviewPane.setVisible(true);
+    reviewSummaryArea.setText(buildReviewSummary());
+    highlightStep(4);
+}
+```
+
+* Triggered by **Next** in Step 3.
+* Moves to **Review Pane** and builds a summary of delivery details.
+
+---
+
+### 9. handleOptionsBack()
+
+```java
+@FXML
+private void handleOptionsBack() {
+    step3DeliveryPane.setVisible(false);
+    step2DeliveryPane.setVisible(true);
+    highlightStep(2);
+}
+```
+
+* Triggered by **Back** in Step 3.
+* Returns to **Step 2 Delivery**.
+
+---
+
+### 10. handleReviewBack()
+
+```java
+@FXML
+private void handleReviewBack() {
+    reviewPane.setVisible(false);
+    if (chosenMethod == Method.PICKUP) {
+        step2PickupPane.setVisible(true);
+        highlightStep(2);
+    } else {
+        step3DeliveryPane.setVisible(true);
+        highlightStep(3);
+    }
+}
+```
+
+* Triggered by **Back** in Step 4 (Review).
+* Returns to either **Step 2 Pickup** or **Step 3 Delivery Options**, depending on the chosen method.
+
+---
+
+### 11. handleConfirm()
+
+```java
+@FXML
+private void handleConfirm() {
+    try {
+        if (chosenMethod == Method.PICKUP) {
+            PickupInfo pickup = new PickupInfo();
+            pickup.setShopId(pickupBranchBox.getValue());
+            pickup.setContactName("Customer");
+            pickup.setPhone(pickupPhoneField.getText());
+            LocalDate d = pickupDatePicker.getValue();
+            LocalTime t = LocalTime.parse(pickupTimeField.getText());
+            pickup.setScheduledAt(LocalDateTime.of(d, t));
+
+            SimpleClient.getClient().sendToServer(new PickupInfoRequest(pickup));
+
+        } else {
+            DeliveryInfo delivery = new DeliveryInfo();
+            delivery.setReceiverName(giftCheck.isSelected()
+                    ? recipientNameField.getText()
+                    : "Customer");
+            delivery.setPhone(deliveryPhoneField.getText());
+            delivery.setAddressLine(streetField.getText() + " " + houseField.getText());
+            delivery.setCity(cityBox.getValue());
+            delivery.setZip(zipField.getText());
+
+            if (deliveryDatePicker.getValue() != null && !deliveryTimeField.getText().isEmpty()) {
+                LocalDate d = deliveryDatePicker.getValue();
+                LocalTime t = LocalTime.parse(deliveryTimeField.getText());
+                delivery.setScheduledAt(LocalDateTime.of(d, t));
+            }
+
+            SimpleClient.getClient().sendToServer(new DeliveryInfoRequest(delivery));
+        }
+
+        showAlert("Order details sent to server. Proceed to payment.");
+
+    } catch (IOException e) {
+        showAlert("Failed to send order: " + e.getMessage());
+    } catch (Exception e) {
+        showAlert("Error: " + e.getMessage());
+    }
+}
+```
+
+* Triggered by **Confirm** in Step 4.
+* Builds a `PickupInfo` or `DeliveryInfo` object.
+* Wraps it in the correct request class (`PickupInfoRequest` or `DeliveryInfoRequest`).
+* Sends the request to the server with `sendToServer(...)`.
+* Shows a confirmation popup.
+
+---
+
+### 12. buildReviewSummary()
+
+```java
+private String buildReviewSummary() { ... }
+```
+
+* Builds a readable text summary of the pickup or delivery details.
+* Shown in the review TextArea for the customer.
+
+---
+
+### 13. showAlert(String msg)
+
+```java
+private void showAlert(String msg) {
+    Alert alert = new Alert(Alert.AlertType.INFORMATION, msg, ButtonType.OK);
+    alert.showAndWait();
+}
+```
+
+* Utility function to show a popup message.
+
+---
+
+# Message Flow – Client to Server
+
+### Example: Pickup
+
+1. **Client** builds a `PickupInfo` object and sends it inside `PickupInfoRequest`.
+
+   ```java
+   SimpleClient.getClient().sendToServer(new PickupInfoRequest(pickup));
+   ```
+
+2. **Server** receives the message in `handleMessageFromClient`.
+
+   ```java
+   if (msg instanceof PickupInfoRequest request) {
+       PickupInfo pickup = request.getPickupInfo();
+       // Save pickup to DB
+       client.sendToClient(new PickupInfoResponse(true, "Pickup saved successfully"));
+   }
+   ```
+
+3. **Server** persists the data in the database.
+
+4. **Server** sends back `PickupInfoResponse` to confirm success.
+
+---
+
+### Example: Delivery
+
+1. **Client** builds a `DeliveryInfo` object and sends it inside `DeliveryInfoRequest`.
+
+   ```java
+   SimpleClient.getClient().sendToServer(new DeliveryInfoRequest(delivery));
+   ```
+
+2. **Server** handles it:
+
+   ```java
+   if (msg instanceof DeliveryInfoRequest request) {
+       DeliveryInfo delivery = request.getDeliveryInfo();
+       // Save delivery to DB
+       client.sendToClient(new DeliveryInfoResponse(true, "Delivery saved successfully"));
+   }
+   ```
+
+3. **Server** persists the delivery data.
+
+4. **Server** responds with a `DeliveryInfoResponse`.
+
+---
+
+# Handling Responses on Client Side
+
+In your `SimpleClient`, you can use **EventBus** to forward responses back to the UI:
+
+```java
+@Override
+protected void handleMessageFromServer(Object msg) {
+    if (msg instanceof PickupInfoResponse response) {
+        Platform.runLater(() -> EventBus.getDefault().post(response));
+    }
+    if (msg instanceof DeliveryInfoResponse response) {
+        Platform.runLater(() -> EventBus.getDefault().post(response));
+    }
+}
+```
+
+Then, in your `PickupDeliveryController`, subscribe to the EventBus:
+
+```java
+@Subscribe
+public void handlePickupResponse(PickupInfoResponse response) {
+    if (response.isSuccess()) {
+        showAlert("Server confirmed pickup: " + response.getMessage());
+    } else {
+        showAlert("Pickup failed: " + response.getMessage());
+    }
+}
+
+@Subscribe
+public void handleDeliveryResponse(DeliveryInfoResponse response) {
+    if (response.isSuccess()) {
+        showAlert("Server confirmed delivery: " + response.getMessage());
+    } else {
+        showAlert("Delivery failed: " + response.getMessage());
+    }
+}
+```
+
+---
+
+# Meaning of the Path
+
+* **Client → Server**: Controller gathers user input, wraps in `Request`, sends with `sendToServer`.
+* **Server**: Processes the request, persists data, creates `Response`.
+* **Server → Client**: Sends back `Response`.
+* **Client**: `SimpleClient` receives it, pushes to EventBus, controller subscribes and updates UI.
+
+This guarantees a **full round trip**:
+
+* The user enters data,
+* Data is validated and saved in the database,
+* The user receives confirmation (or error).
+
+---
+
+✅ Now you have:
+
+1. Explanation of **each controller function**.
+2. Example **server-side handling code**.
+3. Example **client-side handling of responses**.
+4. Clear **message flow path** and meaning.
+
+---
