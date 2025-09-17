@@ -1,0 +1,386 @@
+---
+
+## What this controller is responsible for
+
+* Populating the **card UI** (name, categories, short description, price, image, promo ribbon).
+* Disabling **Add to Cart** when the user is not logged in.
+* Sending **`AddToCartRequest`** to the server when Add is clicked.
+* Notifying the parent screen (Catalog) to **open the details modal** (via a callback).
+
+It **does not**:
+
+* Fetch the catalog list (that’s `CatalogViewController`).
+* Handle server responses (those are delivered to whoever subscribes, e.g., `CatalogViewController`).
+
+---
+
+## The code (for reference)
+
+```java
+package il.cshaifasweng.OCSFMediatorExample.client.Catalog;
+
+import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
+import il.cshaifasweng.OCSFMediatorExample.entities.domain.Flower;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.AddToCartRequest;
+import javafx.fxml.FXML;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.StackPane;
+
+import java.io.IOException;
+
+public class ItemCardController {
+
+    @FXML private StackPane itemCardRoot;
+    @FXML private ImageView productImage;
+    @FXML private Label promoRibbon;
+    @FXML private Label categoryChip;
+    @FXML private Label nameLabel;
+    @FXML private Label shortDescLabel;
+    @FXML private Label priceLabel;
+    @FXML private Button addToCartBtn;
+    @FXML private Button detailsBtn;
+
+    private Flower item;
+    private Runnable onDetails;
+    private boolean loggedIn;
+
+    public void setData(Flower item, boolean loggedIn, Runnable onDetails) {
+        this.item = item;
+        this.onDetails = onDetails;
+        this.loggedIn = loggedIn;
+
+        // Name
+        nameLabel.setText(item.getName());
+
+        // Category display
+        if (item.getCategory() != null && !item.getCategory().isEmpty()) {
+            categoryChip.setText(
+                    item.getCategory().stream()
+                            .map(Enum::toString) // Or .map(Category::getDisplayName)
+                            .reduce((a, b) -> a + ", " + b)
+                            .orElse("Uncategorized")
+            );
+        } else {
+            categoryChip.setText("Uncategorized");
+        }
+
+        // Short description
+        if (item.getShortDescription() != null && !item.getShortDescription().isEmpty()) {
+            shortDescLabel.setText(item.getShortDescription());
+        } else {
+            shortDescLabel.setText(item.getDescription());
+        }
+
+        // Price
+        priceLabel.setText("$" + item.getPrice());
+
+        // Image
+        if (item.getImageUrl() != null && !item.getImageUrl().isEmpty()) {
+            try {
+                productImage.setImage(new Image(item.getImageUrl(), true));
+            } catch (Exception e) {
+                System.err.println("Failed to load image: " + item.getImageUrl());
+            }
+        }
+
+        // Promo flag
+        promoRibbon.setVisible(item.isPromo());
+
+        // Login state
+        addToCartBtn.setDisable(!loggedIn);
+
+        // Events
+        addToCartBtn.setOnAction(e -> sendAddToCart());
+        detailsBtn.setOnAction(e -> openDetails());
+        itemCardRoot.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                openDetails();
+            }
+        });
+    }
+
+    private void sendAddToCart() {
+        if (item == null) return;
+
+        try {
+            SimpleClient.getClient().sendToServer(
+                    new AddToCartRequest(item.getSku(), 1)
+            );
+            System.out.println("Sent AddToCartRequest for sku=" + item.getSku());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void openDetails() {
+        if (onDetails != null) {
+            onDetails.run();
+        }
+    }
+}
+```
+
+---
+
+## FXML bindings and what they do
+
+* `@FXML private StackPane itemCardRoot;`
+  The clickable root. We attach a **double-click** handler here (open details).
+
+* `@FXML private ImageView productImage;`
+  Displays the product image. We load with `new Image(url, true)` to enable background loading.
+
+* `@FXML private Label promoRibbon;`
+  The “PROMO” banner. We set it visible when `item.isPromo()` is `true`.
+
+* `@FXML private Label categoryChip;`
+  Small rounded chip. Displays **a comma-separated list** of categories:
+  `Flowers.getCategory()` is **`List<Category>`** (enums). We map to `.toString()` or your `.getDisplayName()` and join with commas.
+
+* `@FXML private Label nameLabel;`
+  Product name.
+
+* `@FXML private Label shortDescLabel;`
+  The short description, with a fallback to full `description` if short is missing.
+
+* `@FXML private Label priceLabel;`
+  Displays price. (You can later format with `NumberFormat.getCurrencyInstance()` if you want locales.)
+
+* `@FXML private Button addToCartBtn;`
+  Sends the server request. Disabled if `loggedIn == false`.
+
+* `@FXML private Button detailsBtn;`
+  Opens the details modal (delegates to Catalog via `onDetails.run()`).
+
+---
+
+## The lifecycle (`setData`)
+
+When the `CatalogViewController` creates this card:
+
+1. It loads `ItemCard.fxml`.
+2. Grabs this controller via `loader.getController()`.
+3. Calls `setData(flower, loggedIn, onDetailsCallback)`.
+
+Inside `setData`:
+
+* **Binds data** to labels and image.
+* **Shows promo ribbon** if `item.isPromo()`.
+* **Disables add button** if not logged in.
+* **Wires events**:
+
+  * *Add to Cart* → `sendAddToCart()` (network message to server)
+  * *Details* / **double-click** → `openDetails()` (callback to Catalog)
+
+**Example usage from the catalog:**
+
+```java
+FXMLLoader loader = new FXMLLoader(getClass().getResource("ItemCard.fxml"));
+StackPane cardNode = loader.load();
+ItemCardController card = loader.getController();
+
+card.setData(flower, loggedIn, () -> openDetails(flower));
+itemsGrid.getChildren().add(cardNode);
+```
+
+---
+
+## Sending the server message (client → server)
+
+### The request you send
+
+```java
+new AddToCartRequest(item.getSku(), 1)
+```
+
+**Message class (shared):**
+
+```java
+package il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart;
+
+import java.io.Serializable;
+
+public class AddToCartRequest implements Serializable {
+    private final String sku;
+    private final int quantity;
+
+    public AddToCartRequest(String sku, int quantity) {
+        this.sku = sku;
+        this.quantity = quantity;
+    }
+
+    public String getSku() { return sku; }
+    public int getQuantity() { return quantity; }
+}
+```
+
+**How it’s sent:**
+
+```java
+SimpleClient.getClient().sendToServer(new AddToCartRequest(sku, 1));
+```
+
+* This runs in the JavaFX event thread (button onAction). OCSF handles the IO on its own threads.
+* If the connection is down, you’ll see an `IOException`. You can notify the user.
+
+---
+
+## What the server should do (server-side handling)
+
+Inside your OCSF server’s `handleMessageFromClient`:
+
+```java
+@Override
+protected void handleMessageFromClient(Object msg, ConnectionToClient client) {
+    try {
+        if (msg instanceof AddToCartRequest req) {
+            // 1) Validate
+            //    - sku exists?
+            //    - quantity > 0 ?
+            //    - user session valid for this client?
+
+            // 2) Update the cart (e.g., per-client cart in memory or DB)
+            int updatedCartSize = cartService.addItem(client.getId(), req.getSku(), req.getQuantity());
+
+            // 3) Respond
+            client.sendToClient(new AddToCartResponse(true, "Added to cart", updatedCartSize));
+            return;
+        }
+
+        // ... other handlers (e.g., GetCatalogRequest) ...
+
+    } catch (Exception ex) {
+        ex.printStackTrace();
+        // Optional: send a failure response if you want the UI to show a message
+        // client.sendToClient(new AddToCartResponse(false, "Server error", currentCartSize));
+    }
+}
+```
+
+**A minimal in-memory cart service** (dev only; replace with DB later):
+
+```java
+class CartService {
+    private final Map<Object, Map<String,Integer>> carts = new ConcurrentHashMap<>();
+
+    int addItem(Object clientId, String sku, int qty) {
+        var cart = carts.computeIfAbsent(clientId, id -> new ConcurrentHashMap<>());
+        cart.merge(sku, qty, Integer::sum);
+        return cart.values().stream().mapToInt(Integer::intValue).sum(); // total qty in cart
+    }
+}
+```
+
+**Response message (shared):**
+
+```java
+package il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart;
+
+import java.io.Serializable;
+
+public class AddToCartResponse implements Serializable {
+    private final boolean success;
+    private final String message;
+    private final int cartSize;
+
+    public AddToCartResponse(boolean success, String message, int cartSize) {
+        this.success = success;
+        this.message = message;
+        this.cartSize = cartSize;
+    }
+
+    public boolean isSuccess() { return success; }
+    public String getMessage() { return message; }
+    public int getCartSize() { return cartSize; }
+}
+```
+
+---
+
+## How the client should route the **response** (server → client)
+
+Your OCSF client (`SimpleClient`) should post **any** message from the server to **EventBus**, so UI controllers can subscribe to the types they care about:
+
+```java
+@Override
+protected void handleMessageFromServer(Object msg) {
+    org.greenrobot.eventbus.EventBus.getDefault().post(msg);
+}
+```
+
+Then in the **catalog screen** (not in `ItemCardController`), subscribe and update the cart badge:
+
+```java
+@Subscribe
+public void onAddToCartResponse(AddToCartResponse response) {
+    Platform.runLater(() -> {
+        if (response.isSuccess()) {
+            cartCountLabel.setText(response.getCartSize() + " items");
+        } else {
+            // show a toast/dialog if you want
+            System.err.println("AddToCart failed: " + response.getMessage());
+        }
+    });
+}
+```
+
+This keeps the **card** lean (it only sends requests) and the **screen** responsible for global UI state (cart count).
+
+---
+
+## Double-click / Details flow
+
+* The card doesn’t open the modal itself; it calls `onDetails.run()`.
+* The **catalog controller** decides how to open the modal, loads `ItemDetails.fxml`, passes the same `Flower`, and shows it.
+* Inside the **details modal**, the user can also press **Add to Cart**; the modal’s controller sends the **same** `AddToCartRequest`. The catalog then receives the same **`AddToCartResponse`** and updates the cart badge.
+
+This **shared message contract** keeps behavior consistent everywhere.
+
+---
+
+## Common pitfalls & fixes
+
+* **FXML fx\:id mismatches**: Make sure the IDs in `ItemCard.fxml` match the `@FXML` fields exactly.
+* **Stylesheet path**: Use classpath form in FXML: `stylesheets="@/styles/catalog.css"`.
+* **Nulls**: Guard against `null` in `description`, `shortDescription`, `category`, `imageUrl`.
+* **Image failures**: Provide a fallback placeholder image if URL fails to load.
+* **EventBus leaks**: Register in `initialize()`; **unregister** on view teardown (Catalog has a `shutdown()`).
+* **Node duplication**: For promos, you must load a **second** `ItemCard.fxml`—a JavaFX Node cannot have two parents.
+
+---
+
+## Quick end-to-end test
+
+1. Start the server with a few `Flower`s (some `promo=true`, multiple categories).
+2. Open the catalog:
+
+   * Promotions visible at top
+   * All items in grid
+   * Category/promo filters populated
+3. Click **Add to Cart** on a tile → server logs request → client receives `AddToCartResponse` → **cart badge increments**.
+4. Double-click any tile → details modal opens → Add to Cart there also increments the badge.
+5. Try search + filters; ensure `applyFilters()` narrows the view.
+
+---
+
+## Optional enhancements
+
+* **Format price** with `NumberFormat.getCurrencyInstance(Locale)`.
+* **Disable button while sending**; re-enable on response.
+* **Toast/snackbar** on success/failure.
+* **Lazy image placeholders** while loading.
+
+---
+
+### TL;DR
+
+* `ItemCardController` = binds tile UI, sends `AddToCartRequest`, triggers details callback.
+* **Server** handles `AddToCartRequest` → updates cart → sends `AddToCartResponse`.
+* **Client** posts responses to EventBus; `CatalogViewController` updates the **cart count**.
+* Categories are shown by joining `List<Category>` display strings.
+* Promo ribbon is driven by `flower.isPromo()`.
+
+This separation keeps your UI clean, your networking decoupled, and your catalog easy to extend.

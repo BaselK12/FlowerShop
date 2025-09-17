@@ -1,0 +1,344 @@
+## What this controller is responsible for
+
+* Receiving a `Flower` and the current **login state**.
+* Filling the modal with **name, price, image, categories, description**.
+* Disabling **Add to Cart** when the user isn’t logged in.
+* Sending **`AddToCartRequest`** to the server when the user clicks Add.
+* Closing the modal window.
+
+It **does not** fetch the catalog, maintain the cart count label, or decide how to display the modal. Those are handled elsewhere (e.g., `CatalogViewController` and your EventBus subscribers).
+
+---
+
+## The code (for reference)
+
+```java
+package il.cshaifasweng.OCSFMediatorExample.client.Catalog;
+
+import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
+import il.cshaifasweng.OCSFMediatorExample.entities.domain.Flower;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.AddToCartRequest;
+import javafx.application.Platform;
+import javafx.fxml.FXML;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.stage.Stage;
+
+import java.io.IOException;
+
+public class ItemDetailsController {
+
+    @FXML private Label modalTitle;
+    @FXML private ImageView modalImage;
+    @FXML private Label modalCategoryChip;
+    @FXML private Label modalPrice;
+    @FXML private Label modalDescription;
+    @FXML private Button modalCloseBtn;
+    @FXML private Button modalAddToCartBtn;
+
+    private Flower item;
+    private boolean loggedIn;
+
+    /**
+     * Called by CatalogController when opening the details popup.
+     */
+    public void setItem(Flower item, boolean loggedIn) {
+        this.item = item;
+        this.loggedIn = loggedIn;
+
+        // Fill UI with flower data
+        modalTitle.setText(item.getName());
+        modalPrice.setText("$" + item.getPrice());
+        modalDescription.setText(item.getDescription());
+
+        // Show category list
+        if (item.getCategory() != null && !item.getCategory().isEmpty()) {
+            modalCategoryChip.setText(
+                    item.getCategory().stream()
+                            .map(Enum::toString) // or Category::getDisplayName
+                            .reduce((a, b) -> a + ", " + b)
+                            .orElse("Uncategorized")
+            );
+        } else {
+            modalCategoryChip.setText("Uncategorized");
+        }
+
+        if (item.getImageUrl() != null && !item.getImageUrl().isEmpty()) {
+            try {
+                modalImage.setImage(new Image(item.getImageUrl(), true));
+            } catch (Exception e) {
+                System.err.println("Failed to load image: " + item.getImageUrl());
+                // fallback image
+                modalImage.setImage(new Image(getClass().getResource("/images/placeholder.png").toExternalForm()));
+            }
+        }
+
+        // Disable Add to Cart if user is not logged in
+        modalAddToCartBtn.setDisable(!loggedIn);
+
+        // Wire button actions
+        modalAddToCartBtn.setOnAction(e -> sendAddToCart());
+        modalCloseBtn.setOnAction(e -> closeWindow());
+    }
+
+    /**
+     * Sends an AddToCartRequest to the server.
+     */
+    private void sendAddToCart() {
+        if (item == null) return;
+
+        try {
+            SimpleClient.getClient().sendToServer(
+                    new AddToCartRequest(item.getSku(), 1)
+            );
+            System.out.println("Sent AddToCartRequest for sku=" + item.getSku());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Closes the details modal window.
+     */
+    private void closeWindow() {
+        Stage stage = (Stage) modalCloseBtn.getScene().getWindow();
+        Platform.runLater(stage::close);
+    }
+}
+```
+
+---
+
+## FXML bindings (what each field is for)
+
+* `modalTitle` — large title at the top of the dialog (uses CSS `.item-title`).
+* `modalImage` — big product image (loaded with `new Image(url, true)` so it streams in).
+* `modalCategoryChip` — “chip” showing **all** categories (comma-separated). Your `Flower` exposes `List<Category>`; we render them via `Enum::toString` (or `Category::getDisplayName` if you made that).
+* `modalPrice` — bold deep-pink price (CSS `.item-price`).
+* `modalDescription` — full description (longer text than the card’s short description).
+* `modalAddToCartBtn` — pink gradient button (CSS `.btn-primary`) that sends `AddToCartRequest`.
+* `modalCloseBtn` — outline button (CSS `.btn-outline`) to close the modal.
+
+---
+
+## Lifecycle: `setItem(Flower, loggedIn)`
+
+This method is called by your `CatalogViewController` **right after** loading `ItemDetails.fxml`:
+
+```java
+FXMLLoader loader = new FXMLLoader(getClass().getResource("ItemDetails.fxml"));
+Scene scene = new Scene(loader.load());
+ItemDetailsController c = loader.getController();
+c.setItem(flower, loggedIn);
+
+Stage stage = new Stage();
+stage.initModality(Modality.APPLICATION_MODAL);
+stage.setScene(scene);
+stage.showAndWait();
+```
+
+What `setItem` does:
+
+1. Stores the `Flower` and `loggedIn`.
+2. Fills all the labels and image.
+3. Renders `category` as a comma-separated list.
+4. Disables **Add to Cart** if not logged in.
+5. Wires button actions:
+
+   * **Add** → `sendAddToCart()` (fires a server message)
+   * **Close** → `closeWindow()` (hides the modal)
+
+> Tip: If you want localized currency formatting, replace `"$" + item.getPrice()` with `NumberFormat.getCurrencyInstance(Locale).format(item.getPrice())`.
+
+---
+
+## Sending the server message (client → server)
+
+### What the controller sends
+
+```java
+new AddToCartRequest(item.getSku(), 1)
+```
+
+* Uses the **SKU** as the canonical product identifier.
+* Quantity is hard-coded to 1 for now; you can add a numeric stepper in the modal later.
+
+**Request class (shared):**
+
+```java
+package il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart;
+
+import java.io.Serializable;
+
+public class AddToCartRequest implements Serializable {
+    private final String sku;
+    private final int quantity;
+
+    public AddToCartRequest(String sku, int quantity) {
+        this.sku = sku;
+        this.quantity = quantity;
+    }
+
+    public String getSku() { return sku; }
+    public int getQuantity() { return quantity; }
+}
+```
+
+**How it’s sent:**
+
+```java
+SimpleClient.getClient().sendToServer(new AddToCartRequest(sku, 1));
+```
+
+---
+
+## How the server should handle `AddToCartRequest`
+
+In your OCSF server (e.g., `SimpleServer extends AbstractServer`), handle it in `handleMessageFromClient`:
+
+```java
+@Override
+protected void handleMessageFromClient(Object msg, ConnectionToClient client) {
+    try {
+        if (msg instanceof AddToCartRequest req) {
+            // 1) Validate (sku exists, quantity > 0, client session is valid, etc.)
+
+            // 2) Update cart (DB or in-memory)
+            int updatedCartSize = cartService.addItem(client.getId(), req.getSku(), req.getQuantity());
+
+            // 3) Respond
+            client.sendToClient(new AddToCartResponse(true, "Added to cart", updatedCartSize));
+            return;
+        }
+
+        // ... other messages (e.g., GetCatalogRequest) ...
+
+    } catch (Exception ex) {
+        ex.printStackTrace();
+        // Optional: send failure response so client can show a message
+        // client.sendToClient(new AddToCartResponse(false, "Server error", 0));
+    }
+}
+```
+
+**Response class (shared):**
+
+```java
+package il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart;
+
+import java.io.Serializable;
+
+public class AddToCartResponse implements Serializable {
+    private final boolean success;
+    private final String message;
+    private final int cartSize;
+
+    public AddToCartResponse(boolean success, String message, int cartSize) {
+        this.success = success;
+        this.message = message;
+        this.cartSize = cartSize;
+    }
+
+    public boolean isSuccess() { return success; }
+    public String getMessage() { return message; }
+    public int getCartSize() { return cartSize; }
+}
+```
+
+**Dev-only in-memory cart sketch:**
+
+```java
+class CartService {
+    private final Map<Object, Map<String,Integer>> carts = new ConcurrentHashMap<>();
+
+    int addItem(Object clientId, String sku, int qty) {
+        var cart = carts.computeIfAbsent(clientId, id -> new ConcurrentHashMap<>());
+        cart.merge(sku, qty, Integer::sum);
+        return cart.values().stream().mapToInt(Integer::intValue).sum(); // total quantity
+    }
+}
+```
+
+> Replace `CartService` with Hibernate/MySQL in production.
+
+---
+
+## How the client should route the **response** (server → client)
+
+Your OCSF client should **post all server messages to EventBus** so UI controllers can subscribe:
+
+```java
+@Override
+protected void handleMessageFromServer(Object msg) {
+    org.greenrobot.eventbus.EventBus.getDefault().post(msg);
+}
+```
+
+Then, in your **catalog screen** (not the modal), subscribe and update the cart label:
+
+```java
+@Subscribe
+public void onAddToCartResponse(AddToCartResponse response) {
+    Platform.runLater(() -> {
+        if (response.isSuccess()) {
+            cartCountLabel.setText(response.getCartSize() + " items");
+        } else {
+            // show a toast/dialog with response.getMessage()
+        }
+    });
+}
+```
+
+**Why not update inside the modal?**
+Keeping global UI state (cart count) in one place (Catalog view) avoids duplication and keeps the modal controller very simple. Both **card tiles** and **details modal** send the **same** request; the Catalog view receives **all** cart responses and updates the badge.
+
+---
+
+## Closing the modal
+
+```java
+private void closeWindow() {
+    Stage stage = (Stage) modalCloseBtn.getScene().getWindow();
+    Platform.runLater(stage::close);
+}
+```
+
+* Gets the current `Stage` from any node in the scene (the close button).
+* Calls `close()` on the FX thread.
+
+> Since button actions already run on the FX thread, you could simplify to just `stage.close();`. Using `Platform.runLater` is harmless.
+
+---
+
+## Testing checklist (copy & use)
+
+1. **Server**: implement the handler for `AddToCartRequest` (and return `AddToCartResponse`).
+2. **Client**: ensure your `SimpleClient.handleMessageFromServer` posts messages to EventBus.
+3. **Catalog view**: subscribe to `AddToCartResponse` and update `cartCountLabel`.
+4. **Run**:
+
+   * Open a flower’s details modal.
+   * Click **Add to Cart** → server logs the request → client receives response → cart badge increments.
+   * Try with **not logged in** (`loggedIn = false`) → Add button disabled.
+5. **Image fallback**: remove network temporarily or set an invalid URL; verify the placeholder loads (make sure `/images/placeholder.png` exists under `src/main/resources/images/`).
+
+---
+
+## Common pitfalls & fixes
+
+* **Null category list** → handled with `Uncategorized`.
+* **Empty short description** → falls back to full description.
+* **Broken image URL** → prints error and loads placeholder (ensure resource path is correct).
+* **Currency formatting** → use `NumberFormat` for real-world formatting.
+* **EventBus duplicates** → ensure other controllers don’t accidentally double-register.
+
+---
+
+## TL;DR
+
+* `ItemDetailsController` renders one flower, gates Add-to-Cart by login, and **sends** `AddToCartRequest(sku, 1)`.
+* The **server** updates the cart and **responds** with `AddToCartResponse(success, message, cartSize)`.
+* The **client** routes responses to EventBus; `CatalogViewController` updates the **cart badge** accordingly.
+* Categories are rendered by joining your `List<Category>` display strings; price and description are shown in full detail here.
