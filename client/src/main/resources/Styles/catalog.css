@@ -24,6 +24,12 @@
     -fx-spacing: 12;
 }
 
+.hero-section {
+    -fx-background-color: linear-gradient(to right, #fff0f5, #ffffff);
+    -fx-padding: 30;
+    -fx-alignment: center;
+}
+
 .pill-input {
     -fx-background-color: #ffffff;
     -fx-border-color: #ffd6e5;

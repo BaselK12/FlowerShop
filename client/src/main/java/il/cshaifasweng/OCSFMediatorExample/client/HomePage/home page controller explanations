@@ -1,0 +1,466 @@
+
+# 1) What this controller is meant to do (high-level)
+
+* **On load**: ask the server for “featured” flowers.
+* **When the list arrives**: create an `ItemCard.fxml` for each flower and drop it into the row on the home page.
+* **When the user clicks**:
+
+  * **Add to Cart** → send `AddToCartRequest(sku, qty=1)` to the server.
+  * **Details** → show `ItemDetails.fxml` as a modal overlay, filled with that flower’s info (no extra server call needed because the `Flower` already contains all details).
+
+---
+
+# 2) What your FXML **must** include (structural pre-req)
+
+* `cardsRow1` — an `HBox` (or other container) to hold the cards (you already have it 👍).
+* `centerStack` — a **StackPane** that wraps your main center VBox (`heroBox` + `featuredBox`) so the details dialog can overlay on top.
+
+  * If your FXML currently has `BorderPane.center` → VBox, wrap that VBox inside a `StackPane` with `fx:id="centerStack"`, and keep the VBox as the first child in that `StackPane`.
+
+> If `centerStack` is missing in the FXML, `@FXML private StackPane centerStack;` will be `null` → the line `centerStack.getChildren().add(detailsDialogRoot);` will throw a `NullPointerException`. Make sure it’s there.
+
+---
+
+# 3) File-by-file: what each field & function does
+
+### Fields injected from FXML
+
+```java
+@FXML private HBox cardsRow1;
+@FXML private Button btnHome, btnCatalog, btnCart, btnAccount, btnLogin, btnAdmin, btnShopNow;
+@FXML private StackPane centerStack;
+```
+
+* `cardsRow1`: Row container where we will add the generated item cards.
+* Buttons: navigation actions (you can wire them to scene changes later).
+* `centerStack`: the overlay parent for the modal.
+
+### Details dialog fields (created at runtime)
+
+```java
+private Pane detailsDialogRoot;              // The UI root node for ItemDetails.fxml
+private ItemDetailsController detailsController; // Its controller to set content
+```
+
+### `initialize()`
+
+```java
+@FXML
+public void initialize() {
+    EventBus.getDefault().register(this);
+
+    // Ask the server for featured flowers
+    SimpleClient.getClient().sendToServer(new GetCatalogRequest("featured"));
+
+    // Preload details dialog (hidden initially)
+    FXMLLoader loader = new FXMLLoader(getClass().getResource(
+        "/il/cshaifasweng/OCSFMediatorExample/client/Catalog/ItemDetails.fxml"));
+    detailsDialogRoot = loader.load();
+    detailsController = loader.getController();
+    detailsDialogRoot.setVisible(false);
+    detailsDialogRoot.setManaged(false);
+    centerStack.getChildren().add(detailsDialogRoot);
+}
+```
+
+* Registers this controller to receive EventBus messages (your server replies).
+* Sends a **single** request for the “featured” catalog.
+* Loads `ItemDetails.fxml` once, stores the controller, and **adds it to the centerStack** as an overlay, but hidden (`visible=false`, `managed=false` so it doesn’t take layout space).
+
+> **Gotcha (threading)**: `sendToServer` is fine here.
+> **Gotcha (resources)**: The `getResource("/...")` path must exactly match where the FXML file is on the classpath. If you get `NullPointerException` from `loader.load()`, your resource path is wrong.
+
+### Handling the server’s catalog response
+
+```java
+@Subscribe
+public void onCatalogResponse(GetCatalogResponse msg) {
+    List<Flower> flowers = msg.getFlowers();
+    cardsRow1.getChildren().clear();
+
+    for (Flower flower : flowers) {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource(
+            "/il/cshaifasweng/OCSFMediatorExample/client/Catalog/ItemCard.fxml"));
+        Pane cardRoot = loader.load();
+
+        ItemCardController cardController = loader.getController();
+        cardController.setItem(
+            flower,
+            () -> sendAddToCart(flower),
+            () -> showDetails(flower)
+        );
+
+        cardsRow1.getChildren().add(cardRoot);
+    }
+}
+```
+
+* This is the **EventBus subscriber** for catalog responses.
+* Clears the row and recreates the cards from the server’s list.
+* For each card:
+
+  * Loads the FXML.
+  * Calls `setItem(...)` on the card controller to populate it and wire its buttons.
+  * Adds it to the row.
+
+> **Gotcha (JavaFX thread)**: Depending on how your EventBus is configured, the `@Subscribe` method might run on a non-JavaFX thread. If you see threading errors, wrap UI mutations with:
+>
+> ```java
+> Platform.runLater(() -> { /* UI updates */ });
+> ```
+
+### Add-to-cart from the homepage
+
+```java
+private void sendAddToCart(Flower flower) {
+    SimpleClient.getClient().sendToServer(
+        new AddToCartRequest(flower.getSku(), 1)
+    );
+}
+```
+
+* Sends a request with the **SKU** (unique identifier) and a quantity of `1`.
+* You can extend this later (quantity spinners, variant selections, etc.).
+
+### Show / hide details modal
+
+```java
+private void showDetails(Flower flower) {
+    detailsController.setItem(flower, true);
+    detailsDialogRoot.setVisible(true);
+    detailsDialogRoot.setManaged(true);
+}
+
+public void closeDetails() {
+    detailsDialogRoot.setVisible(false);
+    detailsDialogRoot.setManaged(false);
+}
+```
+
+* `setItem(flower, true)` → your `ItemDetailsController` should accept the `Flower` and update its UI.
+* Toggle visibility & managed to show/hide.
+
+### Cleanup
+
+```java
+public void onClose() {
+    EventBus.getDefault().unregister(this);
+}
+```
+
+* Call this from your scene or application teardown to avoid leaks or double subscriptions.
+
+---
+
+# 4) The `ItemCardController` you already have
+
+You posted a controller with **two** methods:
+
+* `setData(...)` — full catalog behavior (sends add-to-cart itself, checks `loggedIn`).
+* `setItem(...)` — light homepage behavior (delegates to the parent via callbacks).
+
+For the homepage we’re using **`setItem(...)`** (what your controller already includes). That’s perfect.
+
+---
+
+# 5) The `ItemDetailsController` (expected API)
+
+Your details controller should expose a method like:
+
+```java
+public class ItemDetailsController {
+    @FXML private Label modalTitle;
+    @FXML private Label modalPrice;
+    @FXML private Label modalCategoryChip;
+    @FXML private Label modalDescription;
+    @FXML private ImageView modalImage;
+    @FXML private Button modalCloseBtn;
+    @FXML private Button modalAddToCartBtn;
+
+    private Flower current;
+
+    public void setItem(Flower flower, boolean loggedIn) {
+        this.current = flower;
+
+        modalTitle.setText(flower.getName());
+        modalPrice.setText(String.format("$%.2f", flower.getPrice()));
+        modalDescription.setText(
+            (flower.getDescription() != null) ? flower.getDescription() : ""
+        );
+
+        if (flower.getCategory() != null && !flower.getCategory().isEmpty()) {
+            // Join multiple categories: "Bouquet, Romantic"
+            String cats = flower.getCategory().stream()
+                .map(Enum::toString) // uses Category.toString() → displayName
+                .reduce((a,b) -> a + ", " + b)
+                .orElse("");
+            modalCategoryChip.setText(cats);
+        } else {
+            modalCategoryChip.setText("");
+        }
+
+        if (flower.getImageUrl() != null && !flower.getImageUrl().isEmpty()) {
+            try {
+                modalImage.setImage(new Image(flower.getImageUrl(), true));
+            } catch (Exception ignored) { /* show placeholder if you want */ }
+        }
+
+        modalAddToCartBtn.setDisable(!loggedIn);
+    }
+
+    // Optionally expose a callback the HomePageController can hook, or
+    // send AddToCartRequest directly (consistent with your setData pattern).
+}
+```
+
+* This matches your `ItemDetails.fxml` (`modalTitle`, `modalPrice`, `modalCategoryChip`, `modalDescription`, `modalImage`, etc.).
+* Whether the **Add to Cart** button sends the message itself or calls back into the parent is up to you. For consistency with `ItemCardController.setData(...)`, many teams send from the details controller directly.
+
+---
+
+# 6) Message Contracts (server & client)
+
+Below are **clean, minimal message classes** that match what your controller expects. If you already have alternatives, stick with yours; otherwise, these are a good baseline.
+
+## `GetCatalogRequest`
+
+Use it to request a set of flowers, optionally filtered:
+
+```java
+public class GetCatalogRequest implements java.io.Serializable {
+    private String filter; // e.g., "featured", "promo", "all"
+
+    public GetCatalogRequest() {}
+    public GetCatalogRequest(String filter) { this.filter = filter; }
+
+    public String getFilter() { return filter; }
+    public void setFilter(String filter) { this.filter = filter; }
+}
+```
+
+## `GetCatalogResponse`
+
+Server returns a list of `Flower`:
+
+```java
+public class GetCatalogResponse implements java.io.Serializable {
+    private java.util.List<Flower> flowers;
+
+    public GetCatalogResponse() {}
+    public GetCatalogResponse(java.util.List<Flower> flowers) { this.flowers = flowers; }
+
+    public java.util.List<Flower> getFlowers() { return flowers; }
+    public void setFlowers(java.util.List<Flower> flowers) { this.flowers = flowers; }
+}
+```
+
+## `AddToCartRequest`
+
+What your `HomePageController` actually sends:
+
+```java
+public class AddToCartRequest implements java.io.Serializable {
+    private String sku;
+    private int quantity;
+
+    public AddToCartRequest() {}
+    public AddToCartRequest(String sku, int quantity) {
+        this.sku = sku;
+        this.quantity = quantity;
+    }
+
+    public String getSku() { return sku; }
+    public int getQuantity() { return quantity; }
+}
+```
+
+## (Optional) `AddToCartResponse`
+
+Nice to have — tells client the cart count or success message:
+
+```java
+public class AddToCartResponse implements java.io.Serializable {
+    private boolean ok;
+    private int cartItemCount;
+
+    public AddToCartResponse() {}
+    public AddToCartResponse(boolean ok, int cartItemCount) {
+        this.ok = ok; this.cartItemCount = cartItemCount;
+    }
+
+    public boolean isOk() { return ok; }
+    public int getCartItemCount() { return cartItemCount; }
+}
+```
+
+---
+
+# 7) Server-side handlers (what the server should do)
+
+You’re using OCSF (or similar). In your server’s `handleMessageFromClient(Object msg, ConnectionToClient client)`:
+
+### Handle `GetCatalogRequest`
+
+* Read the `filter` string:
+
+  * `"featured"` → select featured subset (e.g., promo=true, top sellers, etc.).
+  * `"promo"` → items with `promo==true`.
+  * `"all"` → everything.
+* Return `GetCatalogResponse(List<Flower>)` with fully populated `Flower` items (name, price, shortDescription, description, imageUrl, categories, promo).
+
+**Sample skeleton:**
+
+```java
+@Override
+protected void handleMessageFromClient(Object msg, ConnectionToClient client) {
+    try {
+        if (msg instanceof GetCatalogRequest req) {
+            String filter = req.getFilter(); // may be null
+            List<Flower> all = flowerRepository.fetchAll(); // however you load data
+
+            List<Flower> result;
+            if ("featured".equalsIgnoreCase(filter)) {
+                result = all.stream()
+                            .filter(f -> f.isPromo()) // simple example
+                            .limit(6)
+                            .toList();
+            } else if ("promo".equalsIgnoreCase(filter)) {
+                result = all.stream().filter(Flower::isPromo).toList();
+            } else {
+                result = all; // "all" or null → return everything
+            }
+
+            client.sendToClient(new GetCatalogResponse(result));
+            return;
+        }
+
+        if (msg instanceof AddToCartRequest req) {
+            String sku = req.getSku();
+            int qty = req.getQuantity();
+
+            // Find product
+            Flower f = flowerRepository.findBySku(sku);
+            if (f == null) {
+                client.sendToClient(new AddToCartResponse(false, /*count*/ 0));
+                return;
+            }
+
+            // Add to cart in user's session / DB
+            Cart cart = cartService.addItem(client, f, qty);
+
+            // Send ack (optional: broadcast to update cart badge)
+            client.sendToClient(new AddToCartResponse(true, cart.getTotalItemCount()));
+            return;
+        }
+
+        // ... other messages ...
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
+```
+
+> **Note**: how you identify the user/session depends on your project: you might store a `userId` in the connection or attach a session map keyed by `client`.
+
+---
+
+# 8) Client-side response handling
+
+### Catalog
+
+You already do this:
+
+```java
+@Subscribe
+public void onCatalogResponse(GetCatalogResponse msg) {
+    // Build cards
+}
+```
+
+* If your EventBus posts from a non-FX thread, wrap the body in `Platform.runLater(...)`.
+
+### Add-to-Cart
+
+If you implement `AddToCartResponse`, add a subscriber:
+
+```java
+@Subscribe
+public void onAddToCartResponse(AddToCartResponse msg) {
+    // Update UI (cart badge, toast)
+    // e.g., cartBadge.setText(String.valueOf(msg.getCartItemCount()));
+}
+```
+
+Again, use `Platform.runLater` if needed.
+
+---
+
+# 9) Common pitfalls & fixes
+
+* **Resource paths**:
+  If `FXMLLoader.load()` returns `NullPointerException`, your `getResource("/...")` path is wrong. Paths must match the packaged resource locations exactly. Leading `/` is from classpath root.
+
+* **`centerStack` is null**:
+  Your FXML must wrap the center content in a `StackPane` with `fx:id="centerStack"`; otherwise `centerStack.getChildren().add(...)` will fail.
+
+* **EventBus threading**:
+  If UI updates crash with “Not on FX application thread,” wrap subscribers with:
+
+  ```java
+  @Subscribe
+  public void onCatalogResponse(GetCatalogResponse msg) {
+      Platform.runLater(() -> {
+          // UI updates
+      });
+  }
+  ```
+
+* **No server constructor**:
+  If you add constructors to message classes, **keep a no-arg constructor** too (serialization frameworks often require it).
+
+* **Details dialog input**:
+  Your `ItemDetailsController` must expose a `setItem(Flower, boolean loggedIn)` that mirrors `ItemCardController` use.
+
+---
+
+# 10) End-to-end mini checklist (copyable)
+
+* **FXML**
+
+  * `cardsRow1` exists in `featuredBox`.
+  * `centerStack` wraps the main VBox in `BorderPane.center`.
+  * Stylesheet attached (`catalog.css`).
+  * `ItemCard.fxml` and `ItemDetails.fxml` both have `fx:controller` and correct `@FXML` ids.
+
+* **Controllers**
+
+  * `HomePageController`:
+
+    * Registers to EventBus in `initialize()`.
+    * Sends `GetCatalogRequest("featured")`.
+    * Preloads `ItemDetails.fxml` into `centerStack`, hidden.
+    * Subscribes to `GetCatalogResponse` → builds cards.
+    * Sends `AddToCartRequest` on card add click.
+    * Calls `detailsController.setItem(flower, true)` and shows the overlay on details click.
+    * Unregisters EventBus in `onClose()`.
+
+  * `ItemCardController`:
+
+    * Has `setItem(Flower, Runnable onAdd, Runnable onDetails)` for homepage use.
+    * (Optional) `setData(...)` for catalog page (your existing logic).
+
+  * `ItemDetailsController`:
+
+    * `setItem(Flower, boolean)` updates UI fields.
+    * Add/Close buttons wired (either send to server here or call back).
+
+* **Server**
+
+  * Handles `GetCatalogRequest`: filter + returns `GetCatalogResponse(List<Flower>)`.
+  * Handles `AddToCartRequest`: adds to cart + (optionally) returns `AddToCartResponse(ok, count)`.
+
+* **Threading**
+
+  * Use `Platform.runLater` in subscribers when updating UI.
+
+---
