@@ -1,0 +1,239 @@
+Here’s a **full explanation** of the `ComplaintRepository` we built.
+You can copy all of this directly into your documentation or notes.
+
+---
+
+# ComplaintRepository – Full Explanation
+
+The `ComplaintRepository` is a **data access class**.
+It is responsible for talking to the database (using Hibernate) and fetching complaint records.
+By keeping all DB logic in one place, you keep your code **clean and reusable**.
+
+---
+
+## Where it lives
+
+Place the class in your **server module**, for example:
+
+```
+src/main/java/il/cshaifasweng/OCSFMediatorExample/server/complaints/ComplaintRepository.java
+```
+
+It depends on:
+
+* `HbBoot` → your Hibernate bootstrap class (provides `SessionFactory`).
+* `Complaint` → your entity annotated with `@Entity`.
+
+---
+
+## The class
+
+```java
+public class ComplaintRepository {
+
+    public List<Complaint> find(
+            Complaint.Status status,
+            String type,
+            Long storeId,
+            Long customerId,
+            Long orderId,
+            LocalDateTime from,
+            LocalDateTime to,
+            String q,
+            String sortBy,
+            boolean sortDesc,
+            int page,
+            int pageSize
+    ) {
+        // Build dynamic HQL query
+        // Add WHERE conditions if filters are not null
+        // Add ORDER BY and pagination
+    }
+
+    public long count(
+            Complaint.Status status,
+            String type,
+            Long storeId,
+            Long customerId,
+            Long orderId,
+            LocalDateTime from,
+            LocalDateTime to,
+            String q
+    ) {
+        // Build dynamic COUNT query
+        // Same filters, but only counting rows
+    }
+
+    private record Param(String name, Object value) {}
+}
+```
+
+---
+
+## How it works
+
+1. **Dynamic Query Building**
+   The repository builds an **HQL query** (`from Complaint c where ...`) step by step.
+   For every filter that is not null, it adds a `WHERE` condition.
+
+   Example: If you call with `status=OPEN`, the query becomes:
+
+   ```sql
+   from Complaint c where 1=1 and c.status = :status
+   ```
+
+2. **Parameters Binding**
+   Instead of concatenating values (dangerous!), we use **named parameters**:
+
+   ```java
+   query.setParameter("status", Complaint.Status.OPEN);
+   ```
+
+   This prevents SQL injection and handles types correctly.
+
+3. **Sorting**
+   You can sort by allowed fields (`createdAt`, `status`, `type`, …).
+   If you pass `sortBy="createdAt"` and `sortDesc=true`, it will append:
+
+   ```sql
+   order by c.createdAt desc
+   ```
+
+4. **Pagination**
+   Hibernate lets you fetch results page by page:
+
+   ```java
+   query.setFirstResult(page * pageSize);
+   query.setMaxResults(pageSize);
+   ```
+
+   * `page = 0` → first page
+   * `page = 1` → second page
+   * `pageSize = 20` → 20 rows per page
+
+5. **Counting rows**
+   The `count()` method runs the same filters but returns a **total row count**.
+   This is useful for paginated UIs (so you know how many pages exist).
+
+---
+
+## Example usage
+
+### 1. Fetch all complaints (no filters)
+
+```java
+ComplaintRepository repo = new ComplaintRepository();
+
+List<Complaint> all = repo.find(
+    null, // status
+    null, // type
+    null, // storeId
+    null, // customerId
+    null, // orderId
+    null, // from
+    null, // to
+    null, // q (search text)
+    "createdAt", // sortBy
+    true, // sortDesc
+    0, // page
+    50 // pageSize
+);
+
+System.out.println("Total complaints fetched: " + all.size());
+```
+
+---
+
+### 2. Fetch complaints by status
+
+```java
+List<Complaint> open = repo.find(
+    Complaint.Status.OPEN,
+    null, null, null, null,
+    null, null, null,
+    "createdAt", true,
+    0, 20
+);
+```
+
+This will return up to 20 complaints with status = `OPEN`, sorted by newest first.
+
+---
+
+### 3. Fetch by store + text search
+
+```java
+List<Complaint> storeComplaints = repo.find(
+    null, null,
+    2L,    // storeId
+    null, null,
+    null, null,
+    "late delivery",  // q = free text search
+    "createdAt", true,
+    0, 10
+);
+```
+
+This will return complaints from store ID `2` whose text contains `"late delivery"`.
+
+---
+
+### 4. Count complaints
+
+```java
+long total = repo.count(
+    Complaint.Status.OPEN,
+    null, 2L, null, null,
+    null, null,
+    null
+);
+
+System.out.println("Open complaints in store 2: " + total);
+```
+
+---
+
+## Where to use it
+
+* **Inside your server-side handlers** (e.g., `GetComplaintsHandler`).
+* The handler receives a request event from the client.
+* It calls `ComplaintRepository.find(...)` with the filters passed by the client.
+* It converts the `Complaint` entities into `ComplaintDTO`s using your `ComplaintMapper`.
+* It sends back a `ComplaintsFetchedResponse` to the client.
+
+---
+
+## Why this design is good
+
+* **Reusable**: All DB logic for complaints is in one class.
+* **Flexible**: One method supports both “fetch all” and “filtered fetch”.
+* **Safe**: Uses Hibernate parameters instead of raw SQL strings.
+* **Efficient**: Supports pagination and sorting, so you don’t fetch too much data at once.
+
+---
+
+✅ With this repository, you can now power your `ComplaintsFetchRequestedEvent` handler and easily return filtered results to the client.
+
+---
+
+✅ How to use
+
+Fetch all complaints (no filters):
+
+List<Complaint> all = repo.find(null, null, null, null, null,
+                                null, null, null,
+                                "createdAt", true, 0, 50);
+
+
+Fetch complaints for store 2, status OPEN:
+
+List<Complaint> openForStore = repo.find(
+    Complaint.Status.OPEN, null, 2L, null, null,
+    null, null, null,
+    "createdAt", true, 0, 20
+);
+
+
+Count filtered complaints (for pagination):
+
+long total = repo.count(Complaint.Status.OPEN, null, 2L, null, null, null, null, null);

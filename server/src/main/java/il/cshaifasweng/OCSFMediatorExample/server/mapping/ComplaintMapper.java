@@ -3,46 +3,54 @@ package il.cshaifasweng.OCSFMediatorExample.server.mapping;
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.Complaint;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Complaint.ComplaintDTO;
 
+import java.time.LocalDateTime;
+
 public class ComplaintMapper {
 
-    // Map from DTO → Entity
+    // DTO → Entity (demo version)
     public static Complaint toEntity(ComplaintDTO dto) {
         if (dto == null) return null;
 
         Complaint complaint = new Complaint();
 
-        // Fields coming directly from the DTO
-        complaint.setType(dto.getCategory());   // maps "category" → "type"
-        complaint.setOrderId(dto.getOrderId());
+        // map type/category
+        complaint.setType(dto.getCategory());
 
-        // Merge subject + message into one text (your entity only has 'text')
+        // orderId: convert from String to Long if possible
+        if (dto.getOrderId() != null) {
+            try {
+                complaint.setOrderId(Long.valueOf(dto.getOrderId()));
+            } catch (NumberFormatException e) {
+                complaint.setOrderId(null); // fallback if not numeric
+            }
+        }
+
+        // merge subject + message
         String text = dto.getSubject() != null && !dto.getSubject().isBlank()
                 ? dto.getSubject() + ": " + dto.getMessage()
                 : dto.getMessage();
         complaint.setText(text);
 
-        // If anonymous → skip customer identifiers
-        if (!dto.isAnonymous()) {
-            // Here you’d typically resolve customerId from email/phone in DB.
-            // For demo purposes we just embed email/phone into resolution or text.
-            // In production: lookup the actual customer entity by email/phone.
-            complaint.setCustomerId(dto.getEmail());
-        } else {
+        // demo: we don’t resolve customer from DB, just set null or fake ID
+        if (dto.isAnonymous()) {
             complaint.setCustomerId(null);
+        } else {
+            // put a dummy ID (in real code: lookup customer by email/phone)
+            complaint.setCustomerId(1L);
         }
 
-        // Default status + createdAt for new complaints
+        // set defaults
         complaint.setStatus(Complaint.Status.OPEN);
-        complaint.setCreatedAt(java.time.LocalDateTime.now());
+        complaint.setCreatedAt(LocalDateTime.now());
 
         return complaint;
     }
 
-    // Map from Entity → DTO
+    // Entity → DTO (demo version)
     public static ComplaintDTO toDTO(Complaint entity) {
         if (entity == null) return null;
 
-        // Split text into subject + message heuristically
+        // split subject + message
         String subject = null;
         String message = entity.getText();
         if (message != null && message.contains(":")) {
@@ -53,19 +61,18 @@ public class ComplaintMapper {
 
         ComplaintDTO dto = new ComplaintDTO();
         dto.setCategory(entity.getType());
-        dto.setOrderId(entity.getOrderId());
+        dto.setOrderId(entity.getOrderId() != null ? entity.getOrderId().toString() : null);
         dto.setSubject(subject);
         dto.setMessage(message);
 
-        // If no customerId → treat as anonymous
-        boolean anonymous = (entity.getCustomerId() == null || entity.getCustomerId().isBlank());
+        // anonymous if no customerId
+        boolean anonymous = (entity.getCustomerId() == null);
         dto.setAnonymous(anonymous);
 
-        // Only set contact info if not anonymous
         if (!anonymous) {
-            dto.setEmail(entity.getCustomerId()); // assuming stored email
-            // phone isn’t stored in Complaint, would be resolved elsewhere
-            dto.setPhone(null);
+            // fake email/phone for demo (in real code: fetch from Customer table)
+            dto.setEmail("demo@example.com");
+            dto.setPhone("000-0000000");
         }
 
         return dto;

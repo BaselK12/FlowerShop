@@ -67,7 +67,7 @@ public abstract class AbstractClient implements Runnable
   * of communication between two processes.
   * @see java.net.Socket
   */
-  private Socket clientSocket;
+  protected Socket clientSocket;
 
   /**
   * The stream to handle data going to the server.

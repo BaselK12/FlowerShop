@@ -1,5 +1,6 @@
 package il.cshaifasweng.OCSFMediatorExample.client.Complaint;
 
+import il.cshaifasweng.OCSFMediatorExample.client.App;
 import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.Complaint;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Complaint.*;
@@ -96,7 +97,7 @@ public class ManageComplaintsController {
                 new ReadOnlyStringWrapper(safe(c.getValue().getType())));
 
         StatusCol.setCellValueFactory(c ->
-                new ReadOnlyStringWrapper(safe(c.getValue().getStatus())));
+                new ReadOnlyStringWrapper(safe(c.getValue().getStatusName())));
 
         SummaryCol.setCellValueFactory(c ->
                 new ReadOnlyStringWrapper(safe(c.getValue().getSummary())));
@@ -107,8 +108,10 @@ public class ManageComplaintsController {
         CloseBtn.setOnAction(e -> safeClose());
 
         // 5) Initial load
-        requestComplaintsFromServer();
+        //requestComplaintsFromServer();
+        Platform.runLater(() -> requestComplaintsFromServer());
     }
+
 
     @FXML
     private void requestComplaintsFromServer(ActionEvent e) {
@@ -121,6 +124,10 @@ public class ManageComplaintsController {
     }
 
     private void requestComplaintsFromServer() {
+        if (App.getClient() == null || !App.getClient().isConnected()) {
+            System.err.println("[WARN] Client not connected yet. Skipping complaints fetch.");
+            return;
+        }
         String scope = ScopeCombo.getValue();
         String store = ScopeCombo.getValue() != null && ScopeCombo.getValue().equals(SCOPE_STORE)
                 ? StoreCombo.getValue()
@@ -137,7 +144,7 @@ public class ManageComplaintsController {
         );
 
         try {
-            SimpleClient.getClient().sendToServer(req);
+            App.getClient().sendToServer(req); // changed SimpleClient.getClient().sendToServer(req);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -145,8 +152,17 @@ public class ManageComplaintsController {
 
     ///////// subscribe functions
 
+//    @Subscribe
+//    public void onGetComplaintsResponse(GetComplaintsResponse msg) {
+//        Platform.runLater(() -> {
+//            List<Complaint> list = msg.getComplaints();
+//            rows.setAll(list);
+//        });
+//    }
+
     @Subscribe
     public void onGetComplaintsResponse(GetComplaintsResponse msg) {
+        System.out.println("[CLIENT] Received complaints: " + msg.getComplaints().size());
         Platform.runLater(() -> {
             List<Complaint> list = msg.getComplaints();
             rows.setAll(list);
@@ -187,7 +203,7 @@ public class ManageComplaintsController {
         }
 
         if (!"All".equalsIgnoreCase(safe(status))) {
-            if (!safe(status).equalsIgnoreCase(safe(c.getStatus()))) return false;
+            if (!safe(status).equalsIgnoreCase(safe(c.getStatusName()))) return false;
         }
 
         return true;
