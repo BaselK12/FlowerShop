@@ -129,7 +129,7 @@
                      <children>
                         <HBox alignment="CENTER_LEFT" prefHeight="75.0" prefWidth="569.0" spacing="8.0">
                            <children>
-                              <Label text="Rows:" />
+                              <Label prefHeight="17.0" prefWidth="40.0" text="Rows:" />
                               <Label fx:id="RowCountLabel" text="0" />
                               <Pane prefHeight="90.0" prefWidth="516.0" HBox.hgrow="ALWAYS">
                                  <children>

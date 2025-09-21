@@ -13,5 +13,13 @@
   <artifactId>entities</artifactId>
   <packaging>jar</packaging>
 
+  <dependencies>
+    <dependency>
+      <groupId>jakarta.persistence</groupId>
+      <artifactId>jakarta.persistence-api</artifactId>
+    </dependency>
+  </dependencies>
+
+
   <!-- keep this module clean: DTOs, request/response classes only -->
 </project>
