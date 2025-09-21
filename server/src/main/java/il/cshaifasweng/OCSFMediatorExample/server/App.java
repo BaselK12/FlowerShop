@@ -3,6 +3,7 @@ package il.cshaifasweng.OCSFMediatorExample.server;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.*;
 import il.cshaifasweng.OCSFMediatorExample.server.SimpleServer;
+import il.cshaifasweng.OCSFMediatorExample.server.handlers.complaints.GetComplaintsHandler;
 import il.cshaifasweng.OCSFMediatorExample.server.session.TX;
 // optional smoke (delete after sanity check)
 import il.cshaifasweng.OCSFMediatorExample.server.model.Employee;
@@ -13,7 +14,7 @@ public class App {
         // No Flyway here. We’re using lab-style Hibernate via hibernate.properties.
 
         var bus = new ServerBus();
-        var server = new SimpleServer(3000, bus);
+        var server = new SimpleServer(3050, bus);
 
         // infra
         new OutboundSender(bus);
@@ -24,6 +25,7 @@ public class App {
         new EmployeesFetchHandler(bus);
         new EmployeesOpenEditorHandler(bus);
         new EmployeesDeleteHandler(bus);
+        new GetComplaintsHandler(bus);
 
         // optional smoke to force Hibernate to init once (safe to remove)
         TX.run(s -> {

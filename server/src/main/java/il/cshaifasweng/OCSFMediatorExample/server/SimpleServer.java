@@ -1,5 +1,6 @@
 package il.cshaifasweng.OCSFMediatorExample.server;
 
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Complaint.GetComplaintsRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.RegisterRequest;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.*;
@@ -32,6 +33,22 @@ public class SimpleServer extends ObservableServer {
 				bus.publish(new LoginRequestedEvent(lr, client));
 			} else if (msg instanceof RegisterRequest rr) {
 				bus.publish(new RegisterRequestedEvent(rr, client));
+			} else if (msg instanceof GetComplaintsRequest rr) {
+				bus.publish(new ComplaintsFetchRequestedEvent(
+						rr.getStatus(),
+						rr.getType(),
+						// You currently pass storeName (string). Later you might resolve this to storeId (Long).
+						null,               // storeId (if you only have name, set null for now or add lookup)
+						null,               // customerId
+						null,               // orderId
+						null,               // from
+						null,               // to
+						null,               // free text search
+						"createdAt", true,  // sort by createdAt desc
+						0,                  // page
+						50,                 // pageSize
+						client              // <-- ConnectionToClient
+				));
 			} else if (msg instanceof String s) {
 				switch (s) {
 					case "FETCH_EMPLOYEES" ->
