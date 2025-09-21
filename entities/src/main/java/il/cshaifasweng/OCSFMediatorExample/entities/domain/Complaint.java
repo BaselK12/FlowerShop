@@ -4,36 +4,56 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "complaints")
 public class Complaint implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public enum Status { OPEN, IN_PROGRESS, RESOLVED, REJECTED }
 
     // Identity
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private String id;
 
     // Store (added for UI “Store” column/filter)
     // You can fill these on the server when joining order → store.
+    @Column(name = "store_id", length = 50, nullable = false)
     private String storeId;
+
+    @Column(name = "store_name", nullable = false)
     private String storeName;
 
     // Existing fields
+    @Column(name = "customer_id", length = 50, nullable = false)
     private String customerId;
+
+    @Column(name = "order_id", length = 50, nullable = false)
     private String orderId;
 
     // Type (added for UI “Type” column/filter)
     // Keep as String to match the controller’s String cell value factory.
     // Examples: "Service", "Product Quality", "Delivery", "Pricing", "Billing", "Refund", "Technical", "Other"
+    @Column(name = "type", length = 100, nullable = false)
     private String type;
 
     // Description / text
+    @Column(name = "text", columnDefinition = "TEXT", nullable = false)
     private String text;
 
     // Status + timestamps
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
     private Status status;
+
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     // Resolution notes (if any)
+    @Column(name = "resolution")
     private String resolution;
 
     public Complaint() {}
