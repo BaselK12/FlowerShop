@@ -51,7 +51,7 @@ public class ComplaintMapper {
         if (entity == null) return null;
 
         // split subject + message
-        String subject = null;
+        String subject = entity.getSubject();
         String message = entity.getText();
         if (message != null && message.contains(":")) {
             int idx = message.indexOf(":");
