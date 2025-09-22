@@ -40,8 +40,11 @@ public class Complaint implements Serializable {
     @Column(name = "type", length = 100, nullable = false)
     private String type;
 
+    @Column(name = "subject", columnDefinition = "TEXT", nullable = false)
+    private String subject;
+
     // Description / text
-    @Column(name = "text", columnDefinition = "TEXT", nullable = false)
+    @Column(name = "description", columnDefinition = "TEXT", nullable = false)
     private String text;
 
     @Enumerated(EnumType.STRING)
@@ -89,6 +92,9 @@ public class Complaint implements Serializable {
     public void setStatus(Status status) {
         this.status = status;
     }
+
+    public String getSubject() { return subject; }
+    public void setSubject(String subject) {this.subject = subject; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

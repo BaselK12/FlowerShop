@@ -9,11 +9,16 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.stage.Stage;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import javafx.event.ActionEvent;
 
+import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
@@ -100,12 +105,23 @@ public class ManageComplaintsController {
                 new ReadOnlyStringWrapper(safe(c.getValue().getStatusName())));
 
         SummaryCol.setCellValueFactory(c ->
-                new ReadOnlyStringWrapper(safe(c.getValue().getSummary())));
+                new ReadOnlyStringWrapper(safe(c.getValue().getSubject())));
 
         // 4) Buttons
         ApplyBtn.setOnAction(e -> requestComplaintsFromServer());
         BackBtn.setOnAction(e -> safeClose());
         CloseBtn.setOnAction(e -> safeClose());
+
+        ComplaintsTable.setRowFactory(tv -> {
+            TableRow<Complaint> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    Complaint selectedComplaint = row.getItem();
+                    openComplaintDetails(selectedComplaint);
+                }
+            });
+            return row;
+        });
 
         // 5) Initial load
         //requestComplaintsFromServer();
@@ -254,7 +270,26 @@ public class ManageComplaintsController {
     }
 
 
+    // on double click to see the full details
+    private void openComplaintDetails(Complaint complaint) {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/il/cshaifasweng/OCSFMediatorExample/client/ComplaintDetails.fxml")
+            );
+            Parent root = loader.load();
 
+            ComplaintDetailsController controller = loader.getController();
+            controller.setComplaint(complaint);
+
+            Stage stage = new Stage();
+            stage.setTitle("Complaint Details");
+            stage.setScene(new Scene(root));
+            controller.setStage(stage);
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
 
 
