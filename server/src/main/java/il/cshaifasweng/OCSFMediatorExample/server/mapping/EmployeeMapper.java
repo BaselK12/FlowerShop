@@ -1,66 +1,76 @@
 package il.cshaifasweng.OCSFMediatorExample.server.mapping;
 
+import il.cshaifasweng.OCSFMediatorExample.entities.domain.EmployeeRole;
+import il.cshaifasweng.OCSFMediatorExample.entities.domain.Gender;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.EmployeesDTO;
-import il.cshaifasweng.OCSFMediatorExample.server.model.Employee;
+import il.cshaifasweng.OCSFMediatorExample.entities.domain.Employee;
 
-public final class EmployeeMapper {
-    private EmployeeMapper() {}
+import java.time.LocalDate;
 
-    // Entity -> Read DTO
-    public static EmployeesDTO.Employee toDto(Employee e) {
-        EmployeesDTO.Employee dto = new EmployeesDTO.Employee();
-        dto.setId(e.getId());
-        dto.setName(e.getName());
-        dto.setGender(e.getGender());           // String now
-        dto.setEmail(e.getEmail());
-        dto.setPhone(e.getPhone());
-        dto.setRole(e.getRole());               // String now
-        dto.setActive(e.isActive());
-        dto.setSalary(e.getSalary());
-        dto.setHireDate(e.getHireDate());
-        return dto;
+public class EmployeeMapper {
+
+    // ==== Entity -> DTO (read model) ====
+    public static EmployeesDTO.Employee toDTO(Employee entity) {
+        if (entity == null) return null;
+        return new EmployeesDTO.Employee(
+                entity.getId(),
+                entity.getName(),
+                entity.getGender(), // enum -> String
+                entity.getEmail(),
+                entity.getPhone(),
+                entity.getRole(),   // pass enum directly (EmployeeRole in DTO)
+                entity.isActive(),
+                entity.getSalary(),
+                entity.getHireDate()
+        );
     }
 
-    // Read DTO -> Entity (full copy)
-    public static Employee fromDto(EmployeesDTO.Employee dto) {
-        Employee e = new Employee();
-        e.setId(dto.getId());
-        e.setName(dto.getName());
-        e.setGender(safe(dto.getGender()));
-        e.setEmail(dto.getEmail());
-        e.setPhone(dto.getPhone());
-        e.setRole(safe(dto.getRole()));
-        e.setActive(dto.isActive());
-        e.setSalary(dto.getSalary());
-        e.setHireDate(dto.getHireDate());
-        return e;
+    // ==== DTO -> Entity (create new employee) ====
+    // hireDate set to "today" by default, passwordHash provided externally
+    public static Employee fromCreate(EmployeesDTO.Create dto, String passwordHash) {
+        if (dto == null) return null;
+        return new Employee(
+                dto.getName(),
+                dto.getEmail(),
+                dto.getPhone(),
+                dto.getGender(),      // convert String -> Gender
+                dto.getRole(),          // convert String -> EmployeeRole
+                dto.isActive(),
+                dto.getSalary(),
+                LocalDate.now(),                   // hire date assigned automatically
+                passwordHash                       // must be provided from outside
+        );
     }
 
-    // Create DTO -> Entity
-    public static Employee fromCreate(EmployeesDTO.Create c) {
-        Employee e = new Employee();
-        e.setName(c.getName());
-        e.setGender(safe(c.getGender()));
-        e.setEmail(c.getEmail());
-        e.setPhone(c.getPhone());
-        e.setRole(safe(c.getRole()));
-        e.setActive(c.isActive());
-        e.setSalary(c.getSalary());
-        return e;
+    // ==== DTO -> Entity (update existing employee) ====
+    // keeps original hireDate and passwordHash (must be provided externally)
+    public static Employee fromUpdate(EmployeesDTO.Update dto,
+                                      String passwordHash,
+                                      LocalDate existingHireDate) {
+        if (dto == null) return null;
+        Employee emp = new Employee(
+                dto.getName(),
+                dto.getEmail(),
+                dto.getPhone(),
+                dto.getGender(),      // convert String -> Gender
+                dto.getRole(),          // convert String -> EmployeeRole
+                dto.isActive(),
+                dto.getSalary(),
+                existingHireDate,                  // preserve existing hire date
+                passwordHash
+        );
+        //emp.setId(dto.getId());  // IMPORTANT: set ID for updates
+        return emp;
     }
 
-    // Update DTO -> apply partial changes to existing entity
-    public static void applyUpdate(Employee e, EmployeesDTO.Update u) {
-        if (u.getName()  != null) e.setName(u.getName());
-        if (u.getGender()!= null) e.setGender(safe(u.getGender()));
-        if (u.getEmail() != null) e.setEmail(u.getEmail());
-        if (u.getPhone() != null) e.setPhone(u.getPhone());
-        if (u.getRole()  != null) e.setRole(safe(u.getRole()));
-        e.setActive(u.isActive());
-        e.setSalary(u.getSalary());
+    // ==== Helpers: normalize enums ====
+    private static EmployeeRole parseRole(String role) {
+        if (role == null || role.isBlank()) return null;
+        return EmployeeRole.valueOf(role.trim().toUpperCase().replace(" ", "_"));
     }
 
-    private static String safe(String s) {
-        return s == null ? null : s.trim();
+    private static Gender parseGender(String gender) {
+        if (gender == null || gender.isBlank()) return null;
+        return Gender.valueOf(gender.trim().toUpperCase());
     }
 }

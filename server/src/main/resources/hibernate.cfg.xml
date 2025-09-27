@@ -18,6 +18,7 @@
         <!-- entities -->
         <mapping class="il.cshaifasweng.OCSFMediatorExample.entities.domain.Complaint"/>
         <mapping class="il.cshaifasweng.OCSFMediatorExample.entities.domain.Stores"/>
+        <mapping class="il.cshaifasweng.OCSFMediatorExample.entities.domain.Employee"/>
         <!-- add more as you map them (Customer, Order, etc.) -->
     </session-factory>
 </hibernate-configuration>

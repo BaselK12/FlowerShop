@@ -2,15 +2,17 @@ package il.cshaifasweng.OCSFMediatorExample.client.employee;
 
 
 
-import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.EmployeesDTO;
+import il.cshaifasweng.OCSFMediatorExample.client.App;
+import il.cshaifasweng.OCSFMediatorExample.entities.domain.EmployeeRole;
+import il.cshaifasweng.OCSFMediatorExample.entities.domain.Gender;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.*;
+import javafx.application.Platform;
 import javafx.beans.Observable;
 import org.greenrobot.eventbus.Subscribe;
 import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
-import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
@@ -19,7 +21,7 @@ import org.greenrobot.eventbus.EventBus;
 
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
-import java.util.function.Predicate;
+
 
 public class ManageEmployeesController {
 
@@ -58,19 +60,13 @@ public class ManageEmployeesController {
 
     private final ObservableList<EmployeeVM> backing = FXCollections.observableArrayList(
             (EmployeeVM vm) -> new Observable[]{
-            vm.nameProperty(), vm.emailProperty(), vm.phoneProperty(),
-            vm.roleProperty(), vm.activeProperty(), vm.salaryProperty(),
-            vm.hireDateProperty()}
+                    vm.nameProperty(), vm.emailProperty(), vm.phoneProperty(),
+                    vm.roleProperty(), vm.activeProperty(), vm.salaryProperty(),
+                    vm.hireDateProperty()}
     );
-    private FilteredList<EmployeeVM> filtered;
-    private SortedList<EmployeeVM> sorted;
 
-    // Mock service for now (no server)
-    private final MockEmployeesService service = new MockEmployeesService();
 
     public void initialize() {
-
-        // subscribe
         if (!EventBus.getDefault().isRegistered(this))
             EventBus.getDefault().register(this);
 
@@ -87,10 +83,16 @@ public class ManageEmployeesController {
         // Table cell value factories
         IdCol.setCellValueFactory(c -> c.getValue().idProperty());
         NameCol.setCellValueFactory(c -> c.getValue().nameProperty());
-        GenderCol.setCellValueFactory(c -> c.getValue().genderProperty());
+        GenderCol.setCellValueFactory(c -> Bindings.createStringBinding(
+                () -> c.getValue().getGender() == null ? "" : prettifyGender(c.getValue().getGender()),
+                c.getValue().genderProperty()
+        ));
         EmailCol.setCellValueFactory(c -> c.getValue().emailProperty());
         PhoneCol.setCellValueFactory(c -> c.getValue().phoneProperty());
-        RoleCol.setCellValueFactory(c -> c.getValue().roleProperty());
+        RoleCol.setCellValueFactory(c -> Bindings.createStringBinding(
+                () -> c.getValue().getRole() == null ? "" : prettifyRole(c.getValue().getRole()),
+                c.getValue().roleProperty()
+        ));
         ActiveCol.setCellValueFactory(c -> c.getValue().activeProperty());
         SalaryCol.setCellValueFactory(c -> c.getValue().salaryProperty());
         HireCol.setCellValueFactory(c ->
@@ -101,10 +103,7 @@ public class ManageEmployeesController {
         ActiveCol.setCellFactory(CheckBoxTableCell.forTableColumn(ActiveCol));
 
         // Table data hooks
-        filtered = new FilteredList<>(backing, vm -> true);
-        sorted = new SortedList<>(filtered);
-        sorted.comparatorProperty().bind(TableView.comparatorProperty());
-        TableView.setItems(sorted);
+        TableView.setItems(backing);
 
         // Selection-dependent buttons
         EditBTn.disableProperty().bind(TableView.getSelectionModel().selectedItemProperty().isNull());
@@ -114,7 +113,7 @@ public class ManageEmployeesController {
         ctxEdit.setOnAction(e -> onEdit());
         ctxDelete.setOnAction(e -> onDelete());
 
-        // Double-click to edit (placeholder for now)
+        // Double-click to edit
         TableView.setRowFactory(tv -> {
             TableRow<EmployeeVM> row = new TableRow<>();
             row.setOnMouseClicked(evt -> {
@@ -126,9 +125,9 @@ public class ManageEmployeesController {
         });
 
         // Live filters
-        SearchTxt.textProperty().addListener((o, a, b) -> applyFilters());
-        RoleFilter.valueProperty().addListener((o, a, b) -> applyFilters());
-        ActiveOnly.selectedProperty().addListener((o, a, b) -> applyFilters());
+        SearchTxt.textProperty().addListener((o, a, b) -> fetchEmployees());
+        RoleFilter.valueProperty().addListener((o, a, b) -> fetchEmployees());
+        ActiveOnly.selectedProperty().addListener((o, a, b) -> fetchEmployees());
 
         // Toolbar actions
         AddBtn.setOnAction(e -> onAdd());
@@ -137,16 +136,30 @@ public class ManageEmployeesController {
         RefreshBtn.setOnAction(e -> fetchEmployees());
 
         // Initial load
-        fetchEmployees();
+        Platform.runLater(() -> {fetchEmployees();});
+
     }
 
     private void fetchEmployees() {
         setLoading(true);
         StatusLabel.setText("Loading employees...");
+
+        boolean onlyActive = ActiveOnly.isSelected();
+        String roleStr = RoleFilter.getValue();
+        String search = SearchTxt.getText() != null ? SearchTxt.getText().trim() : "";
+
+        EmployeeRole role = null;
+        if (roleStr != null && !"All".equalsIgnoreCase(roleStr)) {
+            switch (roleStr) {
+                case "Manager" -> role = EmployeeRole.STORE_MANAGER;
+                case "Cashier" -> role = EmployeeRole.CASHIER;
+                case "Florist" -> role = EmployeeRole.FLORIST;
+                case "Driver"  -> role = EmployeeRole.DELIVERY;
+            }
+        }
+
         try {
-            // replace GetEmployeesMessage with your actual message class
-            // we need to send a message to get all the employees
-            SimpleClient.getClient().sendToServer("FETCH_EMPLOYEES");
+            App.getClient().sendToServer(new GetEmployeesRequest(onlyActive, role, search));
         } catch (Exception e) {
             setLoading(false);
             e.printStackTrace();
@@ -158,7 +171,7 @@ public class ManageEmployeesController {
         StatusLabel.setText("Opening new employee editor…");
         try {
             // simple string command (matches your FETCH/DELETE style)
-            SimpleClient.getClient().sendToServer("EMPLOYEES_OPEN_EDITOR:NEW");
+            App.getClient().sendToServer("EMPLOYEES_OPEN_EDITOR:NEW");
         } catch (Exception e) {
             setLoading(false);
             e.printStackTrace();
@@ -175,7 +188,7 @@ public class ManageEmployeesController {
         try {
             // Ask server to open editor for this employee
             // (server will reply to THIS client only)
-            SimpleClient.getClient().sendToServer("EMPLOYEES_OPEN_EDITOR:EDIT:" + vm.getId());
+            App.getClient().sendToServer("EMPLOYEES_OPEN_EDITOR:EDIT:" + vm.getId());
         } catch (Exception e) {
             setLoading(false);
             e.printStackTrace();
@@ -195,8 +208,7 @@ public class ManageEmployeesController {
                 setLoading(true);
                 StatusLabel.setText("Deleting " + vm.getName() + "…");
                 try {
-                    // Send delete command to server (id appended after colon)
-                    SimpleClient.getClient().sendToServer("EMPLOYEES_DELETE:" + vm.getId());
+                    App.getClient().sendToServer(new DeleteEmployeeRequest(vm.getId()));
                 } catch (Exception e) {
                     setLoading(false);
                     e.printStackTrace();
@@ -205,23 +217,7 @@ public class ManageEmployeesController {
         });
     }
 
-    private void applyFilters() {
-        final String q = SearchTxt.getText() == null ? "" : SearchTxt.getText().trim().toLowerCase(Locale.ROOT);
-        final String role = RoleFilter.getValue();
-        final boolean onlyActive = ActiveOnly.isSelected();
 
-        Predicate<EmployeeVM> p = vm -> {
-            boolean matchQ = q.isEmpty()
-                    || vm.getName().toLowerCase(Locale.ROOT).contains(q)
-                    || vm.getEmail().toLowerCase(Locale.ROOT).contains(q)
-                    || vm.getPhone().toLowerCase(Locale.ROOT).contains(q);
-            boolean matchRole = (role == null || role.equals("All")) || role.equals(vm.getRole());
-            boolean matchActive = !onlyActive || vm.isActive();
-            return matchQ && matchRole && matchActive;
-        };
-        filtered.setPredicate(p);
-        StatusLabel.setText(String.format("Showing %d of %d", TableView.getItems().size(), backing.size()));
-    }
 
 
 
@@ -233,43 +229,45 @@ public class ManageEmployeesController {
     // ===== EventBus: responses published by SimpleClient =====
 
     @Subscribe
-    public void onEmployeesFetched(EmployeesEvents.EmployeesFetched ev) {
-        // Map DTOs -> VMs and replace the table data
-        backing.setAll(ev.getEmployees().stream().map(this::toVM).toList());
-        applyFilters();
-        setLoading(false);
-        StatusLabel.setText("Loaded " + backing.size() + " employees");
+    public void onEmployeesFetched(GetEmployeesResponse response) {
+        System.out.println("[CLIENT] Received Employees: " + response.getEmployees().size());
+        Platform.runLater(() -> {
+            backing.setAll(response.getEmployees().stream().map(this::toVM).toList());
+            setLoading(false);
+            StatusLabel.setText("Loaded " + backing.size() + " employees");
+        });
     }
 
-    @Subscribe
-    public void onEmployeeDeleted(EmployeesEvents.EmployeeDeleted ev) {
-        backing.removeIf(vm -> vm.getId() == ev.getEmployeeId());
-        applyFilters();
-        setLoading(false);                     // <- stop spinner here
-        StatusLabel.setText("Employee deleted");
-    }
-
-    @Subscribe
-    public void onEmployeeCreated(EmployeesEvents.EmployeeCreated ev) {
-        var d = ev.getEmployee();
-        backing.removeIf(vm -> vm.getId() == d.getId()); // avoid dup if server re-sent
-        backing.add(toVM(d));
-        applyFilters();
-        StatusLabel.setText("Employee added");
-    }
-
-    @Subscribe
-    public void onEmployeeUpdated(EmployeesEvents.EmployeeUpdated ev) {
-        var d = ev.getEmployee();
-        for (int i = 0; i < backing.size(); i++) {
-            if (backing.get(i).getId() == d.getId()) {
-                backing.set(i, toVM(d));
-                break;
-            }
-        }
-        applyFilters();
-        StatusLabel.setText("Employee updated");
-    }
+//    @Subscribe
+//    public void onEmployeeDeleted(DeleteEmployeeResponse response) {
+//        backing.removeIf(vm -> vm.getId() == response.getEmployeeId());
+//        applyFilters();
+//        setLoading(false);
+//        StatusLabel.setText("Employee deleted");
+//    }
+//
+//    @Subscribe
+//    public void onEmployeeCreated(CreateEmployeeResponse response) {
+//        var d = response.getEmployee();
+//        backing.removeIf(vm -> vm.getId() == d.getId());
+//        backing.add(toVM(d));
+//        applyFilters();
+//        StatusLabel.setText("Employee added");
+//    }
+//
+//
+//    @Subscribe
+//    public void onEmployeeUpdated(UpdateEmployeeResponse response) {
+//        var d = response.getEmployee();
+//        for (int i = 0; i < backing.size(); i++) {
+//            if (backing.get(i).getId() == d.getId()) {
+//                backing.set(i, toVM(d));
+//                break;
+//            }
+//        }
+//        applyFilters();
+//        StatusLabel.setText("Employee updated");
+//    }
 
 
 
@@ -281,11 +279,36 @@ public class ManageEmployeesController {
 
     private EmployeeVM toVM(EmployeesDTO.Employee d) {
         return new EmployeeVM(
-                d.getId(), d.getName(), d.getGender(), d.getEmail(),
-                d.getPhone(), d.getRole(), d.isActive(), d.getSalary(), d.getHireDate()
+                d.getId(),
+                d.getName(),
+                d.getGender(),
+                d.getEmail(),
+                d.getPhone(),
+                d.getRole(),
+                d.isActive(),
+                d.getSalary(),
+                d.getHireDate()
         );
     }
 
+    private String prettifyRole(EmployeeRole role) {
+        if (role == null) return "";
+        return switch (role) {
+            case STORE_MANAGER -> "Manager";
+            case CASHIER       -> "Cashier";
+            case FLORIST       -> "Florist";
+            case DELIVERY      -> "Driver";
+            case OTHER         -> "Other";
+        };
+    }
+
+    private String prettifyGender(Gender gender) {
+        return switch (gender) {
+            case Female -> "Female";
+            case Male   -> "Male";
+            case Other  -> "Other";
+        };
+    }
 
 
 }

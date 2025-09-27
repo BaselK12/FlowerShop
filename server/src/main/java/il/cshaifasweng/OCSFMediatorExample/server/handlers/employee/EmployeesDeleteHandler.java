@@ -1,10 +1,10 @@
-package il.cshaifasweng.OCSFMediatorExample.server.handlers;
+package il.cshaifasweng.OCSFMediatorExample.server.handlers.employee;
 
+import il.cshaifasweng.OCSFMediatorExample.entities.domain.Employee;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.DeleteEmployeeResponse;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.EmployeesDeleteRequestedEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.SendToClientEvent;
-import il.cshaifasweng.OCSFMediatorExample.server.model.Employee;
 import il.cshaifasweng.OCSFMediatorExample.server.session.TX;
 import org.hibernate.exception.ConstraintViolationException;
 import org.hibernate.Session;
@@ -21,12 +21,12 @@ public class EmployeesDeleteHandler {
 
                 if (deleted) {
                     bus.publish(new SendToClientEvent(
-                            new DeleteEmployeeResponse(true, "Employee deleted"),
+                            new DeleteEmployeeResponse(true, "Employee deleted", id),
                             evt.client()
                     ));
                 } else {
                     bus.publish(new SendToClientEvent(
-                            new DeleteEmployeeResponse(false, "Employee not found"),
+                            new DeleteEmployeeResponse(false, "Employee not found", id),
                             evt.client()
                     ));
                 }

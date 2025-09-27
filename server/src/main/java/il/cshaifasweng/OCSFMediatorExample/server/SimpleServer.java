@@ -1,6 +1,7 @@
 package il.cshaifasweng.OCSFMediatorExample.server;
 
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Complaint.GetComplaintsRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.GetEmployeesRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.RegisterRequest;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.*;
@@ -33,7 +34,11 @@ public class SimpleServer extends ObservableServer {
 				bus.publish(new LoginRequestedEvent(lr, client));
 			} else if (msg instanceof RegisterRequest rr) {
 				bus.publish(new RegisterRequestedEvent(rr, client));
-			} else if (msg instanceof GetComplaintsRequest rr) {
+			} else if (msg instanceof GetEmployeesRequest rr) {
+				System.out.printf("[Server] is handling GetEmployeesRequest: %s\n", rr);
+				bus.publish(new EmployeesFetchRequestedEvent(rr, client));
+			}
+			else if (msg instanceof GetComplaintsRequest rr) {
 				bus.publish(new ComplaintsFetchRequestedEvent(
 						rr.getStatus(),
 						rr.getType(),
@@ -51,8 +56,6 @@ public class SimpleServer extends ObservableServer {
 				));
 			} else if (msg instanceof String s) {
 				switch (s) {
-					case "FETCH_EMPLOYEES" ->
-							bus.publish(new EmployeesFetchRequestedEvent(client));
 
 					case "EMPLOYEES_OPEN_EDITOR:NEW" ->
 							bus.publish(new EmployeesOpenEditorEvent(
@@ -83,6 +86,8 @@ public class SimpleServer extends ObservableServer {
 						}
 					}
 				}
+			}else {
+				System.out.printf("[Server] got no handler for msg: %s\n", msg);
 			}
 		} catch (Exception e) {
 			bus.publish(new SendToClientEvent(

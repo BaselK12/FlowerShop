@@ -1,7 +1,6 @@
-package il.cshaifasweng.OCSFMediatorExample.server.handlers;
+package il.cshaifasweng.OCSFMediatorExample.server.handlers.employee;
 
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Ack;
-import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.GetEmployeeResponse;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.ErrorResponse;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.EmployeesOpenEditorEvent;
