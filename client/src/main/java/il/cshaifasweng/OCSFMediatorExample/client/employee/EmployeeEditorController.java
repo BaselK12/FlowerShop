@@ -1,10 +1,13 @@
 package il.cshaifasweng.OCSFMediatorExample.client.employee;
 
+import il.cshaifasweng.OCSFMediatorExample.client.App;
 import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.EmployeeRole;
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.Gender;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.CreateEmployeeRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.EmployeesDTO;
 
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.UpdateEmployeeRequest;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -43,19 +46,13 @@ public class EmployeeEditorController {
     @FXML private Button CancelBtn;
 
     private Stage stage;
-    private Long employeeId = null;
-    private boolean editMode = false;
-
-    private Consumer<EmployeesDTO> onSave;
+    private EmployeeVM employee;
 
     private static final Pattern EMAIL_RE = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
     private static final Pattern PHONE_RE = Pattern.compile("^(0\\d{1,2}-?\\d{3}-?\\d{4}|0\\d{8,9}|\\+?\\d[\\d\\- ]+)$");
     private static final Pattern MONEY_RE = Pattern.compile("^\\d+(?:[\\.,]\\d{1,2})?$");
 
     public void initialize() {
-        if (!EventBus.getDefault().isRegistered(this)) {
-            EventBus.getDefault().register(this);
-        }
 
         // Populate comboBoxes with enums
         RoleBox.setItems(FXCollections.observableArrayList(EmployeeRole.values()));
@@ -104,8 +101,6 @@ public class EmployeeEditorController {
         if (ErrorLabel != null) ErrorLabel.setText(msg == null ? "" : msg);
     }
 
-    private static String trim(String s) { return s == null ? "" : s.trim(); }
-    private static String nz(String s) { return s == null ? "" : s; }
 
     private void closeWindow() {
         if (stage != null) stage.close();
@@ -115,99 +110,195 @@ public class EmployeeEditorController {
         }
     }
 
-    @FXML
-    public void onSaveAction() {
-        setError("");
+    public void setStage(Stage stage) {
+        this.stage = stage;
+    }
 
-        String name   = trim(NameTxt.getText());
-        String email  = trim(EmailTxt.getText());
-        String phone  = trim(PhoneTxt.getText());
-        EmployeeRole role = RoleBox.getValue();
-        Gender gender = GenderBox.getValue();
-        String salStr = trim(SalaryTxt.getText());
-        boolean active = ActiveBox.isSelected();
-
-        if (name.isEmpty()) { setError("Name is required."); return; }
-        if (!email.isEmpty() && !EMAIL_RE.matcher(email).matches()) { setError("Invalid email."); return; }
-        if (!phone.isEmpty() && !PHONE_RE.matcher(phone).matches()) { setError("Invalid phone."); return; }
-        if (role == null) { setError("Role is required."); return; }
-        if (gender == null) { setError("Gender is required."); return; }
-        if (salStr.isEmpty()) { setError("Salary is required."); return; }
-
-        long salary;
-        try {
-            salary = Long.parseLong(salStr);
-            if (salary < 0) { setError("Salary cannot be negative."); return; }
-        } catch (NumberFormatException ex) {
-            setError("Salary must be an integer."); return;
-        }
-
-        Object dtoToSend;
-        if (editMode) {
-            dtoToSend = new EmployeesDTO.Update(
-                    employeeId, name, gender, email, phone, role, active, salary
-            );
+    public void setEmployee(EmployeeVM employee) {
+        this.employee = employee;
+        if (employee != null) {
+            // Fill fields for edit
+            NameTxt.setText(employee.getName());
+            EmailTxt.setText(employee.getEmail());
+            PhoneTxt.setText(employee.getPhone());
+            SalaryTxt.setText(String.valueOf(employee.getSalary()));
+            RoleBox.setValue(employee.getRole());
+            GenderBox.setValue(employee.getGender());
+            ActiveBox.setSelected(employee.isActive());
         } else {
-            dtoToSend = new EmployeesDTO.Create(
-                    name, gender, email, phone, role, active, salary
-            );
-        }
-
-        try {
-            SimpleClient.getClient().sendToServer(dtoToSend);
-            closeWindow();
-        } catch (Exception io) {
-            setError("Network error on save: " + io.getMessage());
+            // Clear fields for add
+            NameTxt.clear();
+            EmailTxt.clear();
+            PhoneTxt.clear();
+            SalaryTxt.clear();
+            RoleBox.getSelectionModel().clearSelection();
+            GenderBox.getSelectionModel().clearSelection();
+            ActiveBox.setSelected(true); // default active
         }
     }
+
+    @FXML
+    private void onSave() {
+        String name     = NameTxt.getText() != null ? NameTxt.getText().trim() : "";
+        String email    = EmailTxt.getText() != null ? EmailTxt.getText().trim() : "";
+        String phone    = PhoneTxt.getText() != null ? PhoneTxt.getText().trim() : "";
+        String salaryStr= SalaryTxt.getText() != null ? SalaryTxt.getText().trim() : "";
+        EmployeeRole role   = RoleBox.getValue();
+        Gender gender       = GenderBox.getValue();
+        boolean active  = ActiveBox.isSelected();
+
+        // === Required fields check ===
+        if (name.isEmpty()) {
+            ErrorLabel.setText("Name is required.");
+            return;
+        }
+        if (email.isEmpty()) {
+            ErrorLabel.setText("Email is required.");
+            return;
+        }
+        if (!email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+            ErrorLabel.setText("Invalid email format.");
+            return;
+        }
+        if (phone.isEmpty()) {
+            ErrorLabel.setText("Phone is required.");
+            return;
+        }
+        if (!phone.matches("^(0\\d{1,2}-?\\d{3}-?\\d{4}|0\\d{8,9}|\\+?\\d[\\d\\- ]+)$")) {
+            ErrorLabel.setText("Invalid phone number.");
+            return;
+        }
+        if (role == null) {
+            ErrorLabel.setText("Role is required.");
+            return;
+        }
+        if (gender == null) {
+            ErrorLabel.setText("Gender is required.");
+            return;
+        }
+        if (salaryStr.isEmpty()) {
+            ErrorLabel.setText("Salary is required.");
+            return;
+        }
+
+        // === Salary check ===
+        long salary;
+        try {
+            salary = Long.parseLong(salaryStr);
+            if (salary < 0) {
+                ErrorLabel.setText("Salary cannot be negative.");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            ErrorLabel.setText("Salary must be a number.");
+            return;
+        }
+
+        // === Build request ===
+        try {
+            if (employee == null) {
+                // 1. Generate raw password
+                String rawPassword = generateRandomPassword(10);
+
+                // 2. Hash it
+                String hashed = hashPassword(rawPassword);
+
+                // 3. Create DTO with hashed password
+                EmployeesDTO.Create dto = new EmployeesDTO.Create(
+                        name, gender, email, phone, role, active, salary, hashed
+                );
+
+                App.getClient().sendToServer(new CreateEmployeeRequest(dto));
+
+                // 4. Show raw password once to manager
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Employee Created");
+                alert.setHeaderText("Account for " + name + " created successfully");
+                alert.setContentText("Temporary password: " + rawPassword +
+                        "\n⚠️ Please give it to the employee.");
+                alert.showAndWait();
+            } else {
+                // build DTO for update
+                EmployeesDTO.Update dto = new EmployeesDTO.Update(
+                        employee.getId(), name, gender, email, phone, role, active, salary
+                );
+                App.getClient().sendToServer(new UpdateEmployeeRequest(dto));
+            }
+            stage.close();
+        } catch (Exception e) {
+            ErrorLabel.setText("Network error: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private String generateRandomPassword(int length) {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%";
+        StringBuilder sb = new StringBuilder();
+        java.util.Random rand = new java.util.Random();
+        for (int i = 0; i < length; i++) {
+            sb.append(chars.charAt(rand.nextInt(chars.length())));
+        }
+        return sb.toString();
+    }
+
+    private String hashPassword(String raw) {
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] digest = md.digest(raw.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : digest) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("Error hashing password", e);
+        }
+    }
+
+
 
     @FXML
     public void onCancelAction() {
-        closeWindow();
+        onClose();
     }
 
-//    public static void openEditor(javafx.stage.Window owner,
-//                                  EmployeesDTO.Employee existingOrNull) {
-//        try {
-//            var loader = new javafx.fxml.FXMLLoader(
-//                    EmployeeEditorController.class.getResource("EmployeeEditor.fxml")
-//            );
-//            var root = loader.load();
-//            var c = loader.getController();
-//
-//            Stage st = new Stage();
-//            st.setTitle(existingOrNull == null ? "New Employee" : "Edit Employee");
-//            st.initModality(javafx.stage.Modality.WINDOW_MODAL);
-//            if (owner != null) st.initOwner(owner);
-//            st.setScene(new javafx.scene.Scene(root));
-//
-//            c.stage = st;
-//            c.initialize();
-//
-//            if (existingOrNull != null) {
-//                c.editMode = true;
-//                c.employeeId = existingOrNull.getId();
-//                c.NameTxt.setText(nz(existingOrNull.getName()));
-//                c.EmailTxt.setText(nz(existingOrNull.getEmail()));
-//                c.PhoneTxt.setText(nz(existingOrNull.getPhone()));
-//                c.RoleBox.getSelectionModel().select(existingOrNull.getRole());
-//                c.GenderBox.getSelectionModel().select(existingOrNull.getGender());
-//                c.SalaryTxt.setText(String.valueOf(existingOrNull.getSalary()));
-//                c.ActiveBox.setSelected(existingOrNull.isActive());
-//            }
-//
-//            st.setOnHidden(e -> {
-//                try {
-//                    if (EventBus.getDefault().isRegistered(c)) {
-//                        EventBus.getDefault().unregister(c);
-//                    }
-//                } catch (Throwable ignore) {}
-//            });
-//
-//            st.show();
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
+    private void onClose() {
+        try {
+            // unregister from EventBus if still registered
+            if (EventBus.getDefault().isRegistered(this)) {
+                EventBus.getDefault().unregister(this);
+            }
+        } catch (Exception ignore) {}
+
+        // close the Stage
+        if (stage != null) {
+            stage.close();
+        } else if (SaveBtn != null && SaveBtn.getScene() != null) {
+            var w = SaveBtn.getScene().getWindow();
+            if (w instanceof Stage s) {
+                s.close();
+            }
+        }
+    }
+
+    private String prettifyRole(EmployeeRole role) {
+        if (role == null) return "";
+        return switch (role) {
+            case STORE_MANAGER -> "Manager";
+            case CASHIER       -> "Cashier";
+            case FLORIST       -> "Florist";
+            case DELIVERY      -> "Driver";
+            case OTHER         -> "Other";
+        };
+    }
+
+    private String prettifyGender(Gender gender) {
+        return switch (gender) {
+            case Female -> "Female";
+            case Male   -> "Male";
+            case Other  -> "Other";
+        };
+    }
+
 }
 

@@ -8,6 +8,10 @@ import il.cshaifasweng.OCSFMediatorExample.entities.domain.Gender;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.*;
 import javafx.application.Platform;
 import javafx.beans.Observable;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
 import org.greenrobot.eventbus.Subscribe;
 import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
 import javafx.beans.binding.Bindings;
@@ -19,6 +23,7 @@ import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.input.MouseButton;
 import org.greenrobot.eventbus.EventBus;
 
+import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
@@ -167,31 +172,44 @@ public class ManageEmployeesController {
     }
 
     private void onAdd() {
-        setLoading(true);
-        StatusLabel.setText("Opening new employee editor…");
-        try {
-            // simple string command (matches your FETCH/DELETE style)
-            App.getClient().sendToServer("EMPLOYEES_OPEN_EDITOR:NEW");
-        } catch (Exception e) {
-            setLoading(false);
-            e.printStackTrace();
-        }
+        openEditor(null);
     }
 
     private void onEdit() {
         EmployeeVM vm = TableView.getSelectionModel().getSelectedItem();
-        if (vm == null) return;
+        if (vm != null) {
+            openEditor(vm);
+        }
+    }
 
-        // spinner is optional here; opening is fast
-        setLoading(true);
-        StatusLabel.setText("Opening editor for " + vm.getName() + "…");
+
+    // helper function to open the window
+    private void openEditor(EmployeeVM vm) {
         try {
-            // Ask server to open editor for this employee
-            // (server will reply to THIS client only)
-            App.getClient().sendToServer("EMPLOYEES_OPEN_EDITOR:EDIT:" + vm.getId());
-        } catch (Exception e) {
-            setLoading(false);
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/il/cshaifasweng/OCSFMediatorExample/client/Employee/EmployeeEditor.fxml"));
+            Parent root = loader.load();
+
+            EmployeeEditorController controller = loader.getController();
+
+            Stage stage = new Stage();
+            stage.setTitle(vm == null ? "Add Employee" : "Edit Employee");
+            stage.setScene(new Scene(root));
+            controller.setStage(stage);
+            controller.setEmployee(vm); // null = new, non-null = edit
+            stage.show();
+
+            StatusLabel.setText(vm == null
+                    ? "Adding new employee…"
+                    : "Editing employee '" + vm.getName() + "'");
+
+        } catch (IOException e) {
             e.printStackTrace();
+            StatusLabel.setText(vm == null
+                    ? "Failed to open Add Employee window"
+                    : "Failed to open editor for " + vm.getName());
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -218,9 +236,6 @@ public class ManageEmployeesController {
     }
 
 
-
-
-
     private void setLoading(boolean v) {
         Loading.setVisible(v);
         TableView.setDisable(v);
@@ -238,36 +253,45 @@ public class ManageEmployeesController {
         });
     }
 
-//    @Subscribe
-//    public void onEmployeeDeleted(DeleteEmployeeResponse response) {
-//        backing.removeIf(vm -> vm.getId() == response.getEmployeeId());
-//        applyFilters();
-//        setLoading(false);
-//        StatusLabel.setText("Employee deleted");
-//    }
-//
-//    @Subscribe
-//    public void onEmployeeCreated(CreateEmployeeResponse response) {
-//        var d = response.getEmployee();
-//        backing.removeIf(vm -> vm.getId() == d.getId());
-//        backing.add(toVM(d));
-//        applyFilters();
-//        StatusLabel.setText("Employee added");
-//    }
-//
-//
-//    @Subscribe
-//    public void onEmployeeUpdated(UpdateEmployeeResponse response) {
-//        var d = response.getEmployee();
-//        for (int i = 0; i < backing.size(); i++) {
-//            if (backing.get(i).getId() == d.getId()) {
-//                backing.set(i, toVM(d));
-//                break;
-//            }
-//        }
-//        applyFilters();
-//        StatusLabel.setText("Employee updated");
-//    }
+    @Subscribe
+    public void onEmployeeDeleted(DeleteEmployeeResponse response) {
+        Platform.runLater(() -> {
+            if (response.isSuccess()) {
+                backing.removeIf(vm -> vm.getId() == response.getEmployeeId());
+                StatusLabel.setText("Employee deleted");
+            } else {
+                new Alert(Alert.AlertType.ERROR, response.getMessage(), ButtonType.OK).showAndWait();
+                StatusLabel.setText("Delete failed");
+            }
+            setLoading(false);
+        });
+    }
+
+
+    @Subscribe
+    public void onEmployeeCreated(CreateEmployeeResponse response) {
+        Platform.runLater(() -> {
+            var d = response.getEmployee();
+            backing.removeIf(vm -> vm.getId() == d.getId());
+            backing.add(toVM(d));
+            StatusLabel.setText("Employee '" + d.getName() + "' added");
+        });
+    }
+
+
+    @Subscribe
+    public void onEmployeeUpdated(UpdateEmployeeResponse response) {
+        var d = response.getEmployee();
+
+        javafx.application.Platform.runLater(() -> {
+            // remove old copy
+            backing.removeIf(vm -> vm.getId() == d.getId());
+            // add updated one
+            backing.add(toVM(d));
+
+            StatusLabel.setText("Employee updated");
+        });
+    }
 
 
 
