@@ -1,0 +1,278 @@
+# Employee Management System — Full Explanation
+
+This section explains in detail how the **client → server → client** messaging works for Employees: **Fetch, Add, Edit, Delete**.
+We use **DTOs (Data Transfer Objects)**, the **EventBus**, and the **OCSF messaging system**.
+
+Every action follows this **pattern**:
+
+1. **UI action** (button click, double-click, etc.) triggers a method in the **controller**.
+2. The controller builds a **request message** (e.g., `CreateEmployeeRequest`) and calls
+
+   ```java
+   App.getClient().sendToServer(request);
+   ```
+3. The **server bus** receives this message, publishes an event (e.g., `EmployeeCreateRequestedEvent`).
+4. A **handler** (e.g., `EmployeeCreateHandler`) is subscribed to that event, performs database work in a transaction, and then publishes a **SendToClientEvent** with a response (e.g., `CreateEmployeeResponse`).
+5. The **SimpleClient** delivers that response back to the client application.
+6. The **EventBus** on the client side invokes a subscriber method in the controller (e.g., `onEmployeeCreated`), which updates the UI (TableView, labels, alerts, etc.).
+
+---
+
+## 1. Fetch Employees
+
+### Controller
+
+Triggered when the user types in the search bar, changes role filter, or clicks refresh:
+
+```java
+App.getClient().sendToServer(new GetEmployeesRequest(onlyActive, role, search));
+```
+
+### Server Handler
+
+Queries DB and maps to DTOs:
+
+```java
+bus.subscribe(EmployeeListRequestedEvent.class, evt -> {
+    GetEmployeesRequest req = evt.request();
+    List<Employee> results = TX.call(s -> queryEmployees(s, req));
+    List<EmployeesDTO.Employee> dtoList = results.stream()
+                                                 .map(EmployeeMapper::toDTO)
+                                                 .toList();
+    bus.publish(new SendToClientEvent(new GetEmployeesResponse(dtoList), evt.client()));
+});
+```
+
+### Response on Client
+
+UI updated:
+
+```java
+@Subscribe
+public void onEmployeesFetched(GetEmployeesResponse response) {
+    Platform.runLater(() -> {
+        backing.setAll(response.getEmployees().stream().map(this::toVM).toList());
+        setLoading(false);
+        StatusLabel.setText("Loaded " + backing.size() + " employees");
+    });
+}
+```
+
+---
+
+## 2. Add Employee
+
+### Controller
+
+Opens editor window with `employee == null`.
+When save is clicked:
+
+```java
+String rawPassword = generateRandomPassword(10);
+String hashed = hashPassword(rawPassword);
+
+EmployeesDTO.Create dto = new EmployeesDTO.Create(
+        name, gender, email, phone, role, active, salary, hashed
+);
+
+App.getClient().sendToServer(new CreateEmployeeRequest(dto));
+
+Alert alert = new Alert(Alert.AlertType.INFORMATION);
+alert.setHeaderText("Account created");
+alert.setContentText("Temporary password: " + rawPassword);
+alert.showAndWait();
+```
+
+### Server Handler
+
+Persists to DB:
+
+```java
+bus.subscribe(EmployeeCreateRequestedEvent.class, evt -> {
+    EmployeesDTO.Create dto = evt.request().getEmployee();
+
+    Employee saved = TX.call(s -> {
+        Employee e = new Employee();
+        e.setName(dto.getName());
+        e.setGender(dto.getGender());
+        e.setEmail(dto.getEmail());
+        e.setPhone(dto.getPhone());
+        e.setRole(dto.getRole());
+        e.setActive(dto.isActive());
+        e.setSalary(dto.getSalary());
+        e.setHireDate(LocalDate.now());
+        e.setPasswordHash(dto.getPasswordHash());
+        s.persist(e);
+        return e;
+    });
+
+    EmployeesDTO.Employee payload = EmployeeMapper.toDTO(saved);
+    bus.publish(new SendToClientEvent(new CreateEmployeeResponse(payload), evt.client()));
+});
+```
+
+### Response on Client
+
+Adds new employee to table:
+
+```java
+@Subscribe
+public void onEmployeeCreated(CreateEmployeeResponse response) {
+    Platform.runLater(() -> {
+        var d = response.getEmployee();
+        backing.removeIf(vm -> vm.getId() == d.getId());
+        backing.add(toVM(d));
+        StatusLabel.setText("Employee '" + d.getName() + "' added");
+    });
+}
+```
+
+---
+
+## 3. Edit Employee
+
+### Controller
+
+User selects an employee and clicks **Edit**:
+
+```java
+EmployeesDTO.Update dto = new EmployeesDTO.Update(
+        employee.getId(), name, gender, email, phone, role, active, salary
+);
+App.getClient().sendToServer(new UpdateEmployeeRequest(dto));
+```
+
+### Server Handler
+
+Updates DB:
+
+```java
+bus.subscribe(EmployeeUpdateRequestedEvent.class, evt -> {
+    EmployeesDTO.Update dto = evt.request().getEmployee();
+
+    Employee updated = TX.call(s -> {
+        Employee e = s.get(Employee.class, dto.getId());
+        if (e != null) {
+            e.setName(dto.getName());
+            e.setGender(dto.getGender());
+            e.setEmail(dto.getEmail());
+            e.setPhone(dto.getPhone());
+            e.setRole(dto.getRole());
+            e.setActive(dto.isActive());
+            e.setSalary(dto.getSalary());
+        }
+        return e;
+    });
+
+    EmployeesDTO.Employee payload = EmployeeMapper.toDTO(updated);
+    bus.publish(new SendToClientEvent(new UpdateEmployeeResponse(payload), evt.client()));
+});
+```
+
+### Response on Client
+
+Replaces the old entry with the updated one:
+
+```java
+@Subscribe
+public void onEmployeeUpdated(UpdateEmployeeResponse response) {
+    Platform.runLater(() -> {
+        var d = response.getEmployee();
+        backing.removeIf(vm -> vm.getId() == d.getId());
+        backing.add(toVM(d));
+        StatusLabel.setText("Employee updated");
+    });
+}
+```
+
+---
+
+## 4. Delete Employee
+
+### Controller
+
+User confirms delete:
+
+```java
+App.getClient().sendToServer(new DeleteEmployeeRequest(vm.getId()));
+```
+
+### Server Handler
+
+Removes from DB:
+
+```java
+bus.subscribe(EmployeeDeleteRequestedEvent.class, evt -> {
+    long id = evt.employeeId();
+
+    boolean deleted = TX.call(s -> {
+        Employee e = s.get(Employee.class, id);
+        if (e != null) {
+            s.remove(e);
+            return true;
+        }
+        return false;
+    });
+
+    bus.publish(new SendToClientEvent(
+            new DeleteEmployeeResponse(deleted, deleted ? "Employee deleted" : "Not found", id),
+            evt.client()
+    ));
+});
+```
+
+### Response on Client
+
+Removes from TableView:
+
+```java
+@Subscribe
+public void onEmployeeDeleted(DeleteEmployeeResponse response) {
+    Platform.runLater(() -> {
+        if (response.isSuccess()) {
+            backing.removeIf(vm -> vm.getId() == response.getEmployeeId());
+            StatusLabel.setText("Employee deleted");
+        } else {
+            new Alert(Alert.AlertType.ERROR, response.getMessage(), ButtonType.OK).showAndWait();
+            StatusLabel.setText("Delete failed");
+        }
+        setLoading(false);
+    });
+}
+```
+
+---
+
+# 🔄 Full Message Flow (All Operations)
+
+Here’s the lifecycle of a message in **every operation**:
+
+```
+[Client UI Action] → (Controller sends Request)
+    → App.getClient().sendToServer(request)
+
+[Server receives Request] → (OCSF bus publishes event)
+    → Handler listens → performs DB transaction (TX.call)
+
+[Server publishes Response] →
+    → new SendToClientEvent(response, client)
+
+[Client receives Response] → (SimpleClient posts to EventBus)
+    → Controller’s @Subscribe method → updates UI
+```
+
+### Example (Add Employee)
+
+```
+User clicks Save in EmployeeEditor →
+EmployeeEditorController builds CreateEmployeeRequest →
+App.getClient().sendToServer(CreateEmployeeRequest) →
+
+Server bus receives → publishes EmployeeCreateRequestedEvent →
+EmployeeCreateHandler persists Employee →
+publishes SendToClientEvent(CreateEmployeeResponse) →
+
+Client receives → EventBus calls onEmployeeCreated →
+TableView updated, StatusLabel shows "Employee added"
+```
+
