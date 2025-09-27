@@ -1,5 +1,7 @@
 package il.cshaifasweng.OCSFMediatorExample.server.model;
 
+import il.cshaifasweng.OCSFMediatorExample.entities.domain.Employee;
+
 public final class ModelRegistry {
     private ModelRegistry() {}
     public static Class<?>[] entities() {

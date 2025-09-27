@@ -1,0 +1,129 @@
+/* Root background */
+.root {
+    -fx-background-color: #f4f6f8;
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-size: 13px;
+}
+
+/* Toolbar */
+.tool-bar {
+    -fx-background-color: #3f51b5; /* slate blue */
+    -fx-padding: 6;
+    -fx-spacing: 8;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 4,0,0,2);
+}
+
+.tool-bar .label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+/* Toolbar controls */
+.text-field, .combo-box, .check-box {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #d6d9dc;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 4 6 4 6;
+}
+
+/* General labels */
+.label {
+    -fx-text-fill: #2c3e50;
+    -fx-font-weight: bold;
+}
+
+/* TableView */
+.table-view {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #d1d9e6;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+
+.table-view .column-header {
+    -fx-background-color: #607d8b; /* muted gray-blue */
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.table-row-cell:filled:selected {
+    -fx-background-color: #cfd8dc; /* light muted blue-gray */
+    -fx-text-fill: black;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: #fafafa;
+}
+.table-row-cell:even {
+    -fx-background-color: #ffffff;
+}
+
+/* Buttons */
+.button {
+    -fx-background-radius: 6;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+/* Specific buttons */
+#AddBtn {
+    -fx-background-color: #4caf50; /* muted green */
+    -fx-text-fill: white;
+}
+#AddBtn:hover {
+    -fx-background-color: #388e3c;
+}
+
+#EditBTn {
+    -fx-background-color: #ffb300; /* soft amber */
+    -fx-text-fill: black;
+}
+#EditBTn:disabled {
+    -fx-opacity: 0.5;
+}
+#EditBTn:hover {
+    -fx-background-color: #ffa000;
+}
+
+#DeleteBtn {
+    -fx-background-color: #e53935; /* muted red */
+    -fx-text-fill: white;
+}
+#DeleteBtn:disabled {
+    -fx-opacity: 0.5;
+}
+#DeleteBtn:hover {
+    -fx-background-color: #c62828;
+}
+
+#RefreshBtn {
+    -fx-background-color: #009688; /* teal */
+    -fx-text-fill: white;
+}
+#RefreshBtn:hover {
+    -fx-background-color: #00796b;
+}
+
+/* Context menu */
+.context-menu {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #d1d9e6;
+    -fx-background-radius: 4;
+}
+
+.menu-item {
+    -fx-text-fill: #2c3e50;
+}
+.menu-item:hover {
+    -fx-background-color: #eeeeee;
+}
+
+/* Status label & loading */
+#StatusLabel {
+    -fx-text-fill: #2c3e50;
+}
+
+.progress-indicator {
+    -fx-progress-color: #009688;
+}
