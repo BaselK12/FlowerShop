@@ -1,7 +1,10 @@
 package il.cshaifasweng.OCSFMediatorExample.server;
 
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Complaint.GetComplaintsRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.CreateEmployeeRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.DeleteEmployeeRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.GetEmployeesRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.UpdateEmployeeRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.RegisterRequest;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.*;
@@ -35,8 +38,13 @@ public class SimpleServer extends ObservableServer {
 			} else if (msg instanceof RegisterRequest rr) {
 				bus.publish(new RegisterRequestedEvent(rr, client));
 			} else if (msg instanceof GetEmployeesRequest rr) {
-				System.out.printf("[Server] is handling GetEmployeesRequest: %s\n", rr);
 				bus.publish(new EmployeesFetchRequestedEvent(rr, client));
+			} else if (msg instanceof CreateEmployeeRequest rr) {
+				bus.publish(new EmployeeCreateRequestedEvent(rr, client));
+			} else if (msg instanceof UpdateEmployeeRequest rr) {
+				bus.publish(new EmployeeUpdateRequestedEvent(rr, client));
+			}else if (msg instanceof DeleteEmployeeRequest rr) {
+				bus.publish(new EmployeeDeleteRequestedEvent(rr, client));
 			}
 			else if (msg instanceof GetComplaintsRequest rr) {
 				bus.publish(new ComplaintsFetchRequestedEvent(
@@ -72,16 +80,7 @@ public class SimpleServer extends ObservableServer {
 								bus.publish(new SendToClientEvent(
 										new ErrorResponse("Bad employee id: " + idStr), client));
 							}
-						} else if (s.startsWith("EMPLOYEES_DELETE:")) {
-							var idStr = s.substring("EMPLOYEES_DELETE:".length());
-							try {
-								long id = Long.parseLong(idStr);
-								bus.publish(new EmployeesDeleteRequestedEvent(id, client));
-							} catch (NumberFormatException e) {
-								bus.publish(new SendToClientEvent(
-										new ErrorResponse("Bad employee id: " + idStr), client));
-							}
-						} else {
+						}  else {
 							bus.publish(new SendToClientEvent(new ErrorResponse("Unknown command: " + s), client));
 						}
 					}

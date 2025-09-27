@@ -3,7 +3,7 @@ package il.cshaifasweng.OCSFMediatorExample.server.handlers.employee;
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.Employee;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.DeleteEmployeeResponse;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
-import il.cshaifasweng.OCSFMediatorExample.server.bus.events.EmployeesDeleteRequestedEvent;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.EmployeeDeleteRequestedEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.SendToClientEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.session.TX;
 import org.hibernate.exception.ConstraintViolationException;
@@ -12,8 +12,8 @@ import org.hibernate.Session;
 public class EmployeesDeleteHandler {
 
     public EmployeesDeleteHandler(ServerBus bus) {
-        bus.subscribe(EmployeesDeleteRequestedEvent.class, evt -> {
-            long id = evt.employeeId();
+        bus.subscribe(EmployeeDeleteRequestedEvent.class, evt -> {
+            long id = evt.request().getEmployeeId();  // ✅ fix: get ID from request
             System.out.printf("[EMP] Delete id=%d%n", id);
 
             try {
@@ -31,15 +31,16 @@ public class EmployeesDeleteHandler {
                     ));
                 }
             } catch (ConstraintViolationException fk) {
-                // FK constraint (e.g., employee referenced by something)
+                // FK constraint (e.g., employee referenced by other data)
                 bus.publish(new SendToClientEvent(
-                        new DeleteEmployeeResponse(false, "Cannot delete: employee is referenced by other data"),
+                        new DeleteEmployeeResponse(false,
+                                "Cannot delete: employee is referenced by other data", id),
                         evt.client()
                 ));
             } catch (Exception ex) {
                 ex.printStackTrace();
                 bus.publish(new SendToClientEvent(
-                        new DeleteEmployeeResponse(false, "Delete failed: " + ex.getMessage()),
+                        new DeleteEmployeeResponse(false, "Delete failed: " + ex.getMessage(), id),
                         evt.client()
                 ));
             }

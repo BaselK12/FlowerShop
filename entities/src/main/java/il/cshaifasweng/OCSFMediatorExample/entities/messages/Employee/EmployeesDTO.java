@@ -73,12 +73,16 @@ public final class EmployeesDTO implements Serializable {
         private boolean active;
         private long salary;
 
+        // new field
+        private String passwordHash;
+
         public Create() {}
 
         public Create(String name, Gender gender, String email, String phone,
-                      EmployeeRole role, boolean active, long salary) {
+                      EmployeeRole role, boolean active, long salary, String passwordHash) {
             this.name = name; this.gender = gender; this.email = email; this.phone = phone;
             this.role = role; this.active = active; this.salary = salary;
+            this.passwordHash = passwordHash;
         }
 
         public String getName() { return name; }
@@ -101,6 +105,9 @@ public final class EmployeesDTO implements Serializable {
 
         public long getSalary() { return salary; }
         public void setSalary(long salary) { this.salary = salary; }
+
+        public String getPasswordHash() { return passwordHash; }
+        public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
     }
 
     // ===== Write model for Update =====
