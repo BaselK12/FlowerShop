@@ -1,5 +1,10 @@
 package il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee;
 
+import il.cshaifasweng.OCSFMediatorExample.entities.domain.EmployeeRole;
+import il.cshaifasweng.OCSFMediatorExample.entities.domain.Gender;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Role;
+
+import java.awt.*;
 import java.io.Serializable;
 import java.time.LocalDate;
 
@@ -12,39 +17,42 @@ public final class EmployeesDTO implements Serializable {
     private EmployeesDTO() {}
 
     // ===== Read model returned from the server =====
+    // ===== Read model =====
     public static final class Employee implements Serializable {
         private static final long serialVersionUID = 1L;
 
         private long id;
         private String name;
-        private String gender;    // "Female", "Male", "Other"
+        private Gender gender;  // Enum instead of String
         private String email;
         private String phone;
-        private String role;      // "Manager", "Cashier", ...
+        private EmployeeRole role;
         private boolean active;
         private long salary;
         private LocalDate hireDate;
 
-        public Employee() { }
+        public Employee() {}
 
-        public Employee(long id, String name, String gender, String email, String phone,
-                        String role, boolean active, long salary, LocalDate hireDate) {
-            this.id = id; this.name = name; this.gender = gender; this.email = email; this.phone = phone;
-            this.role = role; this.active = active; this.salary = salary; this.hireDate = hireDate;
+        public Employee(long id, String name, Gender gender, String email, String phone,
+                        EmployeeRole role, boolean active, long salary, LocalDate hireDate) {
+            this.id = id; this.name = name; this.gender = gender;
+            this.email = email; this.phone = phone;
+            this.role = role; this.active = active;
+            this.salary = salary; this.hireDate = hireDate;
         }
 
         public long getId() { return id; }
         public void setId(long id) { this.id = id; }
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
-        public String getGender() { return gender; }
-        public void setGender(String gender) { this.gender = gender; }
+        public Gender getGender() { return gender; }
+        public void setGender(Gender gender) { this.gender = gender; }
         public String getEmail() { return email; }
         public void setEmail(String email) { this.email = email; }
         public String getPhone() { return phone; }
         public void setPhone(String phone) { this.phone = phone; }
-        public String getRole() { return role; }
-        public void setRole(String role) { this.role = role; }
+        public EmployeeRole getRole() { return role; }
+        public void setRole(EmployeeRole role) { this.role = role; }
         public boolean isActive() { return active; }
         public void setActive(boolean active) { this.active = active; }
         public long getSalary() { return salary; }
@@ -58,35 +66,48 @@ public final class EmployeesDTO implements Serializable {
         private static final long serialVersionUID = 1L;
 
         private String name;
-        private String gender;
+        private Gender gender;   // Enum
         private String email;
         private String phone;
-        private String role;
+        private EmployeeRole role;  // Enum
         private boolean active;
         private long salary;
 
-        public Create() { }
+        // new field
+        private String passwordHash;
 
-        public Create(String name, String gender, String email, String phone,
-                      String role, boolean active, long salary) {
+        public Create() {}
+
+        public Create(String name, Gender gender, String email, String phone,
+                      EmployeeRole role, boolean active, long salary, String passwordHash) {
             this.name = name; this.gender = gender; this.email = email; this.phone = phone;
             this.role = role; this.active = active; this.salary = salary;
+            this.passwordHash = passwordHash;
         }
 
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
-        public String getGender() { return gender; }
-        public void setGender(String gender) { this.gender = gender; }
+
+        public Gender getGender() { return gender; }
+        public void setGender(Gender gender) { this.gender = gender; }
+
         public String getEmail() { return email; }
         public void setEmail(String email) { this.email = email; }
+
         public String getPhone() { return phone; }
         public void setPhone(String phone) { this.phone = phone; }
-        public String getRole() { return role; }
-        public void setRole(String role) { this.role = role; }
+
+        public EmployeeRole getRole() { return role; }
+        public void setRole(EmployeeRole role) { this.role = role; }
+
         public boolean isActive() { return active; }
         public void setActive(boolean active) { this.active = active; }
+
         public long getSalary() { return salary; }
         public void setSalary(long salary) { this.salary = salary; }
+
+        public String getPasswordHash() { return passwordHash; }
+        public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
     }
 
     // ===== Write model for Update =====
@@ -95,35 +116,43 @@ public final class EmployeesDTO implements Serializable {
 
         private long id;
         private String name;
-        private String gender;
+        private Gender gender;
         private String email;
         private String phone;
-        private String role;
+        private EmployeeRole role;
         private boolean active;
         private long salary;
 
-        public Update() { }
+        public Update() {}
 
-        public Update(long id, String name, String gender, String email, String phone,
-                      String role, boolean active, long salary) {
-            this.id = id; this.name = name; this.gender = gender; this.email = email; this.phone = phone;
+        public Update(long id, String name, Gender gender, String email, String phone,
+                      EmployeeRole role, boolean active, long salary) {
+            this.id = id; this.name = name; this.gender = gender;
+            this.email = email; this.phone = phone;
             this.role = role; this.active = active; this.salary = salary;
         }
 
         public long getId() { return id; }
         public void setId(long id) { this.id = id; }
+
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
-        public String getGender() { return gender; }
-        public void setGender(String gender) { this.gender = gender; }
+
+        public Gender getGender() { return gender; }
+        public void setGender(Gender gender) { this.gender = gender; }
+
         public String getEmail() { return email; }
         public void setEmail(String email) { this.email = email; }
+
         public String getPhone() { return phone; }
         public void setPhone(String phone) { this.phone = phone; }
-        public String getRole() { return role; }
-        public void setRole(String role) { this.role = role; }
+
+        public EmployeeRole getRole() { return role; }
+        public void setRole(EmployeeRole role) { this.role = role; }
+
         public boolean isActive() { return active; }
         public void setActive(boolean active) { this.active = active; }
+
         public long getSalary() { return salary; }
         public void setSalary(long salary) { this.salary = salary; }
     }

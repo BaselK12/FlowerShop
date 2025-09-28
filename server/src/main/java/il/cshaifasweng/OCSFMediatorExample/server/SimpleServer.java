@@ -1,5 +1,10 @@
 package il.cshaifasweng.OCSFMediatorExample.server;
 
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Complaint.GetComplaintsRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.CreateEmployeeRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.DeleteEmployeeRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.GetEmployeesRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.UpdateEmployeeRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.RegisterRequest;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.*;
@@ -32,10 +37,33 @@ public class SimpleServer extends ObservableServer {
 				bus.publish(new LoginRequestedEvent(lr, client));
 			} else if (msg instanceof RegisterRequest rr) {
 				bus.publish(new RegisterRequestedEvent(rr, client));
+			} else if (msg instanceof GetEmployeesRequest rr) {
+				bus.publish(new EmployeesFetchRequestedEvent(rr, client));
+			} else if (msg instanceof CreateEmployeeRequest rr) {
+				bus.publish(new EmployeeCreateRequestedEvent(rr, client));
+			} else if (msg instanceof UpdateEmployeeRequest rr) {
+				bus.publish(new EmployeeUpdateRequestedEvent(rr, client));
+			}else if (msg instanceof DeleteEmployeeRequest rr) {
+				bus.publish(new EmployeeDeleteRequestedEvent(rr, client));
+			}
+			else if (msg instanceof GetComplaintsRequest rr) {
+				bus.publish(new ComplaintsFetchRequestedEvent(
+						rr.getStatus(),
+						rr.getType(),
+						// You currently pass storeName (string). Later you might resolve this to storeId (Long).
+						null,               // storeId (if you only have name, set null for now or add lookup)
+						null,               // customerId
+						null,               // orderId
+						null,               // from
+						null,               // to
+						null,               // free text search
+						"createdAt", true,  // sort by createdAt desc
+						0,                  // page
+						50,                 // pageSize
+						client              // <-- ConnectionToClient
+				));
 			} else if (msg instanceof String s) {
 				switch (s) {
-					case "FETCH_EMPLOYEES" ->
-							bus.publish(new EmployeesFetchRequestedEvent(client));
 
 					case "EMPLOYEES_OPEN_EDITOR:NEW" ->
 							bus.publish(new EmployeesOpenEditorEvent(
@@ -52,20 +80,13 @@ public class SimpleServer extends ObservableServer {
 								bus.publish(new SendToClientEvent(
 										new ErrorResponse("Bad employee id: " + idStr), client));
 							}
-						} else if (s.startsWith("EMPLOYEES_DELETE:")) {
-							var idStr = s.substring("EMPLOYEES_DELETE:".length());
-							try {
-								long id = Long.parseLong(idStr);
-								bus.publish(new EmployeesDeleteRequestedEvent(id, client));
-							} catch (NumberFormatException e) {
-								bus.publish(new SendToClientEvent(
-										new ErrorResponse("Bad employee id: " + idStr), client));
-							}
-						} else {
+						}  else {
 							bus.publish(new SendToClientEvent(new ErrorResponse("Unknown command: " + s), client));
 						}
 					}
 				}
+			}else {
+				System.out.printf("[Server] got no handler for msg: %s\n", msg);
 			}
 		} catch (Exception e) {
 			bus.publish(new SendToClientEvent(

@@ -1,0 +1,64 @@
+CartItemCardController.java
+
+Purpose of this class:
+----------------------
+This controller manages a single "card" representing one item inside the shopping cart.
+Each card shows the flower image, name, unit price, quantity spinner, subtotal, and a remove button.
+It is linked to the FXML file CartItemCard.fxml, which defines the layout of the card.
+Multiple cards are created dynamically by CartController and inserted into the cart view (CartView.fxml).
+In other words: CartItemCardController = logic for one cart item, CartController = logic for the whole cart.
+
+Fields:
+-------
+- ProductImage (ImageView): displays the flower picture.
+- QtySpinner (Spinner<Integer>): lets the user change the quantity of this item.
+- RemoveBtn (Button): removes the item from the cart when clicked.
+- SubTotalLabel (Label): shows the subtotal (unit price * quantity).
+- UnitPriceLabel (Label): shows the price per unit.
+- NameLabel (Label): shows the item name.
+
+Data and callbacks:
+-------------------
+- item (CartItem): the CartItem object this card represents.
+- onDelete (Runnable): callback passed in by CartController, tells what to do when the item is removed.
+- onUpdate (Runnable): callback passed in by CartController, tells what to do when the quantity changes (for example, update the total).
+
+Key methods:
+------------
+1. setData(CartItem item, Runnable onDelete, Runnable onUpdate)
+   - Called by CartController when building the cart.
+   - Stores the CartItem object and the two callbacks.
+   - Updates the labels: name, unit price, image.
+   - Initializes the quantity spinner with the current quantity (1 to 99).
+   - Calls updateSubtotal() to set the initial subtotal.
+   - Adds a listener to the spinner:
+       * Whenever the user changes quantity:
+         - Update the CartItem object.
+         - Update the subtotal label.
+         - Call onUpdate.run() so CartController can recalculate totals.
+         - Send a CartUpdateRequest to the server via SimpleClient.
+
+2. updateSubtotal()
+   - Calculates subtotal using item.getSubtotal().
+   - Formats it with two decimal places and updates SubTotalLabel.
+
+3. onRemove(ActionEvent e)
+   - Triggered when the Remove button is clicked.
+   - Calls onDelete.run(), which CartController provided (this removes the item from the list and refreshes the UI).
+   - Sends a CartUpdateRequest to the server to inform that this item was removed (quantity set to 0).
+
+How it connects to CartView:
+----------------------------
+- CartView.fxml is controlled by CartController.
+- CartController loads CartItemCard.fxml for each CartItem in the cart.
+- For each card, it gets the CartItemCardController and calls setData(item, onDelete, onUpdate).
+- This way, each card is bound to a CartItem and knows how to update itself, while CartController knows how to recalculate the total and manage the overall list.
+- When user interacts with a card (changes quantity or clicks remove):
+   * CartItemCardController updates its local display and notifies CartController via callbacks.
+   * It also sends a CartUpdateRequest message to the server through SimpleClient, so the backend stays in sync.
+
+Summary:
+--------
+CartItemCardController is the "mini-controller" for one cart item card.
+It displays product info, lets the user update quantity or remove the item, and keeps the server informed.
+CartController uses many of these cards inside CartView to build the full shopping cart.

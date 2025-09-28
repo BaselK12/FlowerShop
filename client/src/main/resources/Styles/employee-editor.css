@@ -1,0 +1,161 @@
+/* ===== Base / palette (muted, no bright colors) ===== */
+.root {
+    -fx-font-family: "Segoe UI", "Inter", "Noto Sans", Arial;
+    -fx-font-size: 13px;
+    -fx-background-color: #1e1f22;              /* app background */
+    -fx-text-fill: #e2e2e2;
+}
+
+/* Card-like container */
+.grid-pane {
+    -fx-background-color: #2a2d31;              /* panel background */
+    -fx-background-radius: 10;
+    -fx-padding: 16;
+    -fx-border-color: #3a3f45;
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-hgap: 10;
+    -fx-vgap: 10;
+}
+
+/* Labels */
+.label {
+    -fx-text-fill: #cfd3d8;
+}
+
+/* Prompt text on inputs (subtle) */
+.text-input > .text {
+    -fx-fill: #e6e6e6;
+}
+.text-input .prompt-text {
+    -fx-fill: #8b9299;
+}
+
+/* TextFields */
+.text-field {
+    -fx-background-color: #222429, #222429, #2f3338;
+    -fx-background-insets: 0, 1, 2;
+    -fx-background-radius: 8, 7, 6;
+    -fx-text-fill: #e6e6e6;
+    -fx-padding: 8 10 8 10;
+    -fx-border-color: transparent;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 6, 0.2, 0, 1);
+}
+.text-field:focused {
+    -fx-background-color: #222429, #222429, #343941;
+    -fx-border-color: #5e7386;                  /* muted steel-blue */
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+}
+
+/* ComboBox */
+.combo-box-base {
+    -fx-background-color: #222429, #222429, #2f3338;
+    -fx-background-insets: 0, 1, 2;
+    -fx-background-radius: 8, 7, 6;
+    -fx-padding: 0.25em 0.6em 0.25em 0.6em;
+    -fx-text-fill: #e6e6e6;
+}
+.combo-box-base:focused {
+    -fx-background-color: #222429, #222429, #343941;
+    -fx-border-color: #5e7386;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+}
+.list-view, .list-cell {
+    -fx-background-color: #2b2f34;
+    -fx-text-fill: #e6e6e6;
+}
+.list-cell:filled:selected, .list-cell:filled:selected:hover {
+    -fx-background-color: #3a444e;
+}
+
+/* CheckBox */
+.check-box {
+    -fx-text-fill: #e2e2e2;
+}
+.check-box > .box {
+    -fx-background-color: #2f3338;
+    -fx-background-radius: 4;
+    -fx-border-color: #3a3f45;
+    -fx-border-radius: 4;
+}
+.check-box:selected > .box {
+    -fx-background-color: #3a444e;
+    -fx-border-color: #5e7386;
+}
+
+/* Buttons */
+.button {
+    -fx-background-radius: 8;
+    -fx-padding: 8 14 8 14;
+    -fx-font-size: 13px;
+    -fx-background-color: #3a3f45;
+    -fx-text-fill: #e6e6e6;
+    -fx-border-color: transparent;
+}
+.button:hover {
+    -fx-background-color: #464c54;
+}
+.button:pressed {
+    -fx-background-color: #343941;
+}
+
+/* Primary action (Save) */
+#SaveBtn {
+    -fx-background-color: #55697c;              /* muted, not bright */
+    -fx-text-fill: #ffffff;
+}
+#SaveBtn:hover {
+    -fx-background-color: #5f7387;
+}
+#SaveBtn:pressed {
+    -fx-background-color: #4e6173;
+}
+
+/* Secondary action (Cancel) */
+#CancelBtn {
+    -fx-background-color: #3a3f45;
+    -fx-text-fill: #d9d9d9;
+}
+#CancelBtn:hover {
+    -fx-background-color: #464c54;
+}
+
+/* Error message text */
+#ErrorLabel {
+    -fx-fill: #d06b6b;                          /* muted red */
+}
+
+/* Optional: mark invalid inputs by adding .invalid style class in controller */
+.invalid {
+    -fx-border-color: #d06b6b !important;
+    -fx-border-width: 1.2 !important;
+    -fx-background-color: #2b2326, #2b2326, #352a2e;
+}
+
+/* Focus ring for keyboard nav (subtle) */
+:focused {
+    -fx-effect: dropshadow(gaussian, rgba(94,115,134,0.35), 6, 0.2, 0, 0);
+}
+
+/* HBox that wraps buttons */
+.hbox {
+    -fx-alignment: center-right;
+}
+
+/* Fine-tune specific fields if desired */
+#SalaryTxt {
+    -fx-alignment: CENTER_LEFT;
+}
+#PhoneTxt {
+    -fx-font-family: "Consolas", "Fira Code", monospace;
+}
+
+/* Small caps titles, if you add any title labels later with styleClass 'title' */
+.title {
+    -fx-text-fill: #e2e6ea;
+    -fx-font-size: 15px;
+    -fx-opacity: 0.95;
+    -fx-letter-spacing: 0.03em;
+}

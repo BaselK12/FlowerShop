@@ -1,0 +1,435 @@
+# Big-picture: what this controller does
+
+`CatalogViewController` is the “orchestrator” of your catalog screen. It:
+
+* asks the server for the current catalog (`GetCatalogRequest`)
+* receives the list of `Flower` objects (`GetCatalogResponse`) via EventBus and renders:
+
+  * the **promotions strip** (top row) for items with `promo == true`
+  * the **main grid** (all filtered items)
+* listens for **cart updates** (`AddToCartResponse`) and updates the cart badge
+* wires the **search**, **category**, and **promo** filters and re-renders when they change
+* opens the **item details** modal on demand
+* cleans up its EventBus subscription when the view is closed
+
+You’re using:
+
+* **JavaFX** (FXML loaders, nodes, controls)
+* **EventBus** (loose coupling between network layer and UI)
+* **OCSF** (client/server messages)
+
+Below is a line-by-line explanation, then complete server handling, client message routing, and some best practices.
+
+---
+
+# Class anatomy (field-by-field)
+
+```java
+@FXML private TextField searchField;          // search box (“rose”, “orchid”…)
+@FXML private ComboBox<String> categoryCombo; // “All”, “Bouquet”, “Pot Plant”, etc.
+@FXML private ComboBox<String> promoModeCombo;// “All”, “Promotions Only”, “Non-Promotions”
+@FXML private TilePane itemsGrid;             // main catalog grid (ItemCard.fxml tiles)
+@FXML private HBox promotionsStrip;           // horizontal strip for promo items
+@FXML private Label cartCountLabel;           // “0 items”, updated on AddToCartResponse
+
+private List<Flower> allFlowers = new ArrayList<>();
+private boolean loggedIn = true; // (stub) replace with your real auth state
+```
+
+**Note on categories:** your `Flower` has `List<Category>` (enum values). The UI combo holds **Strings** for display, and filtering compares those strings to `Category.toString()` (or `getDisplayName()` if you added one).
+
+---
+
+# Lifecycle
+
+## `initialize()`
+
+```java
+@FXML
+public void initialize() {
+    EventBus.getDefault().register(this);
+
+    // Ask the server for the catalog
+    SimpleClient.getClient().sendToServer(new GetCatalogRequest());
+
+    // When any control changes, recompute filtered view
+    searchField.textProperty().addListener((obs, oldVal, newVal) -> applyFilters());
+    categoryCombo.setOnAction(e -> applyFilters());
+    promoModeCombo.setOnAction(e -> applyFilters());
+}
+```
+
+* **Registers** to EventBus so this controller can receive messages posted by your networking layer.
+* **Sends** `GetCatalogRequest` once to populate the screen.
+* **Hooks up** reactive UI: search text, category select, promo filter → all call `applyFilters()`.
+
+> ⚠️ If this controller can be re-created multiple times during navigation, provide a `shutdown()` (see bottom) to **unregister** from EventBus to avoid leaks.
+
+---
+
+## Receiving and rendering the catalog
+
+### `onGetCatalogResponse(GetCatalogResponse)`
+
+```java
+@Subscribe
+public void onGetCatalogResponse(GetCatalogResponse response) {
+    Platform.runLater(() -> {
+        allFlowers = response.getFlowers();
+
+        // Rebuild the category combo from the enum values present in the data
+        categoryCombo.getItems().clear();
+        categoryCombo.getItems().add("All");
+
+        allFlowers.stream()
+            .filter(f -> f.getCategory() != null)
+            .flatMap(f -> f.getCategory().stream())  // flatten List<Category>
+            .filter(Objects::nonNull)
+            .map(Category::toString)                  // or .map(Category::getDisplayName)
+            .distinct()
+            .sorted()
+            .forEach(categoryCombo.getItems()::add);
+
+        categoryCombo.getSelectionModel().selectFirst();
+
+        // Promo filter options
+        promoModeCombo.getItems().setAll("All", "Promotions Only", "Non-Promotions");
+        promoModeCombo.getSelectionModel().selectFirst();
+
+        // Initial paint
+        renderItems(allFlowers);
+    });
+}
+```
+
+* Runs on the **FX thread** using `Platform.runLater` (EventBus may call you from a non-UI thread).
+* Builds the category list from the actual data so the combo reflects what’s available.
+* Sets initial values for both combos and renders the full unfiltered list.
+
+---
+
+## Keeping the cart badge in sync
+
+### `onAddToCartResponse(AddToCartResponse)`
+
+```java
+@Subscribe
+public void onAddToCartResponse(AddToCartResponse response) {
+    Platform.runLater(() -> {
+        if (response.isSuccess()) {
+            cartCountLabel.setText(response.getCartSize() + " items");
+        } else {
+            // You can also show a toast/dialog here
+            System.err.println("AddToCart failed: " + response.getMessage());
+        }
+    });
+}
+```
+
+* Any time the server confirms an add-to-cart, the label is updated.
+* If it fails, you can surface a toast or dialog for the user.
+
+---
+
+## Filtering logic
+
+### `applyFilters()`
+
+```java
+private void applyFilters() {
+    String search = searchField.getText() != null ? searchField.getText().toLowerCase().trim() : "";
+    String category = categoryCombo.getValue();    // display string (“Bouquet”, …)
+    String promoFilter = promoModeCombo.getValue();// display string
+
+    List<Flower> filtered = allFlowers.stream()
+        // Search in name + descriptions (null-safe)
+        .filter(f -> search.isEmpty()
+            || f.getName().toLowerCase().contains(search)
+            || (f.getDescription() != null && f.getDescription().toLowerCase().contains(search))
+            || (f.getShortDescription() != null && f.getShortDescription().toLowerCase().contains(search)))
+
+        // Category: keep if “All” or any flower category’s toString() equals the selected display
+        .filter(f -> category == null || category.equals("All")
+            || (f.getCategory() != null
+                && f.getCategory().stream().anyMatch(c -> c.toString().equals(category))))
+
+        // Promo: All / Promotions Only / Non-Promotions
+        .filter(f -> {
+            if (promoFilter == null || promoFilter.equals("All")) return true;
+            if (promoFilter.equals("Promotions Only")) return f.isPromo();
+            if (promoFilter.equals("Non-Promotions")) return !f.isPromo();
+            return true;
+        })
+        .toList();
+
+    renderItems(filtered);
+}
+```
+
+* **Search** checks `name`, `description`, and `shortDescription`.
+* **Category filter** compares the combo’s display string with `Category.toString()` for each flower.
+* **Promo filter** is based on `flower.isPromo()`.
+
+> If you decide to show promos only in the strip and **exclude them from the grid**, you’d change `renderItems` rather than the filter.
+
+---
+
+## Painting the tiles
+
+### `renderItems(List<Flower>)`
+
+```java
+private void renderItems(List<Flower> flowers) {
+    itemsGrid.getChildren().clear();
+    promotionsStrip.getChildren().clear();
+
+    for (Flower f : flowers) {
+        try {
+            // main grid tile
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("ItemCard.fxml"));
+            StackPane cardNode = loader.load();
+            ItemCardController cardController = loader.getController();
+            cardController.setData(f, loggedIn, () -> openDetails(f));
+            itemsGrid.getChildren().add(cardNode);
+
+            // promo strip tile (if promo)
+            if (f.isPromo()) {
+                FXMLLoader promoLoader = new FXMLLoader(getClass().getResource("ItemCard.fxml"));
+                StackPane promoCardNode = promoLoader.load();
+                ItemCardController promoCardController = promoLoader.getController();
+                promoCardController.setData(f, loggedIn, () -> openDetails(f));
+                promotionsStrip.getChildren().add(promoCardNode);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+* **Clears** both containers before painting.
+* Loads **one FXML per tile**. For promos, it loads a **second** tile for the strip.
+  (You must load twice because a JavaFX node cannot have two parents.)
+* Wires each tile’s **Details** callback so a double-click or button can open the modal.
+
+> If you want to **avoid duplication** (i.e., promos only in the strip), skip adding promos to the grid here.
+
+---
+
+## Opening the details modal
+
+### `openDetails(Flower)`
+
+```java
+private void openDetails(Flower flower) {
+    try {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("ItemDetails.fxml"));
+        Scene scene = new Scene(loader.load());
+
+        ItemDetailsController detailsController = loader.getController();
+        detailsController.setItem(flower, loggedIn);
+
+        Stage stage = new Stage();
+        stage.initModality(Modality.APPLICATION_MODAL);
+        stage.setTitle("Flower Details");
+        stage.setScene(scene);
+        stage.showAndWait();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+```
+
+* Loads the modal FXML, passes the `Flower`, and blocks input to the underlying window until closed.
+* `ItemDetailsController` is responsible for **sending AddToCartRequest** from inside that modal.
+
+---
+
+## Optional: cleanup
+
+```java
+public void shutdown() {
+    EventBus.getDefault().unregister(this);
+}
+```
+
+Call this when the view is being disposed to prevent memory leaks / duplicate subscriptions.
+
+---
+
+# How the server should handle the messages
+
+You have three message types in play:
+
+1. **GetCatalogRequest → GetCatalogResponse**
+2. **AddToCartRequest → AddToCartResponse** (fired from ItemCard/ItemDetails)
+3. (Optionally later) **Errors / Validation** (respond with failure messages)
+
+### Message classes (shared)
+
+```java
+// Request: no fields yet, later you could add paging/filtering
+public class GetCatalogRequest implements Serializable {}
+
+// Response: a list of Flower entities
+public class GetCatalogResponse implements Serializable {
+    private final List<Flower> flowers;
+    public GetCatalogResponse(List<Flower> flowers) { this.flowers = flowers; }
+    public List<Flower> getFlowers() { return flowers; }
+}
+```
+
+```java
+public class AddToCartRequest implements Serializable {
+    private final String sku;
+    private final int quantity;
+    public AddToCartRequest(String sku, int quantity) { ... }
+    public String getSku() { ... }
+    public int getQuantity() { ... }
+}
+
+public class AddToCartResponse implements Serializable {
+    private final boolean success;
+    private final String message;
+    private final int cartSize; // updated size
+    // getters...
+}
+```
+
+### Server (OCSF) skeleton
+
+In your server (e.g., `SimpleServer extends AbstractServer`):
+
+```java
+@Override
+protected void handleMessageFromClient(Object msg, ConnectionToClient client) {
+    try {
+        if (msg instanceof GetCatalogRequest) {
+            List<Flower> flowers = catalogService.loadCatalog(); // from DB or in-memory
+            client.sendToClient(new GetCatalogResponse(flowers));
+            return;
+        }
+
+        if (msg instanceof AddToCartRequest req) {
+            int updated = cartService.addItem(client.getId(), req.getSku(), req.getQuantity());
+            client.sendToClient(new AddToCartResponse(true, "Added to cart", updated));
+            return;
+        }
+
+        // ... other message types
+
+    } catch (Exception ex) {
+        ex.printStackTrace();
+        // You can send an error response to the client if you have a generic error message type
+    }
+}
+```
+
+#### `catalogService.loadCatalog()`
+
+* **In-memory demo** while developing:
+
+  ```java
+  List<Flower> loadCatalog() {
+      return List.of(
+        // Make sure you fill: sku, name, description, shortDescription, price, imageUrl, promo, category list
+      );
+  }
+  ```
+* **Production**: query with JPA/Hibernate:
+
+  ```java
+  List<Flower> loadCatalog() {
+      EntityManager em = emf.createEntityManager();
+      List<Flower> res = em.createQuery("FROM Flower", Flower.class).getResultList();
+      em.close();
+      return res;
+  }
+  ```
+
+#### `cartService.addItem(clientId, sku, qty)`
+
+* Minimal in-memory sketch:
+
+  ```java
+  class CartService {
+      private final Map<Object, Map<String,Integer>> carts = new ConcurrentHashMap<>();
+      int addItem(Object clientId, String sku, int qty) {
+          var cart = carts.computeIfAbsent(clientId, id -> new ConcurrentHashMap<>());
+          cart.merge(sku, qty, Integer::sum);
+          return cart.values().stream().mapToInt(Integer::intValue).sum();
+      }
+  }
+  ```
+* Replace with DB-backed cart later.
+
+---
+
+# How the client should route messages to EventBus
+
+Your `SimpleClient` (OCSF client) should take **ANY** message it receives and post it to EventBus so whichever controller cares can react:
+
+```java
+@Override
+protected void handleMessageFromServer(Object msg) {
+    // Route to UI via EventBus (controllers @Subscribe to types they care about)
+    EventBus.getDefault().post(msg);
+}
+```
+
+That’s why your `CatalogViewController` methods annotated with `@Subscribe` are invoked.
+
+> If you have more complex routing, you can also post **wrapped** events (e.g., `new UiEvent.AddToCartResponseEvent(response)`), but posting the message directly is the simplest.
+
+---
+
+# Item card + details controllers (where requests are fired)
+
+* **`ItemCardController`** calls `sendToServer(new AddToCartRequest(sku, 1))` when the user clicks **Add to Cart** on a tile.
+* **`ItemDetailsController`** does the same from inside the modal.
+* The server replies with **`AddToCartResponse`**.
+* `SimpleClient.handleMessageFromServer` posts that to EventBus.
+* `CatalogViewController.onAddToCartResponse` updates the **cart badge**.
+
+This is decoupled, testable, and keeps network logic out of the view FXML.
+
+---
+
+# Error handling & UX tips
+
+* **Network errors**: catch and show a toast/snackbar (“Couldn’t reach the server. Try again.”).
+* **Add to cart failure** (`success=false`): show `response.getMessage()` to the user.
+* **Empty states**: If `allFlowers` is empty after response, show a friendly “No items found” label in the grid.
+* **Performance**: Loading 2× FXML for promos is correct but can be heavy at scale. Consider:
+
+  * Virtualized list solutions, or
+  * Reuse views (cell factory style) if the catalog grows huge.
+
+---
+
+# Testing checklist
+
+* Start server with a few `Flower`s, including:
+
+  * at least one with `promo = true`
+  * a mix of categories in the `List<Category>`
+* Start client → you should see:
+
+  * Promotions at the top
+  * All items in the grid
+  * Category combo populated with “All + distinct categories”
+  * Promo filter working
+  * Search working for name, description, shortDescription
+* Click **Add to Cart** on any tile → the cart badge increments
+* Double-click a tile → **ItemDetails** opens; **Add to Cart** from the modal also increments badge
+* Navigate away (if applicable) → ensure `shutdown()` is called to unregister EventBus
+
+---
+
+# Summary
+
+* **Controller flow**: request → receive → render → filter → open details → update cart.
+* **Server**: minimal handlers for `GetCatalogRequest` and `AddToCartRequest`, responding with `GetCatalogResponse` / `AddToCartResponse`.
+* **Client routing**: `SimpleClient` posts server messages to EventBus; controllers subscribe and update the UI on the FX thread.
+* **Categories**: UI shows Strings; data uses `List<Category>` enums; conversion via `toString()` (or `getDisplayName()`).
+
