@@ -5,18 +5,18 @@ import java.io.Serializable;
 public class SubmitComplaintRequest implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private String customerId;   // optional if anonymous
-    private String orderId;      // optional
+    private Long customerId;   // now Long
+    private Long orderId;      // now Long
     private String category;
     private String subject;
     private String message;
     private boolean anonymous;
-    private String email;        // null if anonymous
-    private String phone;        // null if anonymous
+    private String email;
+    private String phone;
 
     public SubmitComplaintRequest() {}
 
-    public SubmitComplaintRequest(String customerId, String orderId, String category,
+    public SubmitComplaintRequest(Long customerId, Long orderId, String category,
                                   String subject, String message,
                                   boolean anonymous, String email, String phone) {
         this.customerId = customerId;
@@ -29,11 +29,11 @@ public class SubmitComplaintRequest implements Serializable {
         this.phone = phone;
     }
 
-    public String getCustomerId() { return customerId; }
-    public void setCustomerId(String customerId) { this.customerId = customerId; }
+    public Long getCustomerId() { return customerId; }
+    public void setCustomerId(Long customerId) { this.customerId = customerId; }
 
-    public String getOrderId() { return orderId; }
-    public void setOrderId(String orderId) { this.orderId = orderId; }
+    public Long getOrderId() { return orderId; }
+    public void setOrderId(Long orderId) { this.orderId = orderId; }
 
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }

@@ -157,9 +157,24 @@ public class FilingComplaintController {
         showErrors(List.of()); // clear
         SubmitBtn.setDisable(true);
 
+        // Convert orderId text field to Long if possible
+        Long orderId = null;
+        String orderText = trim(OrderTxt.getText());
+        if (!orderText.isEmpty()) {
+            try {
+                orderId = Long.valueOf(orderText);
+            } catch (NumberFormatException e) {
+                showErrors(List.of("Order ID must be a valid number."));
+                SubmitBtn.setDisable(false);
+                return;
+            }
+        }
+
+        Long customerId = Long.valueOf(1); //App.getLoggedInCustomerId();
+
         SubmitComplaintRequest req = new SubmitComplaintRequest(
-                "customer123", // needs to replace it with the customer id that submitted the compliant
-                trim(OrderTxt.getText()),
+                customerId, // needs to replace it with the customer id that submitted the compliant
+                orderId,
                 CategoryBox.getValue(),
                 trim(SubjectTxt.getText()),
                 trim(MsgTxt.getText()),
