@@ -4,6 +4,7 @@ import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.Category;
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.Flower;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.AddToCartRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.FlowerDTO;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -12,6 +13,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 
 import java.io.IOException;
+import java.util.List;
 
 public class ItemCardController {
 
@@ -25,39 +27,47 @@ public class ItemCardController {
     @FXML private Button addToCartBtn;
     @FXML private Button detailsBtn;
 
-    private Flower item;
+    private FlowerDTO item;
     private Runnable onDetails;
     private boolean loggedIn;
 
-    public void setData(Flower item, boolean loggedIn, Runnable onDetails) {
+    // ============================
+    // Set data for this card
+    // ============================
+    public void setData(FlowerDTO item, boolean loggedIn, Runnable onDetails) {
         this.item = item;
-        this.onDetails = onDetails;
         this.loggedIn = loggedIn;
+        this.onDetails = onDetails;
 
-        // Name
+        // Product name
         nameLabel.setText(item.getName());
-
-        // Category display
-        if (item.getCategory() != null && !item.getCategory().isEmpty()) {
-            categoryChip.setText(
-                    item.getCategory().stream()
-                            .map(Enum::toString) // Or .map(Category::getDisplayName)
-                            .reduce((a, b) -> a + ", " + b)
-                            .orElse("Uncategorized")
-            );
-        } else {
-            categoryChip.setText("Uncategorized");
-        }
 
         // Short description
         if (item.getShortDescription() != null && !item.getShortDescription().isEmpty()) {
             shortDescLabel.setText(item.getShortDescription());
         } else {
-            shortDescLabel.setText(item.getDescription());
+            shortDescLabel.setText("");
         }
 
-        // Price
-        priceLabel.setText("$" + item.getPrice());
+        // Categories
+        List<String> cats = item.getCategories();
+        if (cats != null && !cats.isEmpty()) {
+            categoryChip.setText(String.join(", ", cats));
+        } else {
+            categoryChip.setText("Uncategorized");
+        }
+
+        // Price display (handle promotion price if exists)
+        double price = item.getPrice();
+        double effectivePrice = item.getEffectivePrice();
+        if (item.getPromotion() != null && item.getPromotion().isActive() && effectivePrice < price) {
+            priceLabel.setText(String.format("$%.2f  (Now: $%.2f)", price, effectivePrice));
+            promoRibbon.setText(item.getPromotion().getName());
+            promoRibbon.setVisible(true);
+        } else {
+            priceLabel.setText(String.format("$%.2f", price));
+            promoRibbon.setVisible(false);
+        }
 
         // Image
         if (item.getImageUrl() != null && !item.getImageUrl().isEmpty()) {
@@ -68,9 +78,6 @@ public class ItemCardController {
             }
         }
 
-        // Promo flag
-        promoRibbon.setVisible(item.isPromo());
-
         // Login state
         addToCartBtn.setDisable(!loggedIn);
 
@@ -78,72 +85,37 @@ public class ItemCardController {
         addToCartBtn.setOnAction(e -> sendAddToCart());
         detailsBtn.setOnAction(e -> openDetails());
         itemCardRoot.setOnMouseClicked(e -> {
-            if (e.getClickCount() == 2) {
-                openDetails();
-            }
+            if (e.getClickCount() == 2) openDetails();
         });
     }
 
+    // ============================
+    // Add to cart logic
+    // ============================
     private void sendAddToCart() {
         if (item == null) return;
 
         try {
-            SimpleClient.getClient().sendToServer(
-                    new AddToCartRequest(item.getSku(), 1)
-            );
+            SimpleClient.getClient().sendToServer(new AddToCartRequest(item.getSku(), 1));
             System.out.println("Sent AddToCartRequest for sku=" + item.getSku());
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    // ============================
+    // Open details view
+    // ============================
     private void openDetails() {
         if (onDetails != null) {
             onDetails.run();
         }
     }
 
-    ////// use this for the home page
-
-    public void setItem(Flower flower, Runnable onAddToCart, Runnable onDetails) {
-        this.item = flower;
-
-        // Fill UI with flower data
-        nameLabel.setText(flower.getName());
-        shortDescLabel.setText(
-                (flower.getShortDescription() != null && !flower.getShortDescription().isEmpty())
-                        ? flower.getShortDescription()
-                        : (flower.getDescription() != null ? flower.getDescription() : "")
-        );
-        priceLabel.setText(String.format("$%.2f", flower.getPrice()));
-
-        if (flower.getCategory() != null && !flower.getCategory().isEmpty()) {
-            Category firstCategory = flower.getCategory().get(0);
-            categoryChip.setText(firstCategory.getDisplayName());
-        } else {
-            categoryChip.setText("Uncategorized");
-        }
-
-        if (flower.getImageUrl() != null && !flower.getImageUrl().isEmpty()) {
-            try {
-                productImage.setImage(new Image(flower.getImageUrl(), true));
-            } catch (Exception e) {
-                System.err.println("Failed to load image: " + flower.getImageUrl());
-            }
-        }
-
-        promoRibbon.setVisible(flower.isPromo());
-
-        // Wire actions
-        addToCartBtn.setOnAction(e -> {
-            if (onAddToCart != null) onAddToCart.run();
-        });
-        detailsBtn.setOnAction(e -> {
-            if (onDetails != null) onDetails.run();
-        });
-    }
-
-    public Flower getFlower() {
+    // ============================
+    // Getter
+    // ============================
+    public FlowerDTO getItem() {
         return item;
     }
 }

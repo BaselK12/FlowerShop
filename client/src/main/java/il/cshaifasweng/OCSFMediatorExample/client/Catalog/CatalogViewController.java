@@ -1,11 +1,11 @@
 package il.cshaifasweng.OCSFMediatorExample.client.Catalog;
 
+import il.cshaifasweng.OCSFMediatorExample.client.App;
 import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.Category;
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.Flower;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.AddToCartResponse;
-import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.GetCatalogRequest;
-import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.GetCatalogResponse;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.*;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -22,9 +22,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class CatalogViewController {
@@ -36,61 +34,82 @@ public class CatalogViewController {
     @FXML private HBox promotionsStrip;
     @FXML private Label cartCountLabel;
 
-    private List<Flower> allFlowers = new ArrayList<>();
-    private boolean loggedIn = true; // TODO: replace with actual login state
+    private List<FlowerDTO> allFlowers = new ArrayList<>();
+    private List<CategoryDTO> allCategories = new ArrayList<>();
+    private List<PromotionDTO> allPromotions = new ArrayList<>();
+    private final Map<String, Long> categoryNameToId = new HashMap<>();
+
+    private boolean loggedIn = true; // TODO: connect to actual login session
 
     @FXML
     public void initialize() {
-        EventBus.getDefault().register(this);
+        if (!EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().register(this);
+        }
 
-        // Request the catalog from server
+        // Request initial data
         try {
-            SimpleClient.getClient().sendToServer(new GetCatalogRequest());
+            App.getClient().sendToServer(new GetCategoriesRequest());
+            App.getClient().sendToServer(new GetPromotionsRequest());
+            App.getClient().sendToServer(new GetCatalogRequest(null, null, null, false));
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        // Search + filters listeners
+        // Listeners
         searchField.textProperty().addListener((obs, oldVal, newVal) -> applyFilters());
         categoryCombo.setOnAction(e -> applyFilters());
         promoModeCombo.setOnAction(e -> applyFilters());
     }
 
-    /**
-     * Handles catalog response from server.
-     */
+    // =======================================
+    // EventBus Handlers (Server Responses)
+    // =======================================
+
     @Subscribe
     public void onGetCatalogResponse(GetCatalogResponse response) {
         Platform.runLater(() -> {
             allFlowers = response.getFlowers();
-
-            // Fill category combo dynamically
-            categoryCombo.getItems().clear();
-            categoryCombo.getItems().add("All");
-
-            allFlowers.stream()
-                    .filter(f -> f.getCategory() != null)
-                    .flatMap(f -> f.getCategory().stream())        // flatten list<Category>
-                    .filter(Objects::nonNull)
-                    .map(Category::toString)                       // convert enum to display text
-                    .distinct()
-                    .sorted()
-                    .forEach(categoryCombo.getItems()::add);
-
-            categoryCombo.getSelectionModel().selectFirst();
-
-            // Fill promo mode combo
-            promoModeCombo.getItems().setAll("All", "Promotions Only", "Non-Promotions");
-            promoModeCombo.getSelectionModel().selectFirst();
-
-            // Render items initially
             renderItems(allFlowers);
         });
     }
 
-    /**
-     * Handles AddToCart responses to update the cart count.
-     */
+    @Subscribe
+    public void onGetCategoriesResponse(GetCategoriesResponse response) {
+        Platform.runLater(() -> {
+            allCategories = response.getCategories();
+            categoryCombo.getItems().clear();
+            categoryCombo.getItems().add("All");
+            categoryNameToId.clear();
+
+            for (CategoryDTO cat : allCategories) {
+                String display = cat.getDisplayName() != null ? cat.getDisplayName() : cat.getName();
+                categoryCombo.getItems().add(display);
+                categoryNameToId.put(display, cat.getId());
+            }
+
+            categoryCombo.getSelectionModel().selectFirst();
+        });
+    }
+
+    @Subscribe
+    public void onGetPromotionsResponse(GetPromotionsResponse response) {
+        Platform.runLater(() -> {
+            allPromotions = response.getPromotions();
+            promoModeCombo.getItems().clear();
+            promoModeCombo.getItems().add("All");
+            promoModeCombo.getItems().add("Non-Promotions");
+
+            // Add all promotions (active + expired) for visibility
+            allPromotions.stream()
+                    .sorted(Comparator.comparing(PromotionDTO::getName))
+                    .map(PromotionDTO::toString)
+                    .forEach(promoModeCombo.getItems()::add);
+
+            promoModeCombo.getSelectionModel().selectFirst();
+        });
+    }
+
     @Subscribe
     public void onAddToCartResponse(AddToCartResponse response) {
         Platform.runLater(() -> {
@@ -98,77 +117,101 @@ public class CatalogViewController {
                 cartCountLabel.setText(response.getCartSize() + " items");
             } else {
                 System.err.println("AddToCart failed: " + response.getMessage());
-                // TODO: show a toast/alert to the user
             }
         });
     }
 
-    /**
-     * Apply search and filter logic.
-     */
+    // =======================================
+    // Apply Filters → Server Request
+    // =======================================
+
     private void applyFilters() {
-        String search = searchField.getText() != null ? searchField.getText().toLowerCase().trim() : "";
-        String category = categoryCombo.getValue();
-        String promoFilter = promoModeCombo.getValue();
+        String search = searchField.getText() != null ? searchField.getText().trim() : "";
+        String selectedCategory = categoryCombo.getValue();
+        String selectedPromo = promoModeCombo.getValue();
 
-        List<Flower> filtered = allFlowers.stream()
-                // Search in name or descriptions
-                .filter(f -> search.isEmpty()
-                        || f.getName().toLowerCase().contains(search)
-                        || (f.getDescription() != null && f.getDescription().toLowerCase().contains(search))
-                        || (f.getShortDescription() != null && f.getShortDescription().toLowerCase().contains(search)))
-                // Category filter (matches any category in the list)
-                .filter(f -> category == null || category.equals("All")
-                        || (f.getCategory() != null &&
-                        f.getCategory().stream().anyMatch(c -> c.toString().equals(category))))
-                // Promo filter
-                .filter(f -> {
-                    if (promoFilter == null || promoFilter.equals("All")) return true;
-                    if (promoFilter.equals("Promotions Only")) return f.isPromo();
-                    if (promoFilter.equals("Non-Promotions")) return !f.isPromo();
-                    return true;
-                })
-                .toList();
+        Long categoryId = null;
+        Long promotionId = null;
+        boolean onlyActivePromotions = false;
 
-        renderItems(filtered);
+        // Category filter
+        if (selectedCategory != null && !selectedCategory.equals("All")) {
+            categoryId = categoryNameToId.get(selectedCategory);
+        }
+
+        // Promotion filter
+        if (selectedPromo != null && !selectedPromo.equals("All")) {
+            if (selectedPromo.equals("Non-Promotions")) {
+                promotionId = 0L;
+            } else {
+                // Remove suffixes like " (Active)" / " (Expired)"
+                String cleanPromoName = selectedPromo.replace(" (Active)", "").replace(" (Expired)", "").trim();
+
+                promotionId = allPromotions.stream()
+                        .filter(p -> p.getName().equalsIgnoreCase(cleanPromoName))
+                        .map(PromotionDTO::getId)
+                        .findFirst()
+                        .orElse(null);
+            }
+        }
+
+        // Whether user asked for active promos only
+        onlyActivePromotions = selectedPromo != null
+                && !selectedPromo.equals("All")
+                && !selectedPromo.equals("Non-Promotions");
+
+        // Send request
+        try {
+            GetCatalogRequest req = new GetCatalogRequest(
+                    categoryId != null ? categoryId.toString() : null,
+                    (promotionId != null && promotionId > 0) ? promotionId : null,
+                    search.isEmpty() ? null : search,
+                    onlyActivePromotions
+            );
+            App.getClient().sendToServer(req);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    /**
-     * Renders the item cards into the grid and promotions strip.
-     */
-    private void renderItems(List<Flower> flowers) {
+    // =======================================
+    // Rendering UI
+    // =======================================
+
+    private void renderItems(List<FlowerDTO> flowers) {
         itemsGrid.getChildren().clear();
         promotionsStrip.getChildren().clear();
 
-        for (Flower f : flowers) {
+        if (flowers.isEmpty()) {
+            Label empty = new Label("No flowers found.");
+            empty.getStyleClass().add("empty-message");
+            itemsGrid.getChildren().add(empty);
+            return;
+        }
+
+        for (FlowerDTO f : flowers) {
             try {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("ItemCard.fxml"));
                 StackPane cardNode = loader.load();
                 ItemCardController cardController = loader.getController();
-
                 cardController.setData(f, loggedIn, () -> openDetails(f));
 
                 itemsGrid.getChildren().add(cardNode);
 
-                if (f.isPromo()) {
+                if (f.getPromotion() != null && f.getPromotion().isActive()) {
                     FXMLLoader promoLoader = new FXMLLoader(getClass().getResource("ItemCard.fxml"));
                     StackPane promoCardNode = promoLoader.load();
                     ItemCardController promoCardController = promoLoader.getController();
                     promoCardController.setData(f, loggedIn, () -> openDetails(f));
-
                     promotionsStrip.getChildren().add(promoCardNode);
                 }
-
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    /**
-     * Opens the details modal for a flower.
-     */
-    private void openDetails(Flower flower) {
+    private void openDetails(FlowerDTO flower) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("ItemDetails.fxml"));
             Scene scene = new Scene(loader.load());
@@ -186,9 +229,6 @@ public class CatalogViewController {
         }
     }
 
-    /**
-     * Optional: call this when leaving the view to avoid EventBus leaks
-     */
     public void shutdown() {
         EventBus.getDefault().unregister(this);
     }

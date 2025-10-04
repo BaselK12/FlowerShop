@@ -1,5 +1,8 @@
 package il.cshaifasweng.OCSFMediatorExample.server;
 
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.GetCatalogRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.GetCategoriesRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.GetPromotionsRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Complaint.GetComplaintsRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.CreateEmployeeRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.DeleteEmployeeRequest;
@@ -8,6 +11,9 @@ import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.UpdateEmpl
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.RegisterRequest;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.*;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Catalog.GetCatalogRequestEvent;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Catalog.GetCategoriesRequestEvent;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Catalog.GetPromotionsRequestEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ObservableServer;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ConnectionToClient;
 
@@ -45,6 +51,12 @@ public class SimpleServer extends ObservableServer {
 				bus.publish(new EmployeeUpdateRequestedEvent(rr, client));
 			}else if (msg instanceof DeleteEmployeeRequest rr) {
 				bus.publish(new EmployeeDeleteRequestedEvent(rr, client));
+			}else if (msg instanceof GetCatalogRequest rr) {
+				bus.publish(new GetCatalogRequestEvent(rr, client));
+			}else if (msg instanceof GetPromotionsRequest rr) {
+				bus.publish(new GetPromotionsRequestEvent(rr, client));
+			}else if (msg instanceof GetCategoriesRequest rr) {
+				bus.publish(new GetCategoriesRequestEvent(rr, client));
 			}
 			else if (msg instanceof GetComplaintsRequest rr) {
 				bus.publish(new ComplaintsFetchRequestedEvent(

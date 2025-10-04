@@ -1,5 +1,6 @@
 package il.cshaifasweng.OCSFMediatorExample.client;
 
+import il.cshaifasweng.OCSFMediatorExample.entities.domain.Customer;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -24,6 +25,10 @@ public class App extends Application {
     private static SimpleClient client;
     private static Stage mainStage;
 
+    private static Customer loggedInCustomer;
+
+
+
     public static SimpleClient getClient() {
         return client;
     }
@@ -45,17 +50,31 @@ public class App extends Application {
 
 //        NET = new ClientBridge("127.0.0.1", 3000);
 
-        scene = new Scene(loadFXML("ManageComplaints"), 640, 480);
-        stage.setScene(scene);
-        stage.setTitle("FlowerShop Client");
-        stage.show();
 
+        // ## manage Complaints ## //
+//        scene = new Scene(loadFXML("ManageComplaints"), 640, 480);
+//        stage.setScene(scene);
+//        stage.setTitle("FlowerShop Client");
+//        stage.show();
 
+        // ## manage employee ## //
 //        scene = new Scene(loadFXML("/il/cshaifasweng/OCSFMediatorExample/client/employee/ManageEmployees"), 640, 480);
 //        stage.setScene(scene);
 //        stage.setTitle("FlowerShop Client");
 //        stage.show();
 
+        // ## Account Viewer ## //
+//        scene = new Scene(loadFXML("/il/cshaifasweng/OCSFMediatorExample/client/Account/MyAccount"), 640, 480);
+//        stage.setScene(scene);
+//        stage.setTitle("FlowerShop Client");
+//        stage.show();
+
+
+
+        scene = new Scene(loadFXML("/il/cshaifasweng/OCSFMediatorExample/client/Catalog/CatalogView"), 640, 480);
+        stage.setScene(scene);
+        stage.setTitle("FlowerShop Client");
+        stage.show();
 
 //        if (client.isConnected()) {
 //            scene = new Scene(loadFXML("primary"), 640, 480);
