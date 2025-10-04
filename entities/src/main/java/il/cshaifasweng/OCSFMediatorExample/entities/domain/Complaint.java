@@ -19,82 +19,89 @@ public class Complaint implements Serializable {
     @Column(name = "id")
     private Long id;
 
-    // Store (added for UI “Store” column/filter)
-    // You can fill these on the server when joining order → store.
-    @Column(name = "store_id", length = 50, nullable = false)
-    private Long storeId;
+    // Store info (optional)
+    @Column(name = "store_id")
+    private String storeId;          // keep as String to match DTO/UI
 
     @Transient
     private String storeName;
 
-    // Existing fields
-    @Column(name = "customer_id", length = 50, nullable = false)
-    private Long customerId;
+    // Customer/order info
+    @Column(name = "customer_id")
+    private String customerId;
 
-    @Column(name = "order_id", length = 50, nullable = false)
-    private Long orderId;
+    @Column(name = "order_id")
+    private String orderId;
 
-    // Type (added for UI “Type” column/filter)
-    // Keep as String to match the controller’s String cell value factory.
-    // Examples: "Service", "Product Quality", "Delivery", "Pricing", "Billing", "Refund", "Technical", "Other"
-    @Column(name = "type", length = 100, nullable = false)
+    // Complaint type/category
+    @Column(name = "type")
     private String type;
 
-    @Column(name = "subject", columnDefinition = "TEXT", nullable = false)
+    @Column(name = "subject", columnDefinition = "TEXT")
     private String subject;
 
-    // Description / text
-    @Column(name = "description", columnDefinition = "TEXT", nullable = false)
+    @Column(name = "description", columnDefinition = "TEXT")
     private String text;
 
+    // Optional fields from DTO
+    @Column(name = "anonymous")
+    private boolean anonymous;
+
+    @Column(name = "email")
+    private String email;
+
+    @Column(name = "phone")
+    private String phone;
+
     @Enumerated(EnumType.STRING)
-    @Column(
-            name = "status",
-            columnDefinition = "ENUM('OPEN','IN_PROGRESS','RESOLVED','REJECTED')"
-    )
+    @Column(name = "status")
     private Status status;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    // Resolution notes (if any)
     @Column(name = "resolution")
     private String resolution;
 
+    // --- Constructors ---
     public Complaint() {}
 
     // --- Getters / Setters ---
-
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public Long getStoreId() { return storeId; }
-    public void setStoreId(Long storeId) { this.storeId = storeId; }
+    public String getStoreId() { return storeId; }
+    public void setStoreId(String storeId) { this.storeId = storeId; }
 
     public String getStoreName() { return storeName; }
     public void setStoreName(String storeName) { this.storeName = storeName; }
 
-    public Long getCustomerId() { return customerId; }
-    public void setCustomerId(Long customerId) { this.customerId = customerId; }
+    public String getCustomerId() { return customerId; }
+    public void setCustomerId(String customerId) { this.customerId = customerId; }
 
-    public Long getOrderId() { return orderId; }
-    public void setOrderId(Long orderId) { this.orderId = orderId; }
+    public String getOrderId() { return orderId; }
+    public void setOrderId(String orderId) { this.orderId = orderId; }
 
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
 
+    public String getSubject() { return subject; }
+    public void setSubject(String subject) { this.subject = subject; }
+
     public String getText() { return text; }
     public void setText(String text) { this.text = text; }
 
-    public Status getStatus() {
-        return status;
-    }
-    public void setStatus(Status status) {
-        this.status = status;
-    }
+    public boolean isAnonymous() { return anonymous; }
+    public void setAnonymous(boolean anonymous) { this.anonymous = anonymous; }
 
-    public String getSubject() { return subject; }
-    public void setSubject(String subject) {this.subject = subject; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+
+    public Status getStatus() { return status; }
+    public void setStatus(Status status) { this.status = status; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
@@ -103,16 +110,13 @@ public class Complaint implements Serializable {
     public void setResolution(String resolution) { this.resolution = resolution; }
 
     // --- Convenience for UI ---
-
-    // Controller uses getSummary(); provide a safe, computed summary so you don’t have to store it separately.
-    public String getSummary() {
-        return getSummary(120); // default limit used by the controller
-    }
-
-    // For UI
     @Transient
     public String getStatusName() {
         return status == null ? "" : status.name();
+    }
+
+    public String getSummary() {
+        return getSummary(120);
     }
 
     public String getSummary(int maxLen) {
@@ -121,19 +125,18 @@ public class Complaint implements Serializable {
         return s.substring(0, Math.max(0, maxLen - 1)) + "…";
     }
 
-    // Useful for Table sorting or logging
     @Override
     public String toString() {
         return "Complaint{" +
-                "id='" + id + '\'' +
-                ", storeName='" + storeName + '\'' +
+                "id=" + id +
+                ", customerId='" + customerId + '\'' +
                 ", orderId='" + orderId + '\'' +
+                ", type='" + type + '\'' +
                 ", status=" + status +
                 ", createdAt=" + createdAt +
                 '}';
     }
 
-    // Equality by id (common for DTOs)
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
