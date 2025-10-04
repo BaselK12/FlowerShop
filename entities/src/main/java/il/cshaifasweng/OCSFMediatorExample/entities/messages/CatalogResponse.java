@@ -1,5 +1,7 @@
 package il.cshaifasweng.OCSFMediatorExample.entities.messages;
 
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.FlowerDTO;
+
 import java.io.Serializable;
 import java.util.List;
 

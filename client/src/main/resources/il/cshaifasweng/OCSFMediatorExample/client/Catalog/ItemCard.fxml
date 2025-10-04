@@ -14,7 +14,7 @@
       <StackPane fx:id="imageStack" maxHeight="160.0" prefHeight="160.0" prefWidth="200.0" StackPane.alignment="TOP_CENTER">
          <children>
             <ImageView fx:id="productImage" cache="true" fitHeight="160.0" fitWidth="230.0" pickOnBounds="true" preserveRatio="true" />
-            <Label styleClass="promo-ribbon" stylesheets="@../../../../../Styles/catalog.css" text="PROMO" visible="false" StackPane.alignment="TOP_RIGHT">
+            <Label fx:id="promoRibbon" styleClass="promo-ribbon" stylesheets="@../../../../../Styles/catalog.css" text="PROMO" visible="false" StackPane.alignment="TOP_RIGHT">
                <StackPane.margin>
                   <Insets right="5.0" top="5.0" />
                </StackPane.margin>

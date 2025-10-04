@@ -2,6 +2,9 @@ package il.cshaifasweng.OCSFMediatorExample.server;
 
 import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.*;
+import il.cshaifasweng.OCSFMediatorExample.server.handlers.catalog.GetCatalogHandler;
+import il.cshaifasweng.OCSFMediatorExample.server.handlers.catalog.GetCategoriesHandler;
+import il.cshaifasweng.OCSFMediatorExample.server.handlers.catalog.GetPromotionsHandler;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.complaints.GetComplaintsHandler;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.employee.*;
 import il.cshaifasweng.OCSFMediatorExample.server.session.TX;
@@ -28,6 +31,11 @@ public class App {
         new EmployeeUpdateHandler(bus);
         new EmployeesDeleteHandler(bus);
         new EmployeesFetchHandler(bus);
+
+        // Catalog
+        new GetCatalogHandler(bus);
+        new GetCategoriesHandler(bus);
+        new GetPromotionsHandler(bus);
 
 
         // optional smoke to force Hibernate to init once (safe to remove)

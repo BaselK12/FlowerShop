@@ -1,12 +1,17 @@
 package il.cshaifasweng.OCSFMediatorExample.server.model;
 
-import il.cshaifasweng.OCSFMediatorExample.entities.domain.Employee;
+import il.cshaifasweng.OCSFMediatorExample.entities.domain.*;
 
 public final class ModelRegistry {
     private ModelRegistry() {}
     public static Class<?>[] entities() {
         return new Class<?>[] {
-                Employee.class
+                Employee.class,
+                Complaint.class,
+                Category.class,
+                Flower.class,
+                Promotion.class,
+                Stores.class
                 // Department.class, Order.class, Product.class, Customer.class, ...
         };
     }

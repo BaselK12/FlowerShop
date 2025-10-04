@@ -19,6 +19,10 @@
         <mapping class="il.cshaifasweng.OCSFMediatorExample.entities.domain.Complaint"/>
         <mapping class="il.cshaifasweng.OCSFMediatorExample.entities.domain.Stores"/>
         <mapping class="il.cshaifasweng.OCSFMediatorExample.entities.domain.Employee"/>
+        <mapping class="il.cshaifasweng.OCSFMediatorExample.entities.domain.Promotion"/>
+        <mapping class="il.cshaifasweng.OCSFMediatorExample.entities.domain.Category"/>
+        <mapping class="il.cshaifasweng.OCSFMediatorExample.entities.domain.Flower"/>
+
         <!-- add more as you map them (Customer, Order, etc.) -->
     </session-factory>
 </hibernate-configuration>

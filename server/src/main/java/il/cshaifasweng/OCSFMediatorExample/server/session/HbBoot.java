@@ -49,3 +49,28 @@ public final class HbBoot {
         return SESSION_FACTORY;
     }
 }
+
+
+//public final class HbBoot {
+//    private static final SessionFactory SESSION_FACTORY = build();
+//
+//    private HbBoot() {}
+//
+//    private static SessionFactory build() {
+//        Configuration cfg = new Configuration().configure();
+//
+//        // This scans for all annotated @Entity classes in the package
+//        cfg.addPackage("il.cshaifasweng.OCSFMediatorExample.entities.domain");
+//
+//        // Build session factory
+//        ServiceRegistry registry = new StandardServiceRegistryBuilder()
+//                .applySettings(cfg.getProperties())
+//                .build();
+//
+//        return cfg.buildSessionFactory(registry);
+//    }
+//
+//    public static SessionFactory sf() {
+//        return SESSION_FACTORY;
+//    }
+//}
