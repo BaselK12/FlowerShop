@@ -19,28 +19,31 @@ public class Complaint implements Serializable {
     @Column(name = "id")
     private Long id;
 
-    // Store info (optional)
-    @Column(name = "store_id")
-    private String storeId;          // keep as String to match DTO/UI
+    // Store (added for UI “Store” column/filter)
+    // You can fill these on the server when joining order → store.
+    @Column(name = "store_id", length = 50, nullable = false)
+    private Long storeId;        // keep as String to match DTO/UI
 
     @Transient
     private String storeName;
 
-    // Customer/order info
-    @Column(name = "customer_id")
-    private String customerId;
+    // Existing fields
+    @Column(name = "customer_id", length = 50, nullable = false)
+    private Long customerId;
 
-    @Column(name = "order_id")
-    private String orderId;
+    @Column(name = "order_id", length = 50, nullable = false)
+    private Long orderId;
 
-    // Complaint type/category
-    @Column(name = "type")
+    // Type (added for UI “Type” column/filter)
+    // Keep as String to match the controller’s String cell value factory.
+    // Examples: "Service", "Product Quality", "Delivery", "Pricing", "Billing", "Refund", "Technical", "Other"
+    @Column(name = "type", length = 100, nullable = false)
     private String type;
 
-    @Column(name = "subject", columnDefinition = "TEXT")
+    @Column(name = "subject", columnDefinition = "TEXT", nullable = false)
     private String subject;
 
-    @Column(name = "description", columnDefinition = "TEXT")
+    @Column(name = "description", columnDefinition = "TEXT", nullable = false)
     private String text;
 
     // Optional fields from DTO
@@ -54,10 +57,13 @@ public class Complaint implements Serializable {
     private String phone;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status")
+    @Column(
+            name = "status",
+            columnDefinition = "ENUM('OPEN','IN_PROGRESS','RESOLVED','REJECTED')"
+    )
     private Status status;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "resolution")
@@ -70,17 +76,17 @@ public class Complaint implements Serializable {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public String getStoreId() { return storeId; }
-    public void setStoreId(String storeId) { this.storeId = storeId; }
+    public Long getStoreId() { return storeId; }
+    public void setStoreId(Long storeId) { this.storeId = storeId; }
 
     public String getStoreName() { return storeName; }
     public void setStoreName(String storeName) { this.storeName = storeName; }
 
-    public String getCustomerId() { return customerId; }
-    public void setCustomerId(String customerId) { this.customerId = customerId; }
+    public Long getCustomerId() { return customerId; }
+    public void setCustomerId(Long customerId) { this.customerId = customerId; }
 
-    public String getOrderId() { return orderId; }
-    public void setOrderId(String orderId) { this.orderId = orderId; }
+    public Long getOrderId() { return orderId; }
+    public void setOrderId(Long orderId) { this.orderId = orderId; }
 
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }

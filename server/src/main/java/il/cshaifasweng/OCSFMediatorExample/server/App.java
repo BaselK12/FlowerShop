@@ -37,6 +37,6 @@ public class App {
         });
 
         server.listen();
-        System.out.println("Server listening on 3000");
+        System.out.println("Server listening on 3050");
     }
 }

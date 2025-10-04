@@ -207,7 +207,22 @@ public class ManageReportsController {
 
         for (ColumnDef col : schema.columns) {
             TableColumn<Map<String,Object>, Object> tc = new TableColumn<>(col.header);
-            tc.setPrefWidth(120);
+
+            // Column width & alignment by type
+            if ("string".equalsIgnoreCase(col.type)) {
+                tc.setPrefWidth(180);
+            } else if ("number".equalsIgnoreCase(col.type)) {
+                tc.setPrefWidth(100);
+                tc.setStyle("-fx-alignment: CENTER-RIGHT;");
+            } else if ("date".equalsIgnoreCase(col.type)) {
+                tc.setPrefWidth(140);
+            } else {
+                tc.setPrefWidth(120);
+            }
+
+            // Disable sorting if you want consistent report order
+            // tc.setSortable(false);
+
             tc.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().get(col.key)));
             Table.getColumns().add(tc);
         }
@@ -221,40 +236,71 @@ public class ManageReportsController {
         if (data == null || data.isEmpty() || schema == null || schema.columns == null || schema.columns.isEmpty())
             return;
 
-        if (sugg != null && sugg.kind == ChartKind.PIE) {
-            for (Map<String,Object> row : data) {
-                String cat = Objects.toString(row.get(sugg.categoryKey), "");
-                Number val = toNumber(row.get(sugg.valueKey));
-                if (val != null) PieChart.getData().add(new PieChart.Data(cat, val.doubleValue()));
+        try {
+            if (sugg != null && sugg.kind == ChartKind.PIE) {
+                for (Map<String,Object> row : data) {
+                    String cat = Objects.toString(row.get(sugg.categoryKey), "");
+                    Number val = toNumber(row.get(sugg.valueKey));
+                    if (val != null) {
+                        PieChart.Data slice = new PieChart.Data(cat, val.doubleValue());
+                        PieChart.getData().add(slice);
+                    }
+                }
+                return;
             }
-            return;
-        }
 
-        String categoryKey = (sugg != null && sugg.categoryKey != null) ? sugg.categoryKey : schema.columns.get(0).key;
-        String valueKey = (sugg != null && sugg.valueKey != null) ? sugg.valueKey : firstNumeric(schema);
-        String seriesKey = (sugg != null) ? sugg.seriesKey : null;
-        if (valueKey == null) return;
+            String categoryKey = (sugg != null && sugg.categoryKey != null) ? sugg.categoryKey : schema.columns.get(0).key;
+            String valueKey = (sugg != null && sugg.valueKey != null) ? sugg.valueKey : firstNumeric(schema);
+            String seriesKey = (sugg != null) ? sugg.seriesKey : null;
+            if (valueKey == null) return;
 
-        if (seriesKey == null) {
-            XYChart.Series<String, Number> s = new XYChart.Series<>();
-            for (Map<String,Object> row : data) {
-                String x = Objects.toString(row.get(categoryKey), "");
-                Number y = toNumber(row.get(valueKey));
-                if (y != null) s.getData().add(new XYChart.Data<>(x, y));
+            if (seriesKey == null) {
+                // Single series
+                XYChart.Series<String, Number> barSeries = new XYChart.Series<>();
+                XYChart.Series<String, Number> lineSeries = new XYChart.Series<>();
+                barSeries.setName(valueKey);
+                lineSeries.setName(valueKey);
+
+                for (Map<String,Object> row : data) {
+                    String x = Objects.toString(row.get(categoryKey), "");
+                    Number y = toNumber(row.get(valueKey));
+                    if (y != null) {
+                        barSeries.getData().add(new XYChart.Data<>(x, y));
+                        lineSeries.getData().add(new XYChart.Data<>(x, y));
+                    }
+                }
+                BarChart.getData().add(barSeries);
+                LineChart.getData().add(lineSeries);
+            } else {
+                // Multiple series
+                Map<String, XYChart.Series<String, Number>> barSeriesMap = new LinkedHashMap<>();
+                Map<String, XYChart.Series<String, Number>> lineSeriesMap = new LinkedHashMap<>();
+
+                for (Map<String,Object> row : data) {
+                    String series = Objects.toString(row.get(seriesKey), "");
+                    barSeriesMap.computeIfAbsent(series, k -> {
+                        XYChart.Series<String, Number> s = new XYChart.Series<>();
+                        s.setName(k);
+                        return s;
+                    });
+                    lineSeriesMap.computeIfAbsent(series, k -> {
+                        XYChart.Series<String, Number> s = new XYChart.Series<>();
+                        s.setName(k);
+                        return s;
+                    });
+
+                    String x = Objects.toString(row.get(categoryKey), "");
+                    Number y = toNumber(row.get(valueKey));
+                    if (y != null) {
+                        barSeriesMap.get(series).getData().add(new XYChart.Data<>(x, y));
+                        lineSeriesMap.get(series).getData().add(new XYChart.Data<>(x, y));
+                    }
+                }
+                BarChart.getData().addAll(barSeriesMap.values());
+                LineChart.getData().addAll(lineSeriesMap.values());
             }
-            BarChart.getData().add(s);
-            LineChart.getData().add(s);
-        } else {
-            Map<String, XYChart.Series<String, Number>> seriesMap = new LinkedHashMap<>();
-            for (Map<String,Object> row : data) {
-                String series = Objects.toString(row.get(seriesKey), "");
-                seriesMap.computeIfAbsent(series, k -> new XYChart.Series<>());
-                String x = Objects.toString(row.get(categoryKey), "");
-                Number y = toNumber(row.get(valueKey));
-                if (y != null) seriesMap.get(series).getData().add(new XYChart.Data<>(x, y));
-            }
-            BarChart.getData().addAll(seriesMap.values());
-            LineChart.getData().addAll(seriesMap.values());
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

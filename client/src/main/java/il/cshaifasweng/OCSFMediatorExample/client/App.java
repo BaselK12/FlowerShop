@@ -45,16 +45,18 @@ public class App extends Application {
 
 //        NET = new ClientBridge("127.0.0.1", 3000);
 
-//        scene = new Scene(loadFXML("ManageComplaints"), 640, 480);
+        scene = new Scene(loadFXML("ManageComplaints"), 640, 480);
+        stage.setScene(scene);
+        stage.setTitle("FlowerShop Client");
+        stage.show();
+
+
+//        scene = new Scene(loadFXML("/il/cshaifasweng/OCSFMediatorExample/client/employee/ManageEmployees"), 640, 480);
 //        stage.setScene(scene);
 //        stage.setTitle("FlowerShop Client");
 //        stage.show();
 
 
-        scene = new Scene(loadFXML("/il/cshaifasweng/OCSFMediatorExample/client/employee/ManageEmployees"), 640, 480);
-        stage.setScene(scene);
-        stage.setTitle("FlowerShop Client");
-        stage.show();
 //        if (client.isConnected()) {
 //            scene = new Scene(loadFXML("primary"), 640, 480);
 //            stage.setScene(scene);

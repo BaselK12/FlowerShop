@@ -131,11 +131,7 @@
                            <children>
                               <Label prefHeight="17.0" prefWidth="40.0" text="Rows:" />
                               <Label fx:id="RowCountLabel" text="0" />
-                              <Pane prefHeight="90.0" prefWidth="516.0" HBox.hgrow="ALWAYS">
-                                 <children>
-                                    <Button fx:id="ExportPDFBtn" layoutX="220.0" layoutY="24.0" mnemonicParsing="false" onAction="#ExportPDF" text="Export PDF" />
-                                 </children>
-                              </Pane>
+                              <Pane prefHeight="90.0" prefWidth="516.0" HBox.hgrow="ALWAYS" />
                            </children>
                         </HBox>
                         <StackPane prefHeight="263.0" prefWidth="569.0" VBox.vgrow="ALWAYS">
