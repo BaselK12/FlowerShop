@@ -65,7 +65,7 @@ public class CustomerLoginPageController {
     @FXML
     public void RegisterBtnOnAction(ActionEvent e) {
         onClose();
-        Nav.go(RegisterBtn, "/il/cshaifasweng/OCSFMediatorExample/client/Customer/CustomerRegister.fxml");
+        Nav.go(RegisterBtn, "/il/cshaifasweng/OCSFMediatorExample/client/CustomerRegister.fxml");
     }
 
     @FXML

@@ -36,6 +36,7 @@ public class SimpleServer extends ObservableServer {
 				switch (s) {
 					case "CustomerLoginPage Back" -> bus.publish(new CustomerLoginNavEvent("BACK", client));
 					case "CustomerLoginPage register" -> bus.publish(new CustomerLoginNavEvent("REGISTER", client));
+					case "register back" -> bus.publish(new CustomerLoginNavEvent("BACK", client)); // <-- add this for consistency
 					default -> bus.publish(new SendToClientEvent(
 							new ErrorResponse("Unknown command: " + s), client));
 				}

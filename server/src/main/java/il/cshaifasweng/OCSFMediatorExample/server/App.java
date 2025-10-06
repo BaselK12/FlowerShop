@@ -26,6 +26,7 @@ public class App {
         new RegisterHandler(bus);
         new GetComplaintsHandler(bus);
         new LoginHandler(bus);
+        new RegisterHandler(bus);
 
         // Employees handlers
         new EmployeeCreateHandler(bus);
