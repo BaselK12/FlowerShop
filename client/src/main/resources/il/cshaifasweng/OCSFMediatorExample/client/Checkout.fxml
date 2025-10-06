@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.String?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox maxWidth="980.0" prefHeight="747.0" prefWidth="962.0" spacing="16.0" styleClass="app" stylesheets="@../../../../Styles/checkout.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.CheckoutStage.CheckoutController">
+   <padding>
+      <Insets bottom="18.0" left="18.0" right="18.0" top="18.0" />
+   </padding>
+   <children>
+      <HBox fx:id="badgesBox" alignment="CENTER" prefHeight="42.0" prefWidth="942.0" spacing="8.0">
+         <children>
+            <Label fx:id="badge1" text="Method">
+               <styleClass>
+                  <String fx:value="badge" />
+                  <String fx:value="active" />
+               </styleClass>
+            </Label>
+            <Label fx:id="badge2" styleClass="badge" text="Payment" />
+            <Label fx:id="badge3" styleClass="badge" text="Review" />
+         </children>
+      </HBox>
+      <StackPane fx:id="contentPane" alignment="TOP_LEFT" prefHeight="726.0" prefWidth="924.0">
+         <children>
+            <VBox fx:id="step3" prefHeight="200.0" prefWidth="100.0" spacing="12.0" styleClass="card" visible="false">
+               <padding>
+                  <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+               </padding>
+               <children>
+                  <Label styleClass="h2" text="Review" />
+                  <TextArea fx:id="reviewBox" editable="false" prefHeight="361.0" prefWidth="882.0" styleClass="text-area" />
+                  <HBox fx:id="navigationBox" alignment="CENTER_LEFT" prefHeight="72.0" prefWidth="882.0">
+                     <children>
+                        <Button fx:id="back3" mnemonicParsing="false" onAction="#handleBack3" styleClass="secondary" text="Back" />
+                        <Region prefHeight="86.0" prefWidth="750.0" HBox.hgrow="ALWAYS" />
+                        <Button fx:id="confirmBtn" mnemonicParsing="false" onAction="#handleConfirm" styleClass="primary" text="Confirm" />
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+            <VBox fx:id="step1" prefHeight="698.0" prefWidth="924.0" spacing="12.0" styleClass="card">
+               <padding>
+                  <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+               </padding>
+               <children>
+                  <Label styleClass="h2" text="Choose how you want to receive your order" />
+                  <Label styleClass="muted" text="Switch between Pickup and Delivery…" />
+                  <HBox fx:id="methodToggleBox" prefHeight="33.0" prefWidth="558.0" styleClass="segmented">
+                     <children>
+                        <ToggleButton fx:id="btnPickup" mnemonicParsing="false" selected="true" text="Pickup" />
+                        <ToggleButton fx:id="btnDelivery" mnemonicParsing="false" text="Delivery" />
+                     </children></HBox>
+                  <StackPane prefHeight="530.0" prefWidth="882.0">
+                     <children>
+                        <GridPane fx:id="pickupFields" hgap="10.0" prefHeight="231.0" prefWidth="897.0" vgap="10.0">
+                          <columnConstraints>
+                            <ColumnConstraints hgrow="SOMETIMES" maxWidth="422.5" minWidth="10.0" prefWidth="67.5" />
+                            <ColumnConstraints hgrow="SOMETIMES" maxWidth="790.5" minWidth="10.0" prefWidth="790.5" />
+                          </columnConstraints>
+                          <rowConstraints>
+                            <RowConstraints maxHeight="45.0" minHeight="10.0" prefHeight="45.0" vgrow="SOMETIMES" />
+                            <RowConstraints maxHeight="45.0" minHeight="10.0" prefHeight="45.0" vgrow="SOMETIMES" />
+                              <RowConstraints maxHeight="45.0" minHeight="10.0" prefHeight="45.0" vgrow="SOMETIMES" />
+                            <RowConstraints maxHeight="45.0" minHeight="10.0" prefHeight="45.0" vgrow="SOMETIMES" />
+                          </rowConstraints>
+                           <children>
+                              <Label text="Branch:" />
+                              <Label text="Date:" GridPane.rowIndex="1" />
+                              <Label text="Time:" GridPane.rowIndex="2" />
+                              <Label text="Phone:" GridPane.rowIndex="3" />
+                              <ComboBox fx:id="pickupBranch" prefWidth="200.0" styleClass="combo-box" GridPane.columnIndex="1" />
+                              <DatePicker fx:id="pickupDate" maxWidth="200.0" styleClass="date-picker" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                              <TextField fx:id="pickupTime" maxWidth="200.0" prefHeight="33.0" prefWidth="510.0" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                              <TextField fx:id="pickupPhone" maxWidth="200.0" styleClass="text-field" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                           </children>
+                           <padding>
+                              <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
+                           </padding>
+                        </GridPane>
+                        <GridPane fx:id="deliveryFields" prefHeight="486.0" prefWidth="882.0" visible="false">
+                          <columnConstraints>
+                            <ColumnConstraints hgrow="SOMETIMES" maxWidth="444.5" minWidth="10.0" prefWidth="117.0" />
+                            <ColumnConstraints hgrow="SOMETIMES" maxWidth="866.5" minWidth="10.0" prefWidth="783.0" />
+                          </columnConstraints>
+                          <rowConstraints>
+                            <RowConstraints maxHeight="45.0" minHeight="7.5" prefHeight="45.0" vgrow="SOMETIMES" />
+                            <RowConstraints maxHeight="45.0" minHeight="0.0" prefHeight="45.0" vgrow="SOMETIMES" />
+                              <RowConstraints maxHeight="45.0" minHeight="10.0" prefHeight="45.0" vgrow="SOMETIMES" />
+                              <RowConstraints maxHeight="45.0" minHeight="10.0" prefHeight="45.0" vgrow="SOMETIMES" />
+                            <RowConstraints maxHeight="45.0" minHeight="10.0" prefHeight="45.0" vgrow="SOMETIMES" />
+                              <RowConstraints maxHeight="200.0" minHeight="150.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                              <RowConstraints maxHeight="45.0" minHeight="10.0" prefHeight="45.0" vgrow="SOMETIMES" />
+                              <RowConstraints maxHeight="45.0" minHeight="10.0" prefHeight="45.0" vgrow="SOMETIMES" />
+                          </rowConstraints>
+                           <children>
+                              <Label text="City:" />
+                              <ComboBox fx:id="CityBox" prefWidth="200.0" styleClass="combo-box" GridPane.columnIndex="1" />
+                              <Label text="Street: " GridPane.rowIndex="1" />
+                              <Label text="House:" GridPane.rowIndex="2" />
+                              <Label text="Zip code:" GridPane.rowIndex="3" />
+                              <Label text="Phone:" GridPane.rowIndex="4" />
+                              <TextField fx:id="StreetText" maxWidth="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                              <TextField fx:id="HouseText" maxWidth="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                              <TextField fx:id="ZipText" maxWidth="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                              <TextField fx:id="PhoneText" maxWidth="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                              <CheckBox fx:id="giftCheck" mnemonicParsing="false" prefHeight="16.0" prefWidth="56.0" text="Gift" textFill="WHITE" GridPane.rowIndex="5" GridPane.valignment="TOP">
+                                 <GridPane.margin>
+                                    <Insets top="20.0" />
+                                 </GridPane.margin></CheckBox>
+                              <VBox fx:id="gifVBox" prefHeight="105.0" prefWidth="774.0" spacing="8.0" GridPane.columnIndex="1" GridPane.rowIndex="5">
+                                 <padding>
+                                    <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
+                                 </padding>
+                                 <children>
+                                    <HBox prefHeight="100.0" prefWidth="200.0" spacing="8.0">
+                                       <children>
+                                          <TextField fx:id="RecipientPhoneText" prefHeight="33.0" prefWidth="190.0" promptText="Recipient Phone" />
+                                          <TextField fx:id="RecepientNameText" prefHeight="33.0" prefWidth="190.0" promptText="Recepient Name" />
+                                       </children>
+                                    </HBox>
+                                    <TextArea fx:id="GiftNoteText" prefHeight="255.0" prefWidth="758.0" promptText="Gift Note" wrapText="true" />
+                                 </children>
+                              </VBox>
+                              <Label text="Delivery Date:" GridPane.rowIndex="6" />
+                              <Label text="Delivery Time:" GridPane.rowIndex="7" />
+                              <DatePicker fx:id="DeliveryDatePicker" maxWidth="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+                              <TextField fx:id="DeliveryTimeText" maxWidth="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+                           </children>
+                        </GridPane>
+                     </children>
+                  </StackPane>
+                  <HBox fx:id="nav1" prefHeight="3.0" prefWidth="882.0">
+                     <children>
+                        <Button fx:id="Back1" mnemonicParsing="false" onAction="#handleBack1" styleClass="secondary" text="Back" />
+                        <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+                        <Button fx:id="next1" mnemonicParsing="false" onAction="#handleNext1" styleClass="primary" text="Next" />
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+            <VBox fx:id="step2" prefHeight="200.0" prefWidth="100.0" spacing="12.0" styleClass="card" visible="false">
+               <padding>
+                  <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+               </padding>
+               <children>
+                  <Label styleClass="h2" text="Payment" />
+                  <GridPane fx:id="paymentGrid">
+                    <columnConstraints>
+                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="435.5" minWidth="10.0" prefWidth="125.0" />
+                      <ColumnConstraints hgrow="SOMETIMES" maxWidth="758.0" minWidth="10.0" prefWidth="757.0" />
+                    </columnConstraints>
+                    <rowConstraints>
+                      <RowConstraints maxHeight="50.0" minHeight="10.0" prefHeight="45.0" vgrow="SOMETIMES" />
+                        <RowConstraints maxHeight="50.0" minHeight="10.0" prefHeight="50.0" vgrow="SOMETIMES" />
+                      <RowConstraints minHeight="10.0" prefHeight="45.0" vgrow="SOMETIMES" />
+                      <RowConstraints maxHeight="50.0" minHeight="10.0" prefHeight="50.0" vgrow="SOMETIMES" />
+                        <RowConstraints maxHeight="50.0" minHeight="10.0" prefHeight="50.0" vgrow="SOMETIMES" />
+                    </rowConstraints>
+                     <children>
+                        <Label text="Card Number:" />
+                        <TextField fx:id="CardNumberText" maxWidth="190.0" prefHeight="33.0" prefWidth="190.0" promptText="4444 4444 4444 4444" GridPane.columnIndex="1" />
+                        <Label text="Expiration Date:" GridPane.rowIndex="1" />
+                        <HBox prefHeight="100.0" prefWidth="200.0" spacing="8.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                           <children>
+                              <ComboBox fx:id="MMBOX" maxHeight="41.0" prefHeight="41.0" prefWidth="90.0" promptText="MM" />
+                              <ComboBox fx:id="YYBOX" maxHeight="41.0" prefHeight="41.0" prefWidth="90.0" promptText="YY" />
+                           </children>
+                           <padding>
+                              <Insets bottom="8.0" top="8.0" />
+                           </padding>
+                           <GridPane.margin>
+                              <Insets top="16.0" />
+                           </GridPane.margin>
+                        </HBox>
+                        <Label text="CVV" GridPane.rowIndex="2" />
+                        <TextField fx:id="cvvText" maxWidth="90.0" prefWidth="90.0" promptText="123" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                           <GridPane.margin>
+                              <Insets top="12.0" />
+                           </GridPane.margin>
+                        </TextField>
+                        <Label text="Full Name:" GridPane.rowIndex="3" />
+                        <TextField fx:id="fullNameText" maxWidth="188.0" prefWidth="188.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                        <Label text="ID number:" GridPane.rowIndex="4" />
+                        <TextField fx:id="IdNumberText" maxWidth="188.0" prefWidth="188.0" promptText="123456789" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                     </children>
+                  </GridPane>
+                  <VBox fx:id="totalsBox" prefHeight="123.0" prefWidth="882.0" styleClass="totals">
+                     <children>
+                        <HBox prefHeight="22.0" prefWidth="856.0" spacing="20.0">
+                           <children>
+                              <Label text="Subtotal:" />
+                              <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+                              <Label fx:id="subtotalLabel" text="0" />
+                           </children>
+                           <padding>
+                              <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+                           </padding>
+                        </HBox>
+                        <HBox prefHeight="22.0" prefWidth="856.0" spacing="20.0">
+                           <children>
+                              <Label text="Discount" />
+                              <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+                              <Label fx:id="discountLabel" text="0" />
+                           </children>
+                           <padding>
+                              <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+                           </padding>
+                        </HBox>
+                        <HBox prefHeight="22.0" prefWidth="856.0" spacing="20.0">
+                           <children>
+                              <Label text="Shipping" />
+                              <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+                              <Label fx:id="shippingLabel" text="0" />
+                           </children>
+                           <padding>
+                              <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+                           </padding>
+                        </HBox>
+                        <HBox prefHeight="22.0" prefWidth="856.0" spacing="20.0">
+                           <children>
+                              <Label text="Grand Total" />
+                              <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+                              <Label fx:id="grandTotalLabel" text="0" />
+                           </children>
+                           <padding>
+                              <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+                           </padding>
+                        </HBox>
+                     </children>
+                  </VBox>
+                  <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="12.0">
+                     <children>
+                        <Button fx:id="back2" mnemonicParsing="false" onAction="#handleBack2" styleClass="secondary" text="Back" />
+                        <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+                        <Button fx:id="payBtn" mnemonicParsing="false" onAction="#handlePay" styleClass="primary" text="Pay" />
+                     </children>
+                     <padding>
+                        <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
+                     </padding>
+                  </HBox>
+               </children>
+            </VBox>
+         </children>
+      </StackPane>
+   </children>
+</VBox>
