@@ -1,0 +1,2 @@
+ALTER TABLE customers
+    MODIFY COLUMN password_hash VARCHAR(255) NOT NULL;

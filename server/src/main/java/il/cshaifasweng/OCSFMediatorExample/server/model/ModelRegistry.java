@@ -11,7 +11,8 @@ public final class ModelRegistry {
                 Category.class,
                 Flower.class,
                 Promotion.class,
-                Stores.class
+                Stores.class,
+                Customer.class
                 // Department.class, Order.class, Product.class, Customer.class, ...
         };
     }

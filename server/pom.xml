@@ -15,22 +15,29 @@
 	<packaging>jar</packaging>
 	<name>server</name>
 
+	<properties>
+		<!-- put the real creds you also have in hibernate.properties -->
+		<db.user>flowershop_user</db.user>
+		<db.pass>fs_password_123</db.pass>
+
+		<!-- keep versions in sync so the universe doesn’t implode -->
+		<flyway.version>10.17.0</flyway.version>
+		<mysql.driver.version>8.4.0</mysql.driver.version>
+		<hikari.version>5.1.0</hikari.version>
+	</properties>
+
 	<dependencies>
-		<!-- Bean Validation API (annotations like @NotBlank, @Email, etc.) -->
+		<!-- Bean Validation -->
 		<dependency>
 			<groupId>jakarta.validation</groupId>
 			<artifactId>jakarta.validation-api</artifactId>
 			<version>3.0.2</version>
 		</dependency>
-
-		<!-- Implementation: Hibernate Validator (so runtime actually enforces constraints) -->
 		<dependency>
 			<groupId>org.hibernate.validator</groupId>
 			<artifactId>hibernate-validator</artifactId>
 			<version>8.0.1.Final</version>
 		</dependency>
-
-		<!-- EL needed by Hibernate Validator -->
 		<dependency>
 			<groupId>org.glassfish</groupId>
 			<artifactId>jakarta.el</artifactId>
@@ -41,10 +48,9 @@
 		<dependency>
 			<groupId>il.cshaifasweng.OCSFMediatorExample</groupId>
 			<artifactId>entities</artifactId>
-			<!-- version inherited from root dependencyManagement -->
 		</dependency>
 
-		<!-- Hibernate + Jakarta -->
+		<!-- Hibernate -->
 		<dependency>
 			<groupId>org.hibernate.orm</groupId>
 			<artifactId>hibernate-core</artifactId>
@@ -52,46 +58,81 @@
 		<dependency>
 			<groupId>jakarta.persistence</groupId>
 			<artifactId>jakarta.persistence-api</artifactId>
-			<!-- 3.2.0 via dependencyManagement -->
 		</dependency>
 
-		<!-- Pool + JDBC -->
+		<!-- JDBC pool + driver -->
 		<dependency>
 			<groupId>com.zaxxer</groupId>
 			<artifactId>HikariCP</artifactId>
-			<version>5.1.0</version>
+			<version>${hikari.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.mysql</groupId>
 			<artifactId>mysql-connector-j</artifactId>
+			<version>${mysql.driver.version}</version>
 		</dependency>
 
-		<!-- Flyway (optional, fine to keep) -->
+		<!-- Flyway for programmatic use (optional but nice) -->
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-core</artifactId>
-			<version>10.15.0</version>
+			<version>${flyway.version}</version>
+		</dependency>
+		<!-- Since Flyway 10, the DB support is split -->
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-mysql</artifactId>
+			<version>${flyway.version}</version>
 		</dependency>
 
+		<!-- Utils -->
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+		</dependency>
 
-		<!-- JUnit 5 -->
+		<!-- Tests -->
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
 			<version>5.10.2</version>
 			<scope>test</scope>
 		</dependency>
-
-
-		<!-- EventBus / utils -->
-		<dependency>
-			<groupId>com.google.guava</groupId>
-			<artifactId>guava</artifactId>
-		</dependency>
 	</dependencies>
 
 	<build>
 		<plugins>
+			<!-- Flyway plugin: needs its own classpath deps -->
+			<plugin>
+				<groupId>org.flywaydb</groupId>
+				<artifactId>flyway-maven-plugin</artifactId>
+				<version>${flyway.version}</version>
+
+				<dependencies>
+					<!-- DB support module for MySQL on the PLUGIN classpath -->
+					<dependency>
+						<groupId>org.flywaydb</groupId>
+						<artifactId>flyway-mysql</artifactId>
+						<version>${flyway.version}</version>
+					</dependency>
+					<!-- JDBC driver on the PLUGIN classpath -->
+					<dependency>
+						<groupId>com.mysql</groupId>
+						<artifactId>mysql-connector-j</artifactId>
+						<version>${mysql.driver.version}</version>
+					</dependency>
+				</dependencies>
+
+				<configuration>
+					<url>jdbc:mysql://localhost:3306/flowershop?serverTimezone=UTC&amp;useSSL=false&amp;allowPublicKeyRetrieval=true</url>
+					<user>${db.user}</user>
+					<password>${db.pass}</password>
+					<locations>
+						<location>classpath:db/migration</location>
+					</locations>
+				</configuration>
+			</plugin>
+
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
@@ -100,6 +141,7 @@
 					<mainClass>il.cshaifasweng.OCSFMediatorExample.server.App</mainClass>
 				</configuration>
 			</plugin>
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>

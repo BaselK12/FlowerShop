@@ -1,9 +1,7 @@
 package il.cshaifasweng.OCSFMediatorExample.client.Catalog;
 
-import il.cshaifasweng.OCSFMediatorExample.client.App;
 import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
-import il.cshaifasweng.OCSFMediatorExample.entities.domain.Category;
-import il.cshaifasweng.OCSFMediatorExample.entities.domain.Flower;
+import il.cshaifasweng.OCSFMediatorExample.client.bus.events.ServerMessageEvent;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.AddToCartResponse;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.*;
 import javafx.application.Platform;
@@ -39,7 +37,7 @@ public class CatalogViewController {
     private List<PromotionDTO> allPromotions = new ArrayList<>();
     private final Map<String, Long> categoryNameToId = new HashMap<>();
 
-    private boolean loggedIn = true; // TODO: connect to actual login session
+    private final boolean loggedIn = true; // wire this to your session later
 
     @FXML
     public void initialize() {
@@ -47,142 +45,162 @@ public class CatalogViewController {
             EventBus.getDefault().register(this);
         }
 
-        // Request initial data
+        // kick off initial loads
         try {
-            App.getClient().sendToServer(new GetCategoriesRequest());
-            App.getClient().sendToServer(new GetPromotionsRequest());
-            App.getClient().sendToServer(new GetCatalogRequest(null, null, null, false));
-        } catch (IOException e) {
+            SimpleClient.getClient().sendSafely(new GetCategoriesRequest());
+            SimpleClient.getClient().sendSafely(new GetPromotionsRequest());
+            SimpleClient.getClient().sendSafely(new GetCatalogRequest(null, null, null, false));
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
-        // Listeners
-        searchField.textProperty().addListener((obs, oldVal, newVal) -> applyFilters());
-        categoryCombo.setOnAction(e -> applyFilters());
-        promoModeCombo.setOnAction(e -> applyFilters());
+        // filters
+        if (searchField != null) {
+            searchField.textProperty().addListener((obs, o, n) -> applyFilters());
+        }
+        if (categoryCombo != null) {
+            categoryCombo.setOnAction(e -> applyFilters());
+        }
+        if (promoModeCombo != null) {
+            promoModeCombo.setOnAction(e -> applyFilters());
+        }
     }
 
-    // =======================================
-    // EventBus Handlers (Server Responses)
-    // =======================================
+    /** Call this when navigating away to avoid EventBus leaks. */
+    public void shutdown() {
+        if (EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().unregister(this);
+        }
+    }
+
+    // ====================== EventBus: listen to the WRAPPER ======================
 
     @Subscribe
-    public void onGetCatalogResponse(GetCatalogResponse response) {
-        Platform.runLater(() -> {
-            allFlowers = response.getFlowers();
-            renderItems(allFlowers);
-        });
+    public void onServer(ServerMessageEvent ev) {
+        Object p = ev.getPayload();
+
+        if (p instanceof GetCategoriesResponse r) {
+            Platform.runLater(() -> handleCategories(r));
+        } else if (p instanceof GetPromotionsResponse r) {
+            Platform.runLater(() -> handlePromotions(r));
+        } else if (p instanceof GetCatalogResponse r) {
+            Platform.runLater(() -> handleCatalog(r));
+        } else if (p instanceof AddToCartResponse r) {
+            Platform.runLater(() -> handleAddToCart(r));
+        }
+        // else ignore other messages, or log if you’re feeling nosy
     }
 
-    @Subscribe
-    public void onGetCategoriesResponse(GetCategoriesResponse response) {
-        Platform.runLater(() -> {
-            allCategories = response.getCategories();
-            categoryCombo.getItems().clear();
-            categoryCombo.getItems().add("All");
-            categoryNameToId.clear();
+    // ====================== Handlers ======================
 
-            for (CategoryDTO cat : allCategories) {
-                String display = cat.getDisplayName() != null ? cat.getDisplayName() : cat.getName();
-                categoryCombo.getItems().add(display);
-                categoryNameToId.put(display, cat.getId());
-            }
+    private void handleCategories(GetCategoriesResponse response) {
+        if (response == null || response.getCategories() == null) return;
 
-            categoryCombo.getSelectionModel().selectFirst();
-        });
+        allCategories = response.getCategories();
+        if (categoryCombo == null) return;
+
+        categoryCombo.getItems().clear();
+        categoryNameToId.clear();
+
+        categoryCombo.getItems().add("All");
+        for (CategoryDTO cat : allCategories) {
+            String display = cat.getDisplayName() != null ? cat.getDisplayName() : cat.getName();
+            categoryCombo.getItems().add(display);
+            categoryNameToId.put(display, cat.getId());
+        }
+        categoryCombo.getSelectionModel().selectFirst();
     }
 
-    @Subscribe
-    public void onGetPromotionsResponse(GetPromotionsResponse response) {
-        Platform.runLater(() -> {
-            allPromotions = response.getPromotions();
-            promoModeCombo.getItems().clear();
-            promoModeCombo.getItems().add("All");
-            promoModeCombo.getItems().add("Non-Promotions");
+    private void handlePromotions(GetPromotionsResponse response) {
+        if (response == null || response.getPromotions() == null) return;
 
-            // Add all promotions (active + expired) for visibility
-            allPromotions.stream()
-                    .sorted(Comparator.comparing(PromotionDTO::getName))
-                    .map(PromotionDTO::toString)
-                    .forEach(promoModeCombo.getItems()::add);
+        allPromotions = response.getPromotions();
+        if (promoModeCombo == null) return;
 
-            promoModeCombo.getSelectionModel().selectFirst();
-        });
+        promoModeCombo.getItems().clear();
+        promoModeCombo.getItems().add("All");
+        promoModeCombo.getItems().add("Non-Promotions");
+
+        allPromotions.stream()
+                .sorted(Comparator.comparing(PromotionDTO::getName, Comparator.nullsLast(String::compareToIgnoreCase)))
+                .map(PromotionDTO::toString)
+                .forEach(promoModeCombo.getItems()::add);
+
+        promoModeCombo.getSelectionModel().selectFirst();
     }
 
-    @Subscribe
-    public void onAddToCartResponse(AddToCartResponse response) {
-        Platform.runLater(() -> {
-            if (response.isSuccess()) {
-                cartCountLabel.setText(response.getCartSize() + " items");
-            } else {
-                System.err.println("AddToCart failed: " + response.getMessage());
-            }
-        });
+    private void handleCatalog(GetCatalogResponse response) {
+        if (response == null || response.getFlowers() == null) return;
+        allFlowers = response.getFlowers();
+        renderItems(allFlowers);
     }
 
-    // =======================================
-    // Apply Filters → Server Request
-    // =======================================
+    private void handleAddToCart(AddToCartResponse response) {
+        if (cartCountLabel == null || response == null) return;
+        if (response.isSuccess()) {
+            cartCountLabel.setText(response.getCartSize() + " items");
+        } else {
+            cartCountLabel.setText("Add to cart failed");
+        }
+    }
+
+    // ====================== Filtering ======================
 
     private void applyFilters() {
-        String search = searchField.getText() != null ? searchField.getText().trim() : "";
-        String selectedCategory = categoryCombo.getValue();
-        String selectedPromo = promoModeCombo.getValue();
+        String search = safeTxt(searchField);
+        String selectedCategory = categoryCombo != null ? categoryCombo.getValue() : null;
+        String selectedPromo = promoModeCombo != null ? promoModeCombo.getValue() : null;
 
         Long categoryId = null;
         Long promotionId = null;
         boolean onlyActivePromotions = false;
 
-        // Category filter
-        if (selectedCategory != null && !selectedCategory.equals("All")) {
+        if (selectedCategory != null && !"All".equals(selectedCategory)) {
             categoryId = categoryNameToId.get(selectedCategory);
         }
 
-        // Promotion filter
-        if (selectedPromo != null && !selectedPromo.equals("All")) {
-            if (selectedPromo.equals("Non-Promotions")) {
+        if (selectedPromo != null && !"All".equals(selectedPromo)) {
+            if ("Non-Promotions".equals(selectedPromo)) {
                 promotionId = 0L;
             } else {
-                // Remove suffixes like " (Active)" / " (Expired)"
-                String cleanPromoName = selectedPromo.replace(" (Active)", "").replace(" (Expired)", "").trim();
-
+                String clean = selectedPromo.replace(" (Active)", "").replace(" (Expired)", "").trim();
                 promotionId = allPromotions.stream()
-                        .filter(p -> p.getName().equalsIgnoreCase(cleanPromoName))
+                        .filter(p -> clean.equalsIgnoreCase(p.getName()))
                         .map(PromotionDTO::getId)
-                        .findFirst()
-                        .orElse(null);
+                        .findFirst().orElse(null);
             }
         }
 
-        // Whether user asked for active promos only
         onlyActivePromotions = selectedPromo != null
-                && !selectedPromo.equals("All")
-                && !selectedPromo.equals("Non-Promotions");
+                && !"All".equals(selectedPromo)
+                && !"Non-Promotions".equals(selectedPromo);
 
-        // Send request
         try {
             GetCatalogRequest req = new GetCatalogRequest(
                     categoryId != null ? categoryId.toString() : null,
                     (promotionId != null && promotionId > 0) ? promotionId : null,
-                    search.isEmpty() ? null : search,
+                    search.isBlank() ? null : search,
                     onlyActivePromotions
             );
-            App.getClient().sendToServer(req);
-        } catch (IOException e) {
+            SimpleClient.getClient().sendSafely(req);
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    // =======================================
-    // Rendering UI
-    // =======================================
+    private static String safeTxt(TextField tf) {
+        return tf == null || tf.getText() == null ? "" : tf.getText().trim();
+    }
+
+    // ====================== Rendering ======================
 
     private void renderItems(List<FlowerDTO> flowers) {
+        if (itemsGrid == null || promotionsStrip == null) return;
+
         itemsGrid.getChildren().clear();
         promotionsStrip.getChildren().clear();
 
-        if (flowers.isEmpty()) {
+        if (flowers == null || flowers.isEmpty()) {
             Label empty = new Label("No flowers found.");
             empty.getStyleClass().add("empty-message");
             itemsGrid.getChildren().add(empty);
@@ -195,10 +213,9 @@ public class CatalogViewController {
                 StackPane cardNode = loader.load();
                 ItemCardController cardController = loader.getController();
                 cardController.setData(f, loggedIn, () -> openDetails(f));
-
                 itemsGrid.getChildren().add(cardNode);
 
-                if (f.getPromotion() != null && f.getPromotion().isActive()) {
+                if (f.getPromotion() != null && Boolean.TRUE.equals(f.getPromotion().isActive())) {
                     FXMLLoader promoLoader = new FXMLLoader(getClass().getResource("ItemCard.fxml"));
                     StackPane promoCardNode = promoLoader.load();
                     ItemCardController promoCardController = promoLoader.getController();
@@ -227,9 +244,5 @@ public class CatalogViewController {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public void shutdown() {
-        EventBus.getDefault().unregister(this);
     }
 }

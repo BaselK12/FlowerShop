@@ -1,0 +1,2 @@
+ALTER TABLE complaints
+    MODIFY COLUMN anonymous TINYINT NOT NULL DEFAULT 0;
