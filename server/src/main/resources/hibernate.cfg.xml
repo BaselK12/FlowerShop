@@ -15,14 +15,6 @@
         <property name="hibernate.show_sql">true</property>
         <property name="hibernate.hbm2ddl.auto">validate</property>
 
-        <!-- entities -->
-        <mapping class="il.cshaifasweng.OCSFMediatorExample.entities.domain.Complaint"/>
-        <mapping class="il.cshaifasweng.OCSFMediatorExample.entities.domain.Stores"/>
-        <mapping class="il.cshaifasweng.OCSFMediatorExample.entities.domain.Employee"/>
-        <mapping class="il.cshaifasweng.OCSFMediatorExample.entities.domain.Promotion"/>
-        <mapping class="il.cshaifasweng.OCSFMediatorExample.entities.domain.Category"/>
-        <mapping class="il.cshaifasweng.OCSFMediatorExample.entities.domain.Flower"/>
-
-        <!-- add more as you map them (Customer, Order, etc.) -->
+        <!-- NO <mapping> entries here. All entities come from ModelRegistry -->
     </session-factory>
 </hibernate-configuration>
