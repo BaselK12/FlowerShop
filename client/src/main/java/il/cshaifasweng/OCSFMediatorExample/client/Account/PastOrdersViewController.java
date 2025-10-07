@@ -51,103 +51,103 @@ public class PastOrdersViewController {
     // Date formatter
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    @FXML
-    private void initialize() {
-        // Column bindings
-        colOrderId.setCellValueFactory(data ->
-                new SimpleStringProperty(data.getValue().getId())
-        );
-
-        colOrderDate.setCellValueFactory(data ->
-                new SimpleStringProperty(
-                        data.getValue().getCreatedAt() != null
-                                ? data.getValue().getCreatedAt().format(dateFormatter)
-                                : ""
-                )
-        );
-
-        colOrderTotal.setCellValueFactory(data ->
-                new SimpleStringProperty(String.format("$%.2f", data.getValue().getTotal()))
-        );
-
-        colOrderStatus.setCellValueFactory(data ->
-                new SimpleStringProperty(
-                        data.getValue().getStatus() != null ? data.getValue().getStatus().name() : ""
-                )
-        );
-
-        ordersTable.setItems(orders);
-
-        // Fill status filter
-        statusFilter.setItems(FXCollections.observableArrayList(
-                "All", "PENDING", "PAID", "PREPARING", "SHIPPED", "DELIVERED", "CANCELED"
-        ));
-        statusFilter.getSelectionModel().select("All");
-
-        // Hook up buttons
-        btnRefreshOrders.setOnAction(e -> loadOrders());
-        btnApplyFilters.setOnAction(e -> applyFilters());
-        btnOrderDetails.setOnAction(e -> showOrderDetails());
-        btnEmptyShopNow.setOnAction(e -> handleShopNow());
-
-        // Initial load
-        loadOrders();
-    }
-
-    private void loadOrders() {
-        orders.clear();
-
-        // TODO: Replace with server call
-        // Example mock data:
-        Order order1 = new Order();
-        order1.setId("ORD1001");
-        order1.setCreatedAt(java.time.LocalDateTime.now().minusDays(5));
-        order1.setTotal(59.99);
-        order1.setStatus(Order.Status.DELIVERED);
-
-        Order order2 = new Order();
-        order2.setId("ORD1002");
-        order2.setCreatedAt(java.time.LocalDateTime.now().minusDays(1));
-        order2.setTotal(24.50);
-        order2.setStatus(Order.Status.PENDING);
-
-        orders.addAll(order1, order2);
-
-        updateUIState();
-    }
-
-    private void applyFilters() {
-        // For now, just reload all
-        // Later: filter by orderSearchField, fromDatePicker, toDatePicker, statusFilter
-        loadOrders();
-    }
-
-    private void updateUIState() {
-        ordersCountLabel.setText("(" + orders.size() + ")");
-        boolean empty = orders.isEmpty();
-        ordersEmptyBox.setVisible(empty);
-        ordersTable.setVisible(!empty);
-    }
-
-    private void showOrderDetails() {
-        Order selected = ordersTable.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            new Alert(Alert.AlertType.WARNING, "Please select an order first.").showAndWait();
-            return;
-        }
-
-        String details = "Order ID: " + selected.getId() +
-                "\nDate: " + (selected.getCreatedAt() != null
-                ? selected.getCreatedAt().format(dateFormatter)
-                : "") +
-                "\nTotal: $" + String.format("%.2f", selected.getTotal()) +
-                "\nStatus: " + (selected.getStatus() != null ? selected.getStatus().name() : "");
-
-        new Alert(Alert.AlertType.INFORMATION, details).showAndWait();
-    }
-
-    private void handleShopNow() {
-        // TODO: navigate back to catalog scene
-        new Alert(Alert.AlertType.INFORMATION, "Go to catalog to shop now.").showAndWait();
-    }
+//    @FXML
+//    private void initialize() {
+//        // Column bindings
+//        colOrderId.setCellValueFactory(data ->
+//                new SimpleStringProperty(data.getValue().getId())
+//        );
+//
+//        colOrderDate.setCellValueFactory(data ->
+//                new SimpleStringProperty(
+//                        data.getValue().getCreatedAt() != null
+//                                ? data.getValue().getCreatedAt().format(dateFormatter)
+//                                : ""
+//                )
+//        );
+//
+//        colOrderTotal.setCellValueFactory(data ->
+//                new SimpleStringProperty(String.format("$%.2f", data.getValue().getTotal()))
+//        );
+//
+//        colOrderStatus.setCellValueFactory(data ->
+//                new SimpleStringProperty(
+//                        data.getValue().getStatus() != null ? data.getValue().getStatus().name() : ""
+//                )
+//        );
+//
+//        ordersTable.setItems(orders);
+//
+//        // Fill status filter
+//        statusFilter.setItems(FXCollections.observableArrayList(
+//                "All", "PENDING", "PAID", "PREPARING", "SHIPPED", "DELIVERED", "CANCELED"
+//        ));
+//        statusFilter.getSelectionModel().select("All");
+//
+//        // Hook up buttons
+//        btnRefreshOrders.setOnAction(e -> loadOrders());
+//        btnApplyFilters.setOnAction(e -> applyFilters());
+//        btnOrderDetails.setOnAction(e -> showOrderDetails());
+//        btnEmptyShopNow.setOnAction(e -> handleShopNow());
+//
+//        // Initial load
+//        loadOrders();
+//    }
+//
+//    private void loadOrders() {
+//        orders.clear();
+//
+//        // TODO: Replace with server call
+//        // Example mock data:
+//        Order order1 = new Order();
+//        order1.setId("ORD1001");
+//        order1.setCreatedAt(java.time.LocalDateTime.now().minusDays(5));
+//        order1.setTotal(59.99);
+//        order1.setStatus(Order.Status.DELIVERED);
+//
+//        Order order2 = new Order();
+//        order2.setId("ORD1002");
+//        order2.setCreatedAt(java.time.LocalDateTime.now().minusDays(1));
+//        order2.setTotal(24.50);
+//        order2.setStatus(Order.Status.PENDING);
+//
+//        orders.addAll(order1, order2);
+//
+//        updateUIState();
+//    }
+//
+//    private void applyFilters() {
+//        // For now, just reload all
+//        // Later: filter by orderSearchField, fromDatePicker, toDatePicker, statusFilter
+//        loadOrders();
+//    }
+//
+//    private void updateUIState() {
+//        ordersCountLabel.setText("(" + orders.size() + ")");
+//        boolean empty = orders.isEmpty();
+//        ordersEmptyBox.setVisible(empty);
+//        ordersTable.setVisible(!empty);
+//    }
+//
+//    private void showOrderDetails() {
+//        Order selected = ordersTable.getSelectionModel().getSelectedItem();
+//        if (selected == null) {
+//            new Alert(Alert.AlertType.WARNING, "Please select an order first.").showAndWait();
+//            return;
+//        }
+//
+//        String details = "Order ID: " + selected.getId() +
+//                "\nDate: " + (selected.getCreatedAt() != null
+//                ? selected.getCreatedAt().format(dateFormatter)
+//                : "") +
+//                "\nTotal: $" + String.format("%.2f", selected.getTotal()) +
+//                "\nStatus: " + (selected.getStatus() != null ? selected.getStatus().name() : "");
+//
+//        new Alert(Alert.AlertType.INFORMATION, details).showAndWait();
+//    }
+//
+//    private void handleShopNow() {
+//        // TODO: navigate back to catalog scene
+//        new Alert(Alert.AlertType.INFORMATION, "Go to catalog to shop now.").showAndWait();
+//    }
 }

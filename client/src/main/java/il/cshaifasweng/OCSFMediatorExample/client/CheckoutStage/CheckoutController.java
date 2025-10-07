@@ -1,11 +1,16 @@
 package il.cshaifasweng.OCSFMediatorExample.client.CheckoutStage;
 
+import il.cshaifasweng.OCSFMediatorExample.client.App;
+import il.cshaifasweng.OCSFMediatorExample.entities.domain.Status;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.CheckOut.*;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.greenrobot.eventbus.EventBus;
+
+import java.time.LocalDateTime;
 
 public class CheckoutController {
 
@@ -228,13 +233,98 @@ public class CheckoutController {
 
     @FXML
     private void handleConfirm() {
-        // TODO: send order to server or show confirmation dialog
-        System.out.println("Order confirmed!");
+        try {
+            // 1. Build the order data from the UI
+            OrderDTO orderDTO = buildOrderDTO();
+
+            // 2. Wrap it in a ConfirmRequest
+            ConfirmRequest request = new ConfirmRequest(orderDTO);
+
+            // 3. Send to server via SimpleClient
+            App.getClient().sendToServer(request);
+
+            // 4. Give instant UI feedback
+            System.out.println("Order sent to server for confirmation.");
+
+            // Optional: disable confirm button to prevent duplicates
+            confirmBtn.setDisable(true);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /* ===========================
        Helper Methods
        =========================== */
+
+    private OrderDTO buildOrderDTO() {
+        OrderDTO dto = new OrderDTO();
+        //dto.setCustomerId(currentCustomerId); // from your logged-in user/session
+        dto.setCreatedAt(LocalDateTime.now());
+        dto.setStatus(Status.PENDING);
+
+        dto.setSubtotal(Double.parseDouble(subtotalLabel.getText()));
+        dto.setDiscountTotal(Double.parseDouble(discountLabel.getText()));
+        dto.setTotal(Double.parseDouble(grandTotalLabel.getText()));
+
+        // If Pickup
+        if (btnPickup.isSelected()) {
+            PickupInfoDTO pickup = new PickupInfoDTO();
+            pickup.setBranchName(pickupBranch.getValue());
+            pickup.setPickupDate(pickupDate.getValue());
+            pickup.setPickupTime(pickupTime.getText());
+            dto.setPickup(pickup);
+        }
+
+        // If Delivery
+        if (btnDelivery.isSelected()) {
+            DeliveryInfoDTO delivery = new DeliveryInfoDTO();
+            delivery.setCity(CityBox.getValue());
+            delivery.setStreet(StreetText.getText());
+            delivery.setHouse(HouseText.getText());
+            delivery.setPhone(PhoneText.getText());
+
+            // Gift info
+            if (giftCheck.isSelected()) {
+                GreetingCardDTO gift = new GreetingCardDTO();
+                gift.setRecipientName(RecepientNameText.getText());
+                gift.setRecipientPhone(RecipientPhoneText.getText());
+                gift.setMessage(GiftNoteText.getText());
+                dto.setGreetingCard(gift);
+            }
+
+            dto.setDelivery(delivery);
+        }
+
+        // Payment
+        PaymentDTO payment = new PaymentDTO();
+
+        String rawCard = CardNumberText.getText().replaceAll("\\s+", "");
+        if (rawCard.length() >= 4) {
+            String last4 = rawCard.substring(rawCard.length() - 4);
+            payment.setCardNumberMasked("**** **** **** " + last4);
+        } else {
+            payment.setCardNumberMasked("**** **** ****");
+        }
+
+        // Combine month/year into one field like "04/27"
+        String expiry = MMBOX.getValue() + "/" + YYBOX.getValue();
+        payment.setExpirationDate(expiry);
+
+        // Holder name and ID
+        payment.setCardHolderName(fullNameText.getText());
+        payment.setIdNumber(IdNumberText.getText());
+
+        // Payment amount = total price
+        double amount = Double.parseDouble(grandTotalLabel.getText());
+        payment.setAmount(amount);
+
+        dto.setPayment(payment);
+
+        return dto;
+    }
+
 
     private void showStep(int step) {
         step1.setVisible(false); step1.setManaged(false);

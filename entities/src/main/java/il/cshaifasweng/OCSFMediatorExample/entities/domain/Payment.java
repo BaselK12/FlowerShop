@@ -8,8 +8,10 @@ public class Payment implements Serializable {
 
     private String id;
     private Method method;
-    private String maskedPan;
-    private String cardholder;
+    private String maskedCardNumber;  // "**** **** **** 1234"
+    private String cardHolderName;
+    private String expirationDate;    // "04/27"
+    private String idNumber;          // optional ID for verification
     private String authCode;
     private double amount;
     private Status status;
@@ -22,11 +24,17 @@ public class Payment implements Serializable {
     public Method getMethod() { return method; }
     public void setMethod(Method method) { this.method = method; }
 
-    public String getMaskedPan() { return maskedPan; }
-    public void setMaskedPan(String maskedPan) { this.maskedPan = maskedPan; }
+    public String getMaskedCardNumber() { return maskedCardNumber; }
+    public void setMaskedCardNumber(String maskedCardNumber) { this.maskedCardNumber = maskedCardNumber; }
 
-    public String getCardholder() { return cardholder; }
-    public void setCardholder(String cardholder) { this.cardholder = cardholder; }
+    public String getCardHolderName() { return cardHolderName; }
+    public void setCardHolderName(String cardHolderName) { this.cardHolderName = cardHolderName; }
+
+    public String getExpirationDate() { return expirationDate; }
+    public void setExpirationDate(String expirationDate) { this.expirationDate = expirationDate; }
+
+    public String getIdNumber() { return idNumber; }
+    public void setIdNumber(String idNumber) { this.idNumber = idNumber; }
 
     public String getAuthCode() { return authCode; }
     public void setAuthCode(String authCode) { this.authCode = authCode; }

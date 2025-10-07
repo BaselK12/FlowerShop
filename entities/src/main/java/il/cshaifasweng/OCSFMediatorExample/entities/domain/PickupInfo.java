@@ -4,10 +4,11 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 public class PickupInfo implements Serializable {
-    private String shopId;
-    private String contactName;
+
+    private String shopId;              // ID or name of the shop branch
+    private String contactName;         // optional contact person (could be left null)
     private String phone;
-    private LocalDateTime scheduledAt;
+    private LocalDateTime scheduledAt;  // combined date+time for pickup scheduling
 
     public PickupInfo() {}
 

@@ -39,6 +39,9 @@ public class App {
         new GetCategoriesHandler(bus);
         new GetPromotionsHandler(bus);
 
+        // Order
+        new ConfirmRequestHandler(bus);
+
 
         // optional smoke to force Hibernate to init once (safe to remove)
         TX.run(s -> {

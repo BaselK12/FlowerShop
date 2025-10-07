@@ -1,21 +1,21 @@
-package il.cshaifasweng.OCSFMediatorExample.entities.domain;
+package il.cshaifasweng.OCSFMediatorExample.entities.messages.CheckOut;
 
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
-public class DeliveryInfo implements Serializable {
+public class DeliveryInfoDTO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private String city;
     private String street;
     private String house;
     private String zipCode;
     private String phone;
-
     private LocalDate deliveryDate;
     private String deliveryTime;
-    private LocalDateTime scheduledAt; // Optional combined field
 
-    public DeliveryInfo() {}
+    public DeliveryInfoDTO() {}
 
     public String getCity() { return city; }
     public void setCity(String city) { this.city = city; }
@@ -37,7 +37,4 @@ public class DeliveryInfo implements Serializable {
 
     public String getDeliveryTime() { return deliveryTime; }
     public void setDeliveryTime(String deliveryTime) { this.deliveryTime = deliveryTime; }
-
-    public LocalDateTime getScheduledAt() { return scheduledAt; }
-    public void setScheduledAt(LocalDateTime scheduledAt) { this.scheduledAt = scheduledAt; }
 }
