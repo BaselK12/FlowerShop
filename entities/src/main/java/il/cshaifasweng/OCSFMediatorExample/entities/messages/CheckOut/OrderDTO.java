@@ -1,31 +1,33 @@
-package il.cshaifasweng.OCSFMediatorExample.entities.domain;
+package il.cshaifasweng.OCSFMediatorExample.entities.messages.CheckOut;
+
+import il.cshaifasweng.OCSFMediatorExample.entities.domain.Status;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public class Order implements Serializable {
+public class OrderDTO implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
 
     private Long id;
     private Long customerId;
     private LocalDateTime createdAt;
     private Status status;
 
-    private List<OrderItem> items;
+    private List<OrderItemDTO> items;
     private double subtotal;
     private double discountTotal;
     private double total;
 
-    private DeliveryInfo delivery;
-    private PickupInfo pickup;
-    private Payment payment;
-    private Promotion appliedPromotion;
-    private GreetingCard greetingCard;
+    private DeliveryInfoDTO delivery;
+    private PickupInfoDTO pickup;
+    private PaymentDTO payment;
+    private GreetingCardDTO greetingCard;
 
-    public Order() {}
+    private String notes;
+
+    public OrderDTO() {}
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -39,8 +41,8 @@ public class Order implements Serializable {
     public Status getStatus() { return status; }
     public void setStatus(Status status) { this.status = status; }
 
-    public List<OrderItem> getItems() { return items; }
-    public void setItems(List<OrderItem> items) { this.items = items; }
+    public List<OrderItemDTO> getItems() { return items; }
+    public void setItems(List<OrderItemDTO> items) { this.items = items; }
 
     public double getSubtotal() { return subtotal; }
     public void setSubtotal(double subtotal) { this.subtotal = subtotal; }
@@ -51,18 +53,18 @@ public class Order implements Serializable {
     public double getTotal() { return total; }
     public void setTotal(double total) { this.total = total; }
 
-    public DeliveryInfo getDelivery() { return delivery; }
-    public void setDelivery(DeliveryInfo delivery) { this.delivery = delivery; }
+    public DeliveryInfoDTO getDelivery() { return delivery; }
+    public void setDelivery(DeliveryInfoDTO delivery) { this.delivery = delivery; }
 
-    public PickupInfo getPickup() { return pickup; }
-    public void setPickup(PickupInfo pickup) { this.pickup = pickup; }
+    public PickupInfoDTO getPickup() { return pickup; }
+    public void setPickup(PickupInfoDTO pickup) { this.pickup = pickup; }
 
-    public Payment getPayment() { return payment; }
-    public void setPayment(Payment payment) { this.payment = payment; }
+    public PaymentDTO getPayment() { return payment; }
+    public void setPayment(PaymentDTO payment) { this.payment = payment; }
 
-    public Promotion getAppliedPromotion() { return appliedPromotion; }
-    public void setAppliedPromotion(Promotion appliedPromotion) { this.appliedPromotion = appliedPromotion; }
+    public GreetingCardDTO getGreetingCard() { return greetingCard; }
+    public void setGreetingCard(GreetingCardDTO greetingCard) { this.greetingCard = greetingCard; }
 
-    public GreetingCard getGreetingCard() { return greetingCard; }
-    public void setGreetingCard(GreetingCard greetingCard) { this.greetingCard = greetingCard; }
+    public String getNotes() { return notes; }
+    public void setNotes(String notes) { this.notes = notes; }
 }

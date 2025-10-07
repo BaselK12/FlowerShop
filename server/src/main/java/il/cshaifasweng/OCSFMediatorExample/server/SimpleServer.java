@@ -3,6 +3,7 @@ package il.cshaifasweng.OCSFMediatorExample.server;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.GetCatalogRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.GetCategoriesRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.GetPromotionsRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.CheckOut.ConfirmRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Complaint.GetComplaintsRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.CreateEmployeeRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.DeleteEmployeeRequest;
@@ -58,6 +59,8 @@ public class SimpleServer extends ObservableServer {
 				bus.publish(new GetPromotionsRequestEvent(rr, client));
 			}else if (msg instanceof GetCategoriesRequest rr) {
 				bus.publish(new GetCategoriesRequestEvent(rr, client));
+			}else if (msg instanceof ConfirmRequest rr) {
+				bus.publish(new ConfirmRequestEvent(rr, client));
 			}
 			else if (msg instanceof GetComplaintsRequest rr) {
 				bus.publish(new ComplaintsFetchRequestedEvent(

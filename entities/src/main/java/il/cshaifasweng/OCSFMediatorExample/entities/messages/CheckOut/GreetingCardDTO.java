@@ -1,22 +1,17 @@
-package il.cshaifasweng.OCSFMediatorExample.entities.domain;
+package il.cshaifasweng.OCSFMediatorExample.entities.messages.CheckOut;
 
 import java.io.Serializable;
 
-public class GreetingCard implements Serializable {
+public class GreetingCardDTO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private String message;
     private String senderName;
     private String recipientName;
     private String recipientPhone;
 
-    public GreetingCard() {}
-
-    public GreetingCard(String message, String senderName, String recipientName, String recipientPhone) {
-        this.message = message;
-        this.senderName = senderName;
-        this.recipientName = recipientName;
-        this.recipientPhone = recipientPhone;
-    }
+    public GreetingCardDTO() {}
 
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }

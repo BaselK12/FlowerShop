@@ -23,7 +23,9 @@ public class PaymentsViewController {
     @FXML private TableView<Payment> paymentsTable;
     @FXML private TableColumn<Payment, String> colCardType;
     @FXML private TableColumn<Payment, String> colCardNumber;
-    @FXML private TableColumn<Payment, String> colExpiryDate; // currently placeholder
+    @FXML private TableColumn<Payment, String> colExpiryDate;
+    @FXML private TableColumn<Payment, String> colAmount;
+    @FXML private TableColumn<Payment, String> colStatus;
 
     // Empty state
     @FXML private VBox paymentsEmptyBox;
@@ -39,7 +41,8 @@ public class PaymentsViewController {
 
     @FXML
     private void initialize() {
-        // Column bindings
+        // --- Table Column Setup ---
+
         colCardType.setCellValueFactory(data ->
                 new SimpleStringProperty(
                         data.getValue().getMethod() != null ? data.getValue().getMethod().name() : ""
@@ -48,42 +51,57 @@ public class PaymentsViewController {
 
         colCardNumber.setCellValueFactory(data ->
                 new SimpleStringProperty(
-                        data.getValue().getMaskedPan() != null ? data.getValue().getMaskedPan() : ""
+                        data.getValue().getMaskedCardNumber() != null ? data.getValue().getMaskedCardNumber() : ""
                 )
         );
 
-        // Expiry date is not in your Payment entity right now
         colExpiryDate.setCellValueFactory(data ->
-                new SimpleStringProperty("") // empty until entity includes expiry
+                new SimpleStringProperty(
+                        data.getValue().getExpirationDate() != null ? data.getValue().getExpirationDate() : ""
+                )
+        );
+
+        colAmount.setCellValueFactory(data ->
+                new SimpleStringProperty(String.format("₪ %.2f", data.getValue().getAmount()))
+        );
+
+        colStatus.setCellValueFactory(data ->
+                new SimpleStringProperty(
+                        data.getValue().getStatus() != null ? data.getValue().getStatus().name() : ""
+                )
         );
 
         paymentsTable.setItems(payments);
 
-        // Hook up buttons
+        // --- Button Setup ---
         btnRefreshPayments.setOnAction(e -> loadPayments());
         btnAddPayment.setOnAction(e -> addPayment());
         btnEmptyAddPayment.setOnAction(e -> addPayment());
         btnRemovePayment.setOnAction(e -> removeSelectedPayment());
 
-        // Initial load
+        // --- Initial Load ---
         loadPayments();
     }
 
+    // --- Load Mock Payments (replace later with server call) ---
     private void loadPayments() {
         payments.clear();
 
-        // TODO: Replace with server call
         Payment p1 = new Payment();
         p1.setId("PAY123");
         p1.setMethod(Payment.Method.CREDIT_CARD);
-        p1.setMaskedPan("**** 1234");
+        p1.setMaskedCardNumber("**** **** **** 1234");
+        p1.setCardHolderName("Maya Cohen");
+        p1.setExpirationDate("05/27");
         p1.setStatus(Payment.Status.AUTHORIZED);
         p1.setAmount(49.99);
 
         Payment p2 = new Payment();
         p2.setId("PAY124");
         p2.setMethod(Payment.Method.CREDIT_CARD);
-        p2.setMaskedPan("**** 5678");
+        p2.setMaskedCardNumber("**** **** **** 5678");
+        p2.setCardHolderName("Noam Levi");
+        p2.setExpirationDate("11/26");
         p2.setStatus(Payment.Status.CAPTURED);
         p2.setAmount(19.95);
 
@@ -92,20 +110,24 @@ public class PaymentsViewController {
         updateUIState();
     }
 
+    // --- Update Header + Visibility ---
     private void updateUIState() {
         paymentsCountLabel.setText("(" + payments.size() + ")");
         boolean empty = payments.isEmpty();
         paymentsEmptyBox.setVisible(empty);
         paymentsTable.setVisible(!empty);
+        paymentsActions.setDisable(empty);
     }
 
+    // --- Add New Payment ---
     private void addPayment() {
-        // TODO: Replace with dialog or integration with payment gateway
-        Alert alert = new Alert(Alert.AlertType.INFORMATION,
-                "Add Payment Method dialog goes here.");
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setHeaderText("Add Payment Method");
+        alert.setContentText("This would open the Add Payment dialog or payment gateway integration.");
         alert.showAndWait();
     }
 
+    // --- Remove Selected Payment ---
     private void removeSelectedPayment() {
         Payment selected = paymentsTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
@@ -113,7 +135,7 @@ public class PaymentsViewController {
             return;
         }
 
-        // TODO: Send delete request to server
+        // TODO: Replace with server delete request
         payments.remove(selected);
         updateUIState();
     }
