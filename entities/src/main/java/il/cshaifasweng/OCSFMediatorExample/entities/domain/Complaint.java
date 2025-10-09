@@ -47,7 +47,7 @@ public class Complaint implements Serializable {
     private String text;
 
     // Optional fields from DTO
-    @Column(name = "anonymous")
+    @Column(name = "anonymous", columnDefinition = "BIT(1)")
     private boolean anonymous;
 
     @Column(name = "email")

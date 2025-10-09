@@ -77,7 +77,7 @@ public class SimpleClient extends AbstractClient {
 		if (msg instanceof Warning) {
 			EventBus.getDefault().post(new WarningEvent((Warning) msg));
 		} else {
-			EventBus.getDefault().post(new ServerMessageEvent(msg)); // <-- wrapper
+			EventBus.getDefault().post(msg); // <-- wrapper
 		}
 		System.out.println("[SimpleClient] " + msg);
 	}

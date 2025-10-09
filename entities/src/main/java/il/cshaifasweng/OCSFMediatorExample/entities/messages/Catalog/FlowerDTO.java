@@ -11,6 +11,8 @@ public class FlowerDTO implements Serializable {
     private double price;
     private double effectivePrice;
     private String imageUrl;
+    private boolean single;
+
 
     private PromotionDTO promotion;      // full promotion info (can be null)
     private List<String> categories;     // e.g. ["Romantic", "Bouquet"]
@@ -29,6 +31,9 @@ public class FlowerDTO implements Serializable {
         this.promotion = promotion;
         this.categories = categories;
     }
+
+
+
 
     // --- Getters & Setters ---
     public String getSku() { return sku; }
@@ -54,6 +59,9 @@ public class FlowerDTO implements Serializable {
 
     public List<String> getCategories() { return categories; }
     public void setCategories(List<String> categories) { this.categories = categories; }
+
+    public boolean isSingle() { return single; }
+    public void setSingle(boolean single) { this.single = single; }
 
     // Helper
     public boolean hasActivePromotion() {

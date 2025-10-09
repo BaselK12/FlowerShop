@@ -43,6 +43,9 @@ public class Flower implements Serializable {
     @JoinColumn(name = "promotion_id")
     private Promotion promotion; // NEW FIELD
 
+    @Column(name = "is_single", nullable = false)
+    private boolean isSingle = true; // default true for single flowers
+
     public Flower() {}
 
     public Flower(String sku, String name, String description, double price, String imageUrl) {
@@ -114,4 +117,7 @@ public class Flower implements Serializable {
             promotion = null;
         }
     }
+
+    public boolean isSingle() { return isSingle; }
+    public void setSingle(boolean single) { this.isSingle = single; }
 }

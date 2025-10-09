@@ -115,6 +115,11 @@
     -fx-text-fill: -rosewood;
 }
 
+.table-cell .button {
+    -fx-padding: 2 8;
+    -fx-font-size: 12px;
+}
+
 /* 7) Buttons */
 .button {
     -fx-background-radius: 8;

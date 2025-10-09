@@ -4,27 +4,46 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.TextInputDialog;
 import javafx.stage.Stage;
+import org.greenrobot.eventbus.EventBus;
 
 import java.io.IOException;
 import java.net.URL;
 
 public class App extends Application {
     private static Scene scene;
-    int x;
+    private static SimpleClient client;
+    private static Stage mainStage;
 
     @Override
     public void start(Stage stage) throws Exception {
-        // init client first (as you already do)
-        SimpleClient c = new SimpleClient("localhost", 3050);
-        c.openConnection();
-        SimpleClient.setClient(c);
+
+        // ## DO NOT TOUCH OR CHANGE ## //
+        TextInputDialog dialog = new TextInputDialog("localhost");
+        dialog.setTitle("Server IP");
+        dialog.setHeaderText("Connect to Server");
+        dialog.setContentText("Please enter the server IP address:");
+        String serverIP = dialog.showAndWait().orElse("localhost");
+
+        client = new SimpleClient(serverIP, 3050);
+        client.openConnection();
+        SimpleClient.setClient(client);
+
 
         // boot the first view
-        scene = new Scene(loadFXML("/il/cshaifasweng/OCSFMediatorExample/client/CustomerLoginPage.fxml"));
+//        scene = new Scene(loadFXML("/il/cshaifasweng/OCSFMediatorExample/client/CustomerLoginPage.fxml"));
+//        stage.setScene(scene);
+//        stage.setTitle("FlowerShop");
+//        stage.show();
+
+
+        // load the create bouquet
+        scene = new Scene(loadFXML("/il/cshaifasweng/OCSFMediatorExample/client/CreateBouquet.fxml"));
         stage.setScene(scene);
         stage.setTitle("FlowerShop");
         stage.show();
+
     }
 
     public static void setRoot(String fxml) throws IOException {
