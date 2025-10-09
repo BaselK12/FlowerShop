@@ -1,5 +1,9 @@
 package il.cshaifasweng.OCSFMediatorExample.client;
 
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.FlowerDTO;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.CreateBouquet.GetFlowersRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.CreateBouquet.GetFlowersResponse;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
@@ -7,21 +11,24 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.control.TableRow;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
 import java.net.URL;
 import java.util.*;
 import java.util.ResourceBundle;
 
-public class CreateBouquetController implements Initializable {
+
+public class CreateBouquetController {
 
     // ====== Header ======
-    @FXML private Label totalPriceLable; // note: label typo preserved from FXML
+    @FXML private Label totalPriceLable;
 
     // ====== Left Panel ======
-    @FXML private TableView<Flower> availableFlowerTable;
-    @FXML private TableColumn<Flower, String> colAvailName;
-    @FXML private TableColumn<Flower, Double> colAvailPrice;
-    @FXML private TableColumn<Flower, Void> volaVailAdd; // "Add" column
+    @FXML private TableView<FlowerDTO> availableFlowerTable;
+    @FXML private TableColumn<FlowerDTO, String> colAvailName;
+    @FXML private TableColumn<FlowerDTO, Double> colAvailPrice;
+    @FXML private TableColumn<FlowerDTO, Void> volaVailAdd;
 
     // ====== Center Panel ======
     @FXML private FlowPane bouquetPreviewPane;
@@ -39,20 +46,32 @@ public class CreateBouquetController implements Initializable {
     @FXML private Button btnCheckout;
 
     // ====== Data ======
-    private final List<Flower> availableFlowers = new ArrayList<>();
+    private final List<FlowerDTO> availableFlowers = new ArrayList<>();
     private final Map<String, SelectedItem> selectedMap = new LinkedHashMap<>();
 
     // =======================================================
     // Initialization
     // =======================================================
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
+    @FXML
+    public void initialize() {
+
+        if (!EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().register(this);
+        }
+
         setupAvailableTable();
         setupSelectedTable();
-        loadMockData();
-        updateAvailableTable();
-        updateTotalPrice();
         setupButtonActions();
+
+        // Ask the server for single-stem flowers
+        try {
+            App.getClient().sendToServer(new GetFlowersRequest(true));
+        } catch (Exception e) {
+            e.printStackTrace();
+            showError("Could not load flowers from server.");
+        }
+
+        updateTotalPrice();
     }
 
     // =======================================================
@@ -60,7 +79,7 @@ public class CreateBouquetController implements Initializable {
     // =======================================================
     private void setupAvailableTable() {
         colAvailName.setCellValueFactory(new PropertyValueFactory<>("name"));
-        colAvailPrice.setCellValueFactory(new PropertyValueFactory<>("price"));
+        colAvailPrice.setCellValueFactory(new PropertyValueFactory<>("effectivePrice"));
 
         volaVailAdd.setCellFactory(param -> new TableCell<>() {
             private final Button addBtn = new Button("Add");
@@ -68,7 +87,7 @@ public class CreateBouquetController implements Initializable {
             {
                 addBtn.getStyleClass().addAll("button", "btn-primary");
                 addBtn.setOnAction(e -> {
-                    Flower f = getTableView().getItems().get(getIndex());
+                    FlowerDTO f = getTableView().getItems().get(getIndex());
                     addFlowerToBouquet(f);
                 });
             }
@@ -76,17 +95,12 @@ public class CreateBouquetController implements Initializable {
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty) {
-                    setGraphic(null);
-                } else {
-                    setGraphic(addBtn);
-                }
+                setGraphic(empty ? null : addBtn);
             }
         });
 
-        // Hover highlight via CSS class (no pseudo selectors)
         availableFlowerTable.setRowFactory(tv -> {
-            TableRow<Flower> row = new TableRow<>();
+            TableRow<FlowerDTO> row = new TableRow<>();
             row.setOnMouseEntered(e -> row.getStyleClass().add("table-row-highlight"));
             row.setOnMouseExited(e -> row.getStyleClass().remove("table-row-highlight"));
             return row;
@@ -95,9 +109,57 @@ public class CreateBouquetController implements Initializable {
 
     private void setupSelectedTable() {
         colSellName.setCellValueFactory(new PropertyValueFactory<>("name"));
-        colSelQty.setCellValueFactory(new PropertyValueFactory<>("quantity"));
         ColSelSubtotal.setCellValueFactory(new PropertyValueFactory<>("subtotal"));
 
+        // Replace this line:
+        // colSelQty.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+        // With this custom cell factory:
+        colSelQty.setCellFactory(param -> new TableCell<>() {
+            private final Button btnMinus = new Button("-");
+            private final Button btnPlus = new Button("+");
+            private final Label qtyLabel = new Label();
+            private final HBox box = new HBox(5, btnMinus, qtyLabel, btnPlus);
+
+            {
+                box.setStyle("-fx-alignment: center;"); // center contents
+                btnMinus.getStyleClass().add("qty-btn");
+                btnPlus.getStyleClass().add("qty-btn");
+                qtyLabel.getStyleClass().add("qty-label");
+                box.getStyleClass().add("qty-box");
+
+                btnMinus.setOnAction(e -> changeQuantity(-1));
+                btnPlus.setOnAction(e -> changeQuantity(+1));
+            }
+
+            private void changeQuantity(int delta) {
+                SelectedItem item = getTableView().getItems().get(getIndex());
+                int newQty = Math.max(0, item.getQuantity() + delta);
+
+                if (newQty == 0) {
+                    selectedMap.remove(item.getName());
+                } else {
+                    item.setQuantity(newQty);
+                }
+
+                qtyLabel.setText(String.valueOf(newQty));
+                updateSelectedTable();
+                updateTotalPrice();
+            }
+
+            @Override
+            protected void updateItem(Integer item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getIndex() >= getTableView().getItems().size()) {
+                    setGraphic(null);
+                } else {
+                    SelectedItem current = getTableView().getItems().get(getIndex());
+                    qtyLabel.setText(String.valueOf(current.getQuantity()));
+                    setGraphic(box);
+                }
+            }
+        });
+
+        // --- Remove column ---
         colSelRemove.setCellFactory(param -> new TableCell<>() {
             private final Button removeBtn = new Button("Remove");
 
@@ -127,14 +189,6 @@ public class CreateBouquetController implements Initializable {
     // =======================================================
     // Data
     // =======================================================
-    private void loadMockData() {
-        availableFlowers.add(new Flower("Red Roses", 120));
-        availableFlowers.add(new Flower("White Tulips", 95));
-        availableFlowers.add(new Flower("Sunflower Joy", 89.9));
-        availableFlowers.add(new Flower("Orchid Elegance", 150));
-        availableFlowers.add(new Flower("Pink Peonies", 135.5));
-    }
-
     private void updateAvailableTable() {
         availableFlowerTable.getItems().setAll(availableFlowers);
     }
@@ -153,9 +207,9 @@ public class CreateBouquetController implements Initializable {
     // =======================================================
     // Bouquet logic
     // =======================================================
-    private void addFlowerToBouquet(Flower flower) {
+    private void addFlowerToBouquet(FlowerDTO flower) {
         selectedMap.compute(flower.getName(), (k, v) -> {
-            if (v == null) return new SelectedItem(flower.getName(), 1, flower.getPrice());
+            if (v == null) return new SelectedItem(flower.getName(), 1, flower.getEffectivePrice());
             v.setQuantity(v.getQuantity() + 1);
             return v;
         });
@@ -201,19 +255,6 @@ public class CreateBouquetController implements Initializable {
     // =======================================================
     // Model classes (inner static)
     // =======================================================
-    public static class Flower {
-        private final String name;
-        private final double price;
-
-        public Flower(String name, double price) {
-            this.name = name;
-            this.price = price;
-        }
-
-        public String getName() { return name; }
-        public double getPrice() { return price; }
-    }
-
     public static class SelectedItem {
         private final String name;
         private int quantity;
@@ -229,5 +270,29 @@ public class CreateBouquetController implements Initializable {
         public int getQuantity() { return quantity; }
         public void setQuantity(int quantity) { this.quantity = quantity; }
         public double getSubtotal() { return price * quantity; }
+    }
+
+    // =======================================================
+    // Events handler
+    // =======================================================
+    @Subscribe
+    public void onGetFlowersResponse(GetFlowersResponse response) {
+        Platform.runLater(() -> {
+            availableFlowers.clear();
+            availableFlowers.addAll(response.getFlowers());
+            updateAvailableTable();
+            updateTotalPrice();
+        });
+    }
+
+    // =======================================================
+    // Utility
+    // =======================================================
+    private void showError(String msg) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText(null);
+        alert.setContentText(msg);
+        alert.showAndWait();
     }
 }

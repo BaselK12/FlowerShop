@@ -17,9 +17,9 @@ public class FlowerMapper {
     public static FlowerDTO toDTO(Flower flower) {
         if (flower == null) return null;
 
-        // Convert Promotion → PromotionDTO (if exists)
-        PromotionDTO promoDTO = null;
+        // --- Promotion mapping ---
         Promotion promo = flower.getPromotion();
+        PromotionDTO promoDTO = null;
         if (promo != null) {
             promoDTO = new PromotionDTO(
                     promo.getId(),
@@ -33,15 +33,15 @@ public class FlowerMapper {
             );
         }
 
-        // Convert categories to simple display names
+        // --- Categories mapping ---
         List<String> categoryNames = flower.getCategory() != null
                 ? flower.getCategory().stream()
                 .map(Category::getDisplayName)
                 .collect(Collectors.toList())
                 : List.of();
 
-        // Build DTO
-        return new FlowerDTO(
+        // --- Build DTO ---
+        FlowerDTO dto = new FlowerDTO(
                 flower.getSku(),
                 flower.getName(),
                 flower.getShortDescription(),
@@ -51,12 +51,21 @@ public class FlowerMapper {
                 promoDTO,
                 categoryNames
         );
+
+        // --- NEW: sync isSingle flag ---
+        dto.setSingle(flower.isSingle());
+
+        return dto;
     }
 
     // ============================
     //  DTO → Entity
     // ============================
-    public static Flower toEntity(FlowerDTO dto, List<Category> availableCategories, Promotion promotion) {
+    public static Flower toEntity(
+            FlowerDTO dto,
+            List<Category> availableCategories,
+            Promotion promotion
+    ) {
         if (dto == null) return null;
 
         Flower flower = new Flower();
@@ -67,6 +76,10 @@ public class FlowerMapper {
         flower.setImageUrl(dto.getImageUrl());
         flower.setPromotion(promotion);
 
+        // --- NEW: sync isSingle flag back ---
+        flower.setSingle(dto.isSingle());
+
+        // --- Category mapping ---
         if (dto.getCategories() != null && availableCategories != null) {
             List<Category> categories = availableCategories.stream()
                     .filter(c -> dto.getCategories().contains(c.getDisplayName()))

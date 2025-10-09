@@ -5,6 +5,7 @@ import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.GetCategori
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.GetPromotionsRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.CheckOut.ConfirmRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Complaint.GetComplaintsRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.CreateBouquet.GetFlowersRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.CreateEmployeeRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.DeleteEmployeeRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.GetEmployeesRequest;
@@ -61,6 +62,8 @@ public class SimpleServer extends ObservableServer {
 				bus.publish(new GetCategoriesRequestEvent(rr, client));
 			}else if (msg instanceof ConfirmRequest rr) {
 				bus.publish(new ConfirmRequestEvent(rr, client));
+			}else if (msg instanceof GetFlowersRequest rr) {
+				bus.publish(new GetFlowersRequestEvent(rr, client));
 			}
 			else if (msg instanceof GetComplaintsRequest rr) {
 				bus.publish(new ComplaintsFetchRequestedEvent(

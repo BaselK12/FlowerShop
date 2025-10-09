@@ -38,9 +38,12 @@ public class App {
         new GetCatalogHandler(bus);
         new GetCategoriesHandler(bus);
         new GetPromotionsHandler(bus);
+        new GetFlowersHandler(bus);
+
 
         // Order
         new ConfirmRequestHandler(bus);
+
 
 
         // optional smoke to force Hibernate to init once (safe to remove)
