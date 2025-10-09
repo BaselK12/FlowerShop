@@ -11,6 +11,7 @@ import java.net.URL;
 
 public class App extends Application {
     private static Scene scene;
+    int x;
 
     @Override
     public void start(Stage stage) throws Exception {
