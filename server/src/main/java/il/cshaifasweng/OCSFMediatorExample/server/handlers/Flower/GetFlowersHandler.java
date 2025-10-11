@@ -1,11 +1,11 @@
-package il.cshaifasweng.OCSFMediatorExample.server.handlers;
+package il.cshaifasweng.OCSFMediatorExample.server.handlers.Flower;
 
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.Flower;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.FlowerDTO;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.CreateBouquet.GetFlowersRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.CreateBouquet.GetFlowersResponse;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
-import il.cshaifasweng.OCSFMediatorExample.server.bus.events.GetFlowersRequestEvent;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Flowers.GetFlowersRequestEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.SendToClientEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.mapping.FlowerMapper;
 import il.cshaifasweng.OCSFMediatorExample.server.session.TX;
