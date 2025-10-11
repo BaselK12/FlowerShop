@@ -4,6 +4,7 @@ import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.*;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.Flower.DeleteFlowerHandler;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.Flower.GetFlowersHandler;
+import il.cshaifasweng.OCSFMediatorExample.server.handlers.Flower.SaveFlowerHandler;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.catalog.GetCatalogHandler;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.catalog.GetCategoriesHandler;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.catalog.GetPromotionsHandler;
@@ -44,6 +45,7 @@ public class App {
         // Flowers
         new GetFlowersHandler(bus);
         new DeleteFlowerHandler(bus);
+        new SaveFlowerHandler(bus);
 
         // Order
         new ConfirmRequestHandler(bus);
