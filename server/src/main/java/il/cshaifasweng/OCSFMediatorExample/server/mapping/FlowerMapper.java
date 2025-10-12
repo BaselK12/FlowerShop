@@ -36,26 +36,22 @@ public class FlowerMapper {
         // --- Categories mapping ---
         List<String> categoryNames = flower.getCategory() != null
                 ? flower.getCategory().stream()
-                .map(Category::getDisplayName)
+                .map(cat -> cat.getDisplayName() != null ? cat.getDisplayName() : cat.getName())
                 .collect(Collectors.toList())
                 : List.of();
 
         // --- Build DTO ---
-        FlowerDTO dto = new FlowerDTO(
+        return new FlowerDTO(
                 flower.getSku(),
                 flower.getName(),
-                flower.getShortDescription(),
+                flower.getDescription(),          // full description
+                flower.getShortDescription(),     // short version
                 flower.getPrice(),
                 flower.getEffectivePrice(),
                 flower.getImageUrl(),
                 promoDTO,
                 categoryNames
         );
-
-        // --- NEW: sync isSingle flag ---
-        dto.setSingle(flower.isSingle());
-
-        return dto;
     }
 
     // ============================
@@ -71,20 +67,24 @@ public class FlowerMapper {
         Flower flower = new Flower();
         flower.setSku(dto.getSku());
         flower.setName(dto.getName());
+        flower.setDescription(dto.getDescription());
         flower.setShortDescription(dto.getShortDescription());
         flower.setPrice(dto.getPrice());
         flower.setImageUrl(dto.getImageUrl());
         flower.setPromotion(promotion);
 
-        // --- NEW: sync isSingle flag back ---
-        flower.setSingle(dto.isSingle());
+        // --- Force isSingle = false for all flowers created via admin ---
+        flower.setSingle(false);
 
         // --- Category mapping ---
         if (dto.getCategories() != null && availableCategories != null) {
-            List<Category> categories = availableCategories.stream()
-                    .filter(c -> dto.getCategories().contains(c.getDisplayName()))
+            List<Category> matched = availableCategories.stream()
+                    .filter(c ->
+                            dto.getCategories().contains(c.getDisplayName()) ||
+                                    dto.getCategories().contains(c.getName())
+                    )
                     .collect(Collectors.toList());
-            flower.setCategory(categories);
+            flower.setCategory(matched);
         }
 
         return flower;
