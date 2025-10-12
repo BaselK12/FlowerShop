@@ -1,5 +1,7 @@
 package il.cshaifasweng.OCSFMediatorExample.server;
 
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.DeleteFlowerRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.SaveFlowerRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.GetCatalogRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.GetCategoriesRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.GetPromotionsRequest;
@@ -16,6 +18,9 @@ import il.cshaifasweng.OCSFMediatorExample.server.bus.events.*;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Catalog.GetCatalogRequestEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Catalog.GetCategoriesRequestEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Catalog.GetPromotionsRequestEvent;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Flowers.DeleteFlowerRequestEvent;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Flowers.GetFlowersRequestEvent;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Flowers.SaveFlowerRequestEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ObservableServer;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ConnectionToClient;
 
@@ -64,6 +69,10 @@ public class SimpleServer extends ObservableServer {
 				bus.publish(new ConfirmRequestEvent(rr, client));
 			}else if (msg instanceof GetFlowersRequest rr) {
 				bus.publish(new GetFlowersRequestEvent(rr, client));
+			}else if (msg instanceof DeleteFlowerRequest rr) {
+				bus.publish(new DeleteFlowerRequestEvent(rr, client));
+			}else if (msg instanceof SaveFlowerRequest rr) {
+				bus.publish(new SaveFlowerRequestEvent(rr, client));
 			}
 			else if (msg instanceof GetComplaintsRequest rr) {
 				bus.publish(new ComplaintsFetchRequestedEvent(

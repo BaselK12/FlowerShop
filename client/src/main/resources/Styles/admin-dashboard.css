@@ -1,0 +1,154 @@
+/* =========================================================
+   Admin Dashboard Theme — Elegant & Romantic (Lint-safe)
+   Palette:
+     - Blush Rose   #E8A7B3
+     - Dusty Mauve  #D8A7B1
+     - Ivory Cream  #FFF9F9
+     - Soft Beige   #F5E2D3
+     - Rosewood     #5A4E4E
+   ========================================================= */
+
+/* 1) Root + palette */
+.root {
+    -blush:    #E8A7B3;
+    -mauve:    #D8A7B1;
+    -ivory:    #FFF9F9;
+    -beige:    #F5E2D3;
+    -rosewood: #5A4E4E;
+    -ink:      #3a2d2d;
+
+    /* Global focus colors instead of :focused rules */
+    -fx-focus-color: #D8A7B1; /* mauve */
+    -fx-faint-focus-color: rgba(216,167,177,0.25);
+
+    -fx-background-color: linear-gradient(#FFF9F9, #F5E2D3);
+    -fx-text-fill: -ink;
+}
+
+/* 2) Header bar */
+.header-bar {
+    -fx-background-color: -blush;
+    -fx-padding: 15 30;
+    -fx-alignment: CENTER_LEFT;
+    -fx-border-color: transparent transparent -mauve transparent;
+    -fx-border-width: 0 0 3 0;
+}
+.header-title {
+    -fx-text-fill: -ivory;
+    -fx-font-size: 22px;
+    -fx-font-weight: 700;
+}
+.logout-btn {
+    -fx-background-color: -rosewood;
+    -fx-text-fill: white;
+    -fx-background-radius: 8;
+    -fx-padding: 6 14;
+    -fx-cursor: hand;
+}
+/* no derive(): hard-coded lighter rosewood */
+.logout-btn:hover {
+    -fx-background-color: #7F6E6E; /* rosewood lightened ~20% */
+}
+
+/* 3) Section panes */
+.section-pane {
+    -fx-background-color: white;
+    -fx-background-radius: 14;
+    -fx-padding: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 8, 0, 0, 2);
+    -fx-border-color: -mauve;
+    -fx-border-radius: 14;
+}
+.section-title {
+    -fx-text-fill: -rosewood;
+    -fx-font-size: 16px;
+    -fx-font-weight: 600;
+    -fx-padding: 0 0 8 0;
+}
+
+/* 4) Table styling */
+.table-view {
+    -fx-background-color: transparent;
+    -fx-table-cell-border-color: #f0d4d8;
+    -fx-base: white;
+    -fx-padding: 5;
+
+    /* selection colors (no :selected) */
+    -fx-selection-bar: #f5d4da;
+    -fx-selection-bar-non-focused: #f5d4da;
+}
+.table-view .column-header-background {
+    -fx-background-color: -beige;
+}
+.table-view .column-header .label {
+    -fx-text-fill: -rosewood;
+    -fx-font-weight: 600;
+}
+.table-row-cell {
+    -fx-background-color: rgba(255,255,255,0.9);
+}
+
+/* 5) Buttons */
+.button {
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-padding: 8 14;
+    -fx-font-weight: 600;
+    -fx-border-color: transparent;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 4, 0, 0, 1);
+}
+.btn-primary {
+    -fx-background-color: -blush;
+    -fx-text-fill: white;
+}
+.btn-primary:hover {
+    -fx-background-color: -mauve;
+}
+.btn-secondary {
+    -fx-background-color: -mauve;
+    -fx-text-fill: white;
+}
+.btn-secondary:hover {
+    -fx-background-color: -blush;
+}
+.btn-outline {
+    -fx-background-color: transparent;
+    -fx-border-color: -mauve;
+    -fx-text-fill: -rosewood;
+}
+.btn-outline:hover {
+    -fx-background-color: -beige;
+}
+
+/* 6) Form fields (no :focused; rely on -fx-focus-color) */
+.text-field, .text-area, .date-picker {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e1c5cb;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 6 8;
+    -fx-font-size: 13px;
+}
+
+/* 7) Selection list container */
+.selection-box {
+    -fx-background-color: #fafafa;
+    -fx-border-color: #e1c5cb;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 8;
+}
+
+/* 8) Promotion status */
+.status-active {
+    -fx-text-fill: #2e8b57;
+    -fx-font-weight: bold;
+}
+.status-expired {
+    -fx-text-fill: #999999;
+    -fx-font-weight: bold;
+}
+
+/* 9) Spacers */
+.v-spacer { -fx-min-height: 10; -fx-pref-height: 10; -fx-max-height: 10; }
+.h-spacer { -fx-min-width: 10;  -fx-pref-width: 10;  -fx-max-width: 10;  }
