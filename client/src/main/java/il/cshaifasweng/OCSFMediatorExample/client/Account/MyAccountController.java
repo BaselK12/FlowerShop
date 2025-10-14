@@ -1,5 +1,10 @@
 package il.cshaifasweng.OCSFMediatorExample.client.Account;
 
+import il.cshaifasweng.OCSFMediatorExample.client.common.ClientSession;
+import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
+import il.cshaifasweng.OCSFMediatorExample.client.common.RequiresSession;
+import il.cshaifasweng.OCSFMediatorExample.client.common.Session;
+import il.cshaifasweng.OCSFMediatorExample.client.ui.Nav;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -10,6 +15,8 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MyAccountController {
 
@@ -24,12 +31,17 @@ public class MyAccountController {
 
     @FXML private StackPane ContentStack;
 
+    // Cache loaded FXMLs so switching tabs doesn’t re-parse files every time
+    private final Map<String, Node> cache = new HashMap<>();
+
     @FXML
     private void initialize() {
-        // Load default view (Profile)
+        ClientSession.install();
+        // Keep UI state and loaded view in sync
+        ProfileBtn.setSelected(true);
         loadView("/il/cshaifasweng/OCSFMediatorExample/client/Account/ProfileView.fxml");
 
-        // Listen to navigation group changes
+        // Navigation
         navGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
             if (newToggle == null) return;
 
@@ -44,28 +56,43 @@ public class MyAccountController {
             }
         });
 
-        // Hook buttons
+        // Buttons
         LogOutBtn.setOnAction(e -> handleLogout());
         CloseBtn.setOnAction(e -> handleClose());
     }
 
+
     private void loadView(String fxmlPath) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
-            Node view = loader.load();
+            Node view = cache.get(fxmlPath);
+            if (view == null) {
+                var url = getClass().getResource(fxmlPath);
+                if (url == null) {
+                    throw new IllegalArgumentException("FXML not found on classpath: " + fxmlPath);
+                }
+                FXMLLoader loader = new FXMLLoader(url);
+                view = loader.load();
 
-            ContentStack.getChildren().clear();
-            ContentStack.getChildren().add(view);
+                Object c = loader.getController();
+                if (c instanceof RequiresSession rs) {
+                    long id = ClientSession.getCustomerId();  // << use the cached id
+                    rs.setCustomerId(id);
+                }
+                cache.put(fxmlPath, view);
+            }
+            ContentStack.getChildren().setAll(view);
         } catch (IOException e) {
             e.printStackTrace();
+            throw new RuntimeException("Failed to load: " + fxmlPath, e);
         }
     }
 
+
     private void handleLogout() {
-        // TODO: clear session, go back to login scene
-        System.out.println("Logging out...");
-        // Example: navigate to login
-        // App.setRoot("Login");  (depends on your project structure)
+        try { SimpleClient.getClient().closeConnection(); } catch (Exception ignored) {}
+        ClientSession.clear();
+        Session.clear();
+        Nav.go(ContentStack, "/il/cshaifasweng/OCSFMediatorExample/client/CustomerLoginPage.fxml");
     }
 
     private void handleClose() {

@@ -1,9 +1,0 @@
-USE flowershop;
-
-CREATE TABLE IF NOT EXISTS stores (
-    id      BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name    VARCHAR(255) NOT NULL,
-    address VARCHAR(255) NOT NULL,
-    phone   VARCHAR(32)  NOT NULL,
-    city    VARCHAR(120) NOT NULL
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

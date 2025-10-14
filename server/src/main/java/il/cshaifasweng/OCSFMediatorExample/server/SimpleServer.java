@@ -1,5 +1,7 @@
 package il.cshaifasweng.OCSFMediatorExample.server;
 
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.GetCouponsRequest;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Account.GetCouponsRequestedEvent;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.DeleteFlowerRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.SaveFlowerRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.GetCatalogRequest;
@@ -23,6 +25,14 @@ import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Flowers.GetFlowersR
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Flowers.SaveFlowerRequestEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ObservableServer;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ConnectionToClient;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.AccountOverviewRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.UpdateCustomerProfileRequest;
+import il.cshaifasweng.OCSFMediatorExample.server.session.SessionRegistry;
+
+
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Account.AccountOverviewRequestedEvent;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Account.UpdateCustomerProfileRequestedEvent;
+
 
 // your existing entities/messages
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.LoginRequest;
@@ -37,6 +47,15 @@ public class SimpleServer extends ObservableServer {
 	}
 
 	@Override
+	protected synchronized void clientDisconnected(ConnectionToClient client) {
+		try {
+			SessionRegistry.clear(client); // nuke the mapping for this socket
+		} catch (Exception ignored) {}
+		super.clientDisconnected(client); // let ObservableServer do its thing
+	}
+
+
+	@Override
 	protected void handleMessageFromClient(Object msg, ConnectionToClient client) {
 		try {
 			if (msg instanceof String s) {
@@ -47,6 +66,12 @@ public class SimpleServer extends ObservableServer {
 					default -> bus.publish(new SendToClientEvent(
 							new ErrorResponse("Unknown command: " + s), client));
 				}
+			} else if (msg instanceof GetCouponsRequest rr) {
+				bus.publish(new GetCouponsRequestedEvent(rr, client));
+			} else if (msg instanceof AccountOverviewRequest rr) {
+				bus.publish(new AccountOverviewRequestedEvent(rr, client));
+			} else if (msg instanceof UpdateCustomerProfileRequest rr) {
+				bus.publish(new UpdateCustomerProfileRequestedEvent(rr, client));
 			} else if (msg instanceof LoginRequest lr) {
 				bus.publish(new LoginRequestedEvent(lr, client));
 			} else if (msg instanceof RegisterRequest rr) {
