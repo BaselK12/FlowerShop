@@ -5,54 +5,60 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" spacing="10.0"
-      xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.Account.CouponsViewController">
-   <children>
-      <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0">
-         <children>
-            <Label fx:id="couponsTitleLabel" text="Coupons" textFill="#2c3e50">
-               <font>
-                  <Font size="18.0" />
-               </font>
-            </Label>
-            <Label fx:id="couponsCountLabel" text="(0)" textFill="#6b7a90">
-               <font>
-                  <Font size="18.0" />
-               </font>
-               <HBox.margin>
-                  <Insets />
-               </HBox.margin>
-               <padding>
-                  <Insets left="8.0" />
-               </padding>
-            </Label>
-         </children>
-         <VBox.margin>
-            <Insets />
-         </VBox.margin>
-         <padding>
-            <Insets left="8.0" />
-         </padding>
-      </HBox>
-      <ScrollPane fitToWidth="true" hbarPolicy="NEVER" prefHeight="379.0" prefWidth="560.0">
-        <content>
-          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="200.0">
-               <children>
-                  <FlowPane fx:id="couponsFlow" hgap="12.0" layoutX="125.0" layoutY="-6.0" prefHeight="200.0" prefWidth="544.0" prefWrapLength="900.0" vgap="12.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-               </children>
-            </AnchorPane>
-        </content>
-      </ScrollPane>
-      <ProgressIndicator fx:id="couponsLoading" progress="0.0" visible="false" />
-      <Button fx:id="btnLoadMore" alignment="CENTER" mnemonicParsing="false" style="-fx-background-color: #3498db; -fx-background-radius: 8;" text="Load More" textFill="WHITE" visible="false" />
-   </children>
+<VBox xmlns="http://javafx.com/javafx/21.0.1"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="il.cshaifasweng.OCSFMediatorExample.client.Account.CouponsViewController"
+      prefHeight="400.0" prefWidth="600.0" spacing="10.0">
+
    <padding>
-      <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+      <Insets top="20.0" right="20.0" bottom="20.0" left="20.0"/>
    </padding>
+   <HBox alignment="CENTER_LEFT">
+      <padding>
+         <Insets left="8.0"/>
+      </padding>
+      <Label fx:id="couponsTitleLabel" text="Coupons" textFill="#2c3e50">
+         <font>
+            <Font size="18.0"/>
+         </font>
+      </Label>
+      <Label fx:id="couponsCountLabel" text="(0)" textFill="#6b7a90">
+         <font>
+            <Font size="18.0"/>
+         </font>
+         <HBox.margin>
+            <Insets/>
+         </HBox.margin>
+         <padding>
+            <Insets left="8.0"/>
+         </padding>
+      </Label>
+   </HBox>
+
+   <!-- Scrollable area -->
+   <ScrollPane fx:id="couponsScroll"
+               fitToWidth="true"
+               hbarPolicy="NEVER"
+               prefWidth="560.0"
+               prefHeight="320.0"
+               VBox.vgrow="ALWAYS">
+      <!-- Direct FlowPane as content; no AnchorPane wrapper -->
+      <FlowPane fx:id="couponsFlow"
+                hgap="12.0" vgap="12.0"
+                prefWrapLength="520.0">
+         <padding>
+            <Insets top="8.0" right="8.0" bottom="8.0" left="8.0"/>
+         </padding>
+      </FlowPane>
+   </ScrollPane>
+
+   <ProgressIndicator fx:id="couponsLoading" progress="0.0" visible="false"/>
+   <Button fx:id="btnLoadMore" alignment="CENTER" mnemonicParsing="false"
+           style="-fx-background-color: #3498db; -fx-background-radius: 8;"
+           text="Load More" textFill="WHITE" visible="false"/>
 </VBox>

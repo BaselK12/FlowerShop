@@ -1,19 +1,21 @@
 package il.cshaifasweng.OCSFMediatorExample.client.Customer;
 
 import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
-import il.cshaifasweng.OCSFMediatorExample.client.bus.events.ServerMessageEvent;
 import il.cshaifasweng.OCSFMediatorExample.client.ui.Nav;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.LoginRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.LoginResponse;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.event.ActionEvent;
-
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
+
+import java.net.URL;
 
 public class CustomerLoginPageController {
 
@@ -22,8 +24,8 @@ public class CustomerLoginPageController {
     @FXML private TextField EmailTxt;
     @FXML private PasswordField PassTxt;
 
-    // prevent double-click spam
-    private volatile boolean loggingIn = false;
+    // proper observable flag so bindings actually update
+    private final BooleanProperty loggingIn = new SimpleBooleanProperty(false);
 
     private boolean isValidEmail(String s) {
         return s != null && s.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
@@ -31,25 +33,24 @@ public class CustomerLoginPageController {
 
     @FXML
     private void initialize() {
-        // Subscribe once
         if (!EventBus.getDefault().isRegistered(this)) {
             EventBus.getDefault().register(this);
         }
 
-        // Disable login button when inputs are empty or email invalid, or while logging in
+        // Disable login when fields empty, email invalid, or mid-request
         LoginBtn.disableProperty().bind(
                 EmailTxt.textProperty().isEmpty()
                         .or(PassTxt.textProperty().isEmpty())
                         .or(Bindings.createBooleanBinding(
                                 () -> !isValidEmail(EmailTxt.getText()),
                                 EmailTxt.textProperty()))
-                        .or(Bindings.createBooleanBinding(() -> loggingIn)) // reflects volatile field via lambda
+                        .or(loggingIn)
         );
 
         ErrorLabel.setText("");
     }
 
-    // Call this when leaving the screen (e.g., after successful nav or when Nav.back is used)
+    // Call this before leaving the screen to avoid duplicate subscribers
     public void onClose() {
         if (EventBus.getDefault().isRegistered(this)) {
             EventBus.getDefault().unregister(this);
@@ -79,39 +80,40 @@ public class CustomerLoginPageController {
             ErrorLabel.setText("Please enter a valid email.");
             return;
         }
-        if (loggingIn) return; // extra guard
+        if (loggingIn.get()) return;
 
-        loggingIn = true; // triggers button disable via binding above
-
+        loggingIn.set(true);
         try {
-            // Use sendSafely to ensure connection (reopen if needed)
             SimpleClient.getClient().sendSafely(new LoginRequest(email, pass));
         } catch (Exception ex) {
-            loggingIn = false;
+            loggingIn.set(false);
             ErrorLabel.setText("Connection error");
             ex.printStackTrace();
         }
     }
 
+    // SUBSCRIBE DIRECTLY to LoginResponse since SimpleClient posts raw messages
     @Subscribe
-    public void onServer(ServerMessageEvent ev) {
-        final Object payload = ev.getPayload();
-        if (!(payload instanceof LoginResponse)) return;
-
-        final LoginResponse r = (LoginResponse) payload;
-
+    public void onLoginResponse(LoginResponse r) {
         Platform.runLater(() -> {
             try {
                 if (r.isOk()) {
                     ErrorLabel.setText("");
-                    onClose();
-                    // Navigate to catalog
-                    Nav.go(LoginBtn, "/il/cshaifasweng/OCSFMediatorExample/client/Catalog/CatalogView.fxml");
+
+                    // Optional guard to fail loudly if FXML is missing during dev
+                    URL url = getClass().getResource("/il/cshaifasweng/OCSFMediatorExample/client/Account/MyAccount.fxml");
+                    if (url == null) {
+                        ErrorLabel.setText("MyAccount.fxml not found on classpath");
+                        return;
+                    }
+
+                    onClose(); // unregister before navigation
+                    Nav.go(LoginBtn, "/il/cshaifasweng/OCSFMediatorExample/client/Account/MyAccount.fxml");
                 } else {
                     ErrorLabel.setText(r.getReason() != null ? r.getReason() : "Login failed");
                 }
             } finally {
-                loggingIn = false; // re-enable login after handling result
+                loggingIn.set(false);
             }
         });
     }

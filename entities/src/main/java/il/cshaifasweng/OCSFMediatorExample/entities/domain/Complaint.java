@@ -3,6 +3,8 @@ package il.cshaifasweng.OCSFMediatorExample.entities.domain;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Objects;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import jakarta.persistence.*;
 
@@ -46,9 +48,13 @@ public class Complaint implements Serializable {
     @Column(name = "description", columnDefinition = "TEXT", nullable = false)
     private String text;
 
-    // Optional fields from DTO
-    @Column(name = "anonymous", columnDefinition = "BIT(1)")
+
+    @Column(name = "anonymous", nullable = false)  // adjust nullable as needed
     private boolean anonymous;
+
+    /* Optional fields from DTO
+    @Column(name = "anonymous", columnDefinition = "BIT(1)")
+    private boolean anonymous;*/
 
     @Column(name = "email")
     private String email;

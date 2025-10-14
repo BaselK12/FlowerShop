@@ -1,5 +1,6 @@
 package il.cshaifasweng.OCSFMediatorExample.server.handlers;
 
+import il.cshaifasweng.OCSFMediatorExample.server.session.SessionRegistry;
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.Customer;
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.Employee;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.LoginRequest;
@@ -87,6 +88,24 @@ public class LoginHandler {
             send(client, false, "Wrong email or password", null, null);
             return;
         }
+
+        if (!matchesPlainOrLegacyHash(password, safeStrip(cust.getPasswordHash()))) {
+            send(client, false, "Wrong email or password", null, null);
+            return;
+        }
+
+        SessionManager.get().registerLogin(
+                cust.getEmail().toLowerCase(Locale.ROOT),
+                Role.CUSTOMER.name(),
+                cust.getDisplayName(),
+                client
+        );
+
+        SessionRegistry.set(client, cust.getId());
+
+        send(client, true, null, cust.getDisplayName(), Role.CUSTOMER);
+        System.out.printf("[LOGIN] CUSTOMER ok email=%s%n", cust.getEmail());
+
 
         SessionManager.get().registerLogin(
                 cust.getEmail().toLowerCase(Locale.ROOT),
