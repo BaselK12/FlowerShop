@@ -9,12 +9,18 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
+import java.io.IOException;
 import java.util.*;
 
 public class AdminDashboardController {
@@ -51,7 +57,6 @@ public class AdminDashboardController {
     }
 
     // =================== SETUP HELPERS ===================
-
     private void setupFlowersTable() {
         flowersTable.setItems(flowers);
 
@@ -62,7 +67,6 @@ public class AdminDashboardController {
         colFlowersCategory.setCellValueFactory(c ->
                 new ReadOnlyObjectWrapper<>(joinCategories(c.getValue().getCategories())));
 
-        // Add action buttons to each row
         colFlowerActions.setCellFactory(col -> new TableCell<>() {
             private final Button editBtn = makeSmallBtn("Edit");
             private final Button deleteBtn = makeSmallBtn("Delete");
@@ -102,9 +106,13 @@ public class AdminDashboardController {
     }
 
     // =================== FLOWER ACTIONS ===================
-
     private void onEditFlower(FlowerDTO flower) {
-        showInfo("Edit Flower", "Open edit view for " + flower.getName());
+        openFlowerEditor(flower);
+    }
+
+    @FXML
+    private void onAddFlower() {
+        openFlowerEditor(null);
     }
 
     private void onDeleteFlower(FlowerDTO flower) {
@@ -128,7 +136,6 @@ public class AdminDashboardController {
     }
 
     // =================== EVENTBUS RESPONSES ===================
-
     @Subscribe
     public void onGetFlowersResponse(GetCatalogResponse res) {
         Platform.runLater(() -> {
@@ -159,7 +166,6 @@ public class AdminDashboardController {
     }
 
     // =================== REQUEST HELPERS ===================
-
     private void requestFlowers() {
         try {
             App.getClient().sendSafely(new GetCatalogRequest(null, null, null, false));
@@ -177,7 +183,6 @@ public class AdminDashboardController {
     }
 
     // =================== UI UTILITIES ===================
-
     private Button makeSmallBtn(String text) {
         Button b = new Button(text);
         b.setMinWidth(60);
@@ -188,8 +193,21 @@ public class AdminDashboardController {
     private void rebuildFlowerCheckboxes() {
         checkboxBySku.clear();
         flowerSelectBox.getChildren().clear();
-        for (FlowerDTO f : flowers) {
-            CheckBox cb = new CheckBox(f.getName());
+
+        // Only show flowers without active promotions
+        List<FlowerDTO> eligibleFlowers = flowers.stream()
+                .filter(f -> !f.hasActivePromotion())
+                .toList();
+
+        if (eligibleFlowers.isEmpty()) {
+            Label noneLabel = new Label("No available flowers (all have promotions)");
+            noneLabel.getStyleClass().add("muted-label");
+            flowerSelectBox.getChildren().add(noneLabel);
+            return;
+        }
+
+        for (FlowerDTO f : eligibleFlowers) {
+            CheckBox cb = new CheckBox(f.getName() + " — ₪" + String.format("%.2f", f.getPrice()));
             flowerSelectBox.getChildren().add(cb);
             checkboxBySku.put(f.getSku(), cb);
         }
@@ -205,7 +223,6 @@ public class AdminDashboardController {
     }
 
     // =================== POPUP HELPERS ===================
-
     private void showInfo(String title, String content) {
         showPopup(title, content, Alert.AlertType.INFORMATION);
     }
@@ -229,8 +246,40 @@ public class AdminDashboardController {
         alert.showAndWait();
     }
 
-    // =================== RECORD FOR PROMOTIONS ===================
+    // =================== FLOWER EDITOR POPUP ===================
+    private void openFlowerEditor(FlowerDTO flower) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/il/cshaifasweng/OCSFMediatorExample/client/Admin/addEditFlower.fxml"));
+            Parent root = loader.load();
 
+            AddEditFlowerController controller = loader.getController();
+            controller.setFlower(flower);
+
+            Stage stage = new Stage();
+            stage.setTitle(flower == null ? "Add Flower" : "Edit Flower");
+            stage.initModality(Modality.APPLICATION_MODAL); // make it modal
+            stage.setScene(new Scene(root));
+            stage.setMinWidth(500);
+            stage.setMinHeight(700);
+
+            root.getStylesheets().add(
+                    getClass().getResource("/Styles/add-edit-flower.css").toExternalForm());
+
+            stage.setOnHidden(evt -> {
+                controller.onClose();
+                requestFlowers(); // auto-refresh after closing editor
+            });
+
+            stage.showAndWait();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            showError("Error", "Failed to open flower editor: " + e.getMessage());
+        }
+    }
+
+    // =================== RECORD FOR PROMOTIONS ===================
     public record PromotionRow(String title, String status) {
         static PromotionRow fromServerDto(Object dto) {
             return new PromotionRow("Demo Promo", "Active");
