@@ -50,7 +50,7 @@ public class MyAccountController {
             } else if (newToggle == CouponsBtn) {
                 loadView("/il/cshaifasweng/OCSFMediatorExample/client/Account/CouponsView.fxml");
             } else if (newToggle == OrdersBtn) {
-                loadView("/il/cshaifasweng/OCSFMediatorExample/client/Account/OrdersView.fxml");
+                loadView("/il/cshaifasweng/OCSFMediatorExample/client/Account/PastOrdersView.fxml");
             } else if (newToggle == PaymentsBtn) {
                 loadView("/il/cshaifasweng/OCSFMediatorExample/client/Account/PaymentsView.fxml");
             }

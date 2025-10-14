@@ -13,7 +13,8 @@ public final class ModelRegistry {
                 Promotion.class,
                 Stores.class,
                 Customer.class,
-                Coupon.class
+                Coupon.class,
+                Payment.class
                 // Department.class, Order.class, Product.class, Customer.class, ...
         };
     }
