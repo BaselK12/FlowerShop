@@ -1,5 +1,7 @@
 package il.cshaifasweng.OCSFMediatorExample.server;
 
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.GetOrdersRequest;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Account.GetOrdersRequestedEvent;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.GetCouponsRequest;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Account.GetCouponsRequestedEvent;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.DeleteFlowerRequest;
@@ -28,6 +30,13 @@ import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ConnectionToClient;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.AccountOverviewRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.UpdateCustomerProfileRequest;
 import il.cshaifasweng.OCSFMediatorExample.server.session.SessionRegistry;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.GetPaymentsRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.AddPaymentRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.RemovePaymentRequest;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Account.GetPaymentsRequestedEvent;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Account.AddPaymentRequestedEvent;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Account.RemovePaymentRequestedEvent;
+
 
 
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Account.AccountOverviewRequestedEvent;
@@ -49,10 +58,18 @@ public class SimpleServer extends ObservableServer {
 	@Override
 	protected synchronized void clientDisconnected(ConnectionToClient client) {
 		try {
-			SessionRegistry.clear(client); // nuke the mapping for this socket
+			// remove the numeric id mapping if any
+			SessionRegistry.clear(client);
 		} catch (Exception ignored) {}
-		super.clientDisconnected(client); // let ObservableServer do its thing
+
+		try {
+			// THIS is the missing piece: drop the username<->session mapping
+			il.cshaifasweng.OCSFMediatorExample.server.session.SessionManager.get().logout(client);
+		} catch (Exception ignored) {}
+
+		super.clientDisconnected(client);
 	}
+
 
 
 	@Override
@@ -68,6 +85,14 @@ public class SimpleServer extends ObservableServer {
 				}
 			} else if (msg instanceof GetCouponsRequest rr) {
 				bus.publish(new GetCouponsRequestedEvent(rr, client));
+			} else if (msg instanceof GetPaymentsRequest r) {
+				bus.publish(new GetPaymentsRequestedEvent(r, client));
+			} else if (msg instanceof AddPaymentRequest r) {
+				bus.publish(new AddPaymentRequestedEvent(r, client));
+			} else if (msg instanceof RemovePaymentRequest r) {
+				bus.publish(new RemovePaymentRequestedEvent(r, client));
+			} else if (msg instanceof GetOrdersRequest rr) {
+				bus.publish(new GetOrdersRequestedEvent(rr, client));
 			} else if (msg instanceof AccountOverviewRequest rr) {
 				bus.publish(new AccountOverviewRequestedEvent(rr, client));
 			} else if (msg instanceof UpdateCustomerProfileRequest rr) {

@@ -1,7 +1,16 @@
 package il.cshaifasweng.OCSFMediatorExample.client.Account;
 
-
+import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
+import il.cshaifasweng.OCSFMediatorExample.client.common.RequiresSession;
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.Payment;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.AddPaymentRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.AddPaymentResponse;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.GetPaymentsRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.GetPaymentsResponse;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.PaymentDTO;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.RemovePaymentRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.RemovePaymentResponse;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -10,8 +19,14 @@ import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import javafx.scene.layout.GridPane;
 
-public class PaymentsViewController {
+
+import java.util.List;
+
+public class PaymentsViewController implements RequiresSession {
 
     // Header
     @FXML private Label paymentsTitleLabel;
@@ -39,10 +54,15 @@ public class PaymentsViewController {
     // Data
     private final ObservableList<Payment> payments = FXCollections.observableArrayList();
 
+    private long customerId = -1;
+
     @FXML
     private void initialize() {
-        // --- Table Column Setup ---
+        if (!EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().register(this);
+        }
 
+        // --- Table Column Setup ---
         colCardType.setCellValueFactory(data ->
                 new SimpleStringProperty(
                         data.getValue().getMethod() != null ? data.getValue().getMethod().name() : ""
@@ -74,40 +94,48 @@ public class PaymentsViewController {
         paymentsTable.setItems(payments);
 
         // --- Button Setup ---
-        btnRefreshPayments.setOnAction(e -> loadPayments());
+        btnRefreshPayments.setOnAction(e -> requestPayments());
         btnAddPayment.setOnAction(e -> addPayment());
         btnEmptyAddPayment.setOnAction(e -> addPayment());
         btnRemovePayment.setOnAction(e -> removeSelectedPayment());
 
-        // --- Initial Load ---
-        loadPayments();
+        updateUIState();
     }
 
-    // --- Load Mock Payments (replace later with server call) ---
-    private void loadPayments() {
-        payments.clear();
+    @Override
+    public void setCustomerId(long customerId) {
+        this.customerId = customerId;
+        requestPayments();
+    }
 
-        Payment p1 = new Payment();
-        p1.setId("PAY123");
-        p1.setMethod(Payment.Method.CREDIT_CARD);
-        p1.setMaskedCardNumber("**** **** **** 1234");
-        p1.setCardHolderName("Maya Cohen");
-        p1.setExpirationDate("05/27");
-        p1.setStatus(Payment.Status.AUTHORIZED);
-        p1.setAmount(49.99);
+    // --- Request payments from server ---
+    private void requestPayments() {
+        try {
+            payments.clear();
+            updateUIState();
+            SimpleClient.getClient().sendToServer(new GetPaymentsRequest(String.valueOf(customerId)));
+        } catch (Exception ex) {
+            showError("Failed to request payments: " + ex.getMessage());
+        }
+    }
 
-        Payment p2 = new Payment();
-        p2.setId("PAY124");
-        p2.setMethod(Payment.Method.CREDIT_CARD);
-        p2.setMaskedCardNumber("**** **** **** 5678");
-        p2.setCardHolderName("Noam Levi");
-        p2.setExpirationDate("11/26");
-        p2.setStatus(Payment.Status.CAPTURED);
-        p2.setAmount(19.95);
+    @Subscribe
+    public void onGetPayments(GetPaymentsResponse resp) {
+        Platform.runLater(() -> {
+            List<Payment> list = resp != null ? resp.getPayments() : List.of();
+            payments.setAll(list);
+            updateUIState();
+        });
+    }
 
-        payments.addAll(p1, p2);
+    @Subscribe
+    public void onAddPayment(AddPaymentResponse resp) {
+        Platform.runLater(this::requestPayments);
+    }
 
-        updateUIState();
+    @Subscribe
+    public void onRemovePayment(RemovePaymentResponse resp) {
+        Platform.runLater(this::requestPayments);
     }
 
     // --- Update Header + Visibility ---
@@ -119,24 +147,95 @@ public class PaymentsViewController {
         paymentsActions.setDisable(empty);
     }
 
-    // --- Add New Payment ---
+    // --- Add New Payment (simple inline dialog) ---
     private void addPayment() {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setHeaderText("Add Payment Method");
-        alert.setContentText("This would open the Add Payment dialog or payment gateway integration.");
-        alert.showAndWait();
+        Dialog<PaymentDTO> dialog = new Dialog<>();
+        dialog.setTitle("Add Payment Method");
+        dialog.setHeaderText("Enter card details");
+
+        ButtonType saveBtn = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveBtn, ButtonType.CANCEL);
+
+        // Form controls
+        TextField holder = new TextField();
+        holder.setPromptText("Card holder (e.g., John Doe)");
+
+        TextField number = new TextField();
+        number.setPromptText("Card number (digits only)");
+
+        TextField expiry = new TextField();
+        expiry.setPromptText("MM/YY");
+
+        ComboBox<Payment.Method> method = new ComboBox<>();
+        method.getItems().addAll(Payment.Method.CREDIT_CARD);
+        method.getSelectionModel().select(Payment.Method.CREDIT_CARD);
+
+        // Layout
+        GridPane grid = new GridPane();
+        grid.setHgap(10); grid.setVgap(8);
+        grid.addRow(0, new Label("Method:"), method);
+        grid.addRow(1, new Label("Holder:"), holder);
+        grid.addRow(2, new Label("Number:"), number);
+        grid.addRow(3, new Label("Expiry:"), expiry);
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.setResultConverter(btn -> {
+            if (btn == saveBtn) {
+                String digits = number.getText() == null ? "" : number.getText().replaceAll("\\D", "");
+                if (digits.length() < 12) {
+                    showWarn("Invalid card number.");
+                    return null;
+                }
+                String last4 = digits.substring(digits.length() - 4);
+                String masked = "**** **** **** " + last4;
+
+                String exp = expiry.getText() == null ? "" : expiry.getText().trim();
+                if (!exp.matches("^(0[1-9]|1[0-2])\\/\\d{2}$")) {
+                    showWarn("Expiry must be MM/YY.");
+                    return null;
+                }
+
+                PaymentDTO dto = new PaymentDTO();
+                dto.setMethod(method.getSelectionModel().getSelectedItem());
+                dto.setMaskedCardNumber(masked);
+                dto.setCardHolderName(holder.getText());
+                dto.setExpirationDate(exp);
+                dto.setAmount(0.0); // storing method; not a charge
+                return dto;
+            }
+            return null;
+        });
+
+        PaymentDTO dto = dialog.showAndWait().orElse(null);
+        if (dto == null) return;
+
+        try {
+            SimpleClient.getClient().sendToServer(new AddPaymentRequest(String.valueOf(customerId), dto));
+        } catch (Exception ex) {
+            showError("Failed to add payment: " + ex.getMessage());
+        }
     }
 
     // --- Remove Selected Payment ---
     private void removeSelectedPayment() {
         Payment selected = paymentsTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
-            new Alert(Alert.AlertType.WARNING, "Please select a payment method to remove.").showAndWait();
+            showWarn("Please select a payment method to remove.");
             return;
         }
+        try {
+            SimpleClient.getClient().sendToServer(
+                    new RemovePaymentRequest(String.valueOf(customerId), selected.getId())
+            );
+        } catch (Exception ex) {
+            showError("Failed to remove payment: " + ex.getMessage());
+        }
+    }
 
-        // TODO: Replace with server delete request
-        payments.remove(selected);
-        updateUIState();
+    private static void showWarn(String msg) {
+        new Alert(Alert.AlertType.WARNING, msg).showAndWait();
+    }
+    private static void showError(String msg) {
+        new Alert(Alert.AlertType.ERROR, msg).showAndWait();
     }
 }

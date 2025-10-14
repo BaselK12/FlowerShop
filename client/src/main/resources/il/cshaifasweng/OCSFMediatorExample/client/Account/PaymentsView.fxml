@@ -38,11 +38,14 @@
       <StackPane fx:id="paymentsTableStack" prefHeight="300.0" prefWidth="200.0">
          <children>
             <TableView fx:id="paymentsTable" prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: white; -fx-background-radius: 8; -fx-padding: 6;">
-              <columns>
-                <TableColumn fx:id="colCardType" minWidth="60.0" prefWidth="70.0" text="Type" />
-                <TableColumn fx:id="colCardNumber" prefWidth="75.0" text="Card Number" />
-                  <TableColumn fx:id="colExpiryDate" prefWidth="75.0" text="Expiry" />
-              </columns>
+               <columns>
+                  <TableColumn fx:id="colCardType"   minWidth="60.0" prefWidth="70.0" text="Type"/>
+                  <TableColumn fx:id="colCardNumber"                 prefWidth="120.0" text="Card Number"/>
+                  <TableColumn fx:id="colExpiryDate"                 prefWidth="75.0"  text="Expiry"/>
+                  <TableColumn fx:id="colAmount"                     prefWidth="80.0"  text="Amount"/>
+                  <TableColumn fx:id="colStatus"                     prefWidth="90.0"  text="Status"/>
+               </columns>
+
                <columnResizePolicy>
                   <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
                </columnResizePolicy>

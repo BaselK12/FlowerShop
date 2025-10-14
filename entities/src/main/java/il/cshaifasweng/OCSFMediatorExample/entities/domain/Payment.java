@@ -1,25 +1,54 @@
 package il.cshaifasweng.OCSFMediatorExample.entities.domain;
 
+import jakarta.persistence.*;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "payments")
 public class Payment implements Serializable {
-    public enum Method { CREDIT_CARD }
-    public enum Status { INITIATED, AUTHORIZED, CAPTURED, FAILED, REFUNDED }
 
+    public enum Method { CREDIT_CARD }
+    public enum Status { AUTHORIZED, CAPTURED, DECLINED, CANCELED }
+
+    @Id
+    @Column(name = "id", length = 32, nullable = false)
     private String id;
+
+    // Keep it simple: store customer id directly
+    @Column(name = "customer_id", nullable = false)
+    private Long customerId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "method", length = 32, nullable = false)
     private Method method;
-    private String maskedCardNumber;  // "**** **** **** 1234"
+
+    @Column(name = "masked_card_number", length = 32, nullable = false)
+    private String maskedCardNumber;
+
+    @Column(name = "card_holder_name", length = 100)
     private String cardHolderName;
-    private String expirationDate;    // "04/27"
-    private String idNumber;          // optional ID for verification
-    private String authCode;
-    private double amount;
+
+    // store as "MM/YY" like your UI
+    @Column(name = "expiration_date", length = 5)
+    private String expirationDate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 32, nullable = false)
     private Status status;
 
-    public Payment() {}
+    @Column(name = "amount")
+    private Double amount;
 
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    // -------- getters/setters ----------
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
+
+    public Long getCustomerId() { return customerId; }
+    public void setCustomerId(Long customerId) { this.customerId = customerId; }
 
     public Method getMethod() { return method; }
     public void setMethod(Method method) { this.method = method; }
@@ -33,15 +62,12 @@ public class Payment implements Serializable {
     public String getExpirationDate() { return expirationDate; }
     public void setExpirationDate(String expirationDate) { this.expirationDate = expirationDate; }
 
-    public String getIdNumber() { return idNumber; }
-    public void setIdNumber(String idNumber) { this.idNumber = idNumber; }
-
-    public String getAuthCode() { return authCode; }
-    public void setAuthCode(String authCode) { this.authCode = authCode; }
-
-    public double getAmount() { return amount; }
-    public void setAmount(double amount) { this.amount = amount; }
-
     public Status getStatus() { return status; }
     public void setStatus(Status status) { this.status = status; }
+
+    public Double getAmount() { return amount; }
+    public void setAmount(Double amount) { this.amount = amount; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }
