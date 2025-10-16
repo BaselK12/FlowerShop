@@ -36,6 +36,16 @@ import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.RemovePayme
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Account.GetPaymentsRequestedEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Account.AddPaymentRequestedEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Account.RemovePaymentRequestedEvent;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.GetCartRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.AddToCartRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.CartUpdateRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.ContinueShoppingRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.CheckoutRequest;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Cart.GetCartRequestedEvent;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Cart.AddToCartRequestedEvent;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Cart.CartUpdateRequestedEvent;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Cart.ContinueShoppingRequestedEvent;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Cart.CheckoutRequestedEvent;
 
 
 
@@ -83,6 +93,16 @@ public class SimpleServer extends ObservableServer {
 					default -> bus.publish(new SendToClientEvent(
 							new ErrorResponse("Unknown command: " + s), client));
 				}
+			} else if (msg instanceof GetCartRequest req) {
+				bus.publish(new GetCartRequestedEvent(req, client));
+			} else if (msg instanceof AddToCartRequest req) {
+				bus.publish(new AddToCartRequestedEvent(req, client));
+			} else if (msg instanceof CartUpdateRequest req) {
+				bus.publish(new CartUpdateRequestedEvent(req, client));
+			} else if (msg instanceof ContinueShoppingRequest req) {
+				bus.publish(new ContinueShoppingRequestedEvent(req, client));
+			} else if (msg instanceof CheckoutRequest req) {
+				bus.publish(new CheckoutRequestedEvent(req, client));
 			} else if (msg instanceof GetCouponsRequest rr) {
 				bus.publish(new GetCouponsRequestedEvent(rr, client));
 			} else if (msg instanceof GetPaymentsRequest r) {

@@ -101,14 +101,14 @@ public class CustomerLoginPageController {
                     ErrorLabel.setText("");
 
                     // Optional guard to fail loudly if FXML is missing during dev
-                    URL url = getClass().getResource("/il/cshaifasweng/OCSFMediatorExample/client/Account/MyAccount.fxml");
+                    URL url = getClass().getResource("/il/cshaifasweng/OCSFMediatorExample/client/Catalog/CatalogView.fxml");
                     if (url == null) {
                         ErrorLabel.setText("MyAccount.fxml not found on classpath");
                         return;
                     }
 
                     onClose(); // unregister before navigation
-                    Nav.go(LoginBtn, "/il/cshaifasweng/OCSFMediatorExample/client/Account/MyAccount.fxml");
+                    Nav.go(LoginBtn, "/il/cshaifasweng/OCSFMediatorExample/client/Catalog/CatalogView.fxml");
                 } else {
                     ErrorLabel.setText(r.getReason() != null ? r.getReason() : "Login failed");
                 }
