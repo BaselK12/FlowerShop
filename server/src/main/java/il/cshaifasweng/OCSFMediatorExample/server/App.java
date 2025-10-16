@@ -15,6 +15,7 @@ import il.cshaifasweng.OCSFMediatorExample.server.handlers.catalog.GetPromotions
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.complaints.GetComplaintsHandler;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.employee.*;
 import il.cshaifasweng.OCSFMediatorExample.server.session.TX;
+import il.cshaifasweng.OCSFMediatorExample.server.handlers.cart.CartHandler;
 // optional smoke (delete after sanity check)
 
 
@@ -38,6 +39,7 @@ public class App {
         new CouponsHandler(bus);
         new OrdersHandler(bus);
         new PaymentsHandler(bus);
+        new CartHandler(bus);
 
 
         // Employees handlers

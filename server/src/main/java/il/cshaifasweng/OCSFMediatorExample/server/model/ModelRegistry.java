@@ -14,7 +14,8 @@ public final class ModelRegistry {
                 Stores.class,
                 Customer.class,
                 Coupon.class,
-                Payment.class
+                Payment.class,
+                CartItemRow.class
                 // Department.class, Order.class, Product.class, Customer.class, ...
         };
     }

@@ -16,11 +16,10 @@
 	<name>server</name>
 
 	<properties>
-		<!-- put the real creds you also have in hibernate.properties -->
+		<!-- keep in sync with hibernate.properties -->
 		<db.user>flowershop_user</db.user>
 		<db.pass>fs_password_123</db.pass>
 
-		<!-- keep versions in sync so the universe doesn’t implode -->
 		<flyway.version>10.17.0</flyway.version>
 		<mysql.driver.version>8.4.0</mysql.driver.version>
 		<hikari.version>5.1.0</hikari.version>
@@ -72,13 +71,19 @@
 			<version>${mysql.driver.version}</version>
 		</dependency>
 
-		<!-- Flyway for programmatic use (optional but nice) -->
+		<dependency>
+			<groupId>org.objenesis</groupId>
+			<artifactId>objenesis</artifactId>
+			<version>3.3</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Flyway (runtime use) -->
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-core</artifactId>
 			<version>${flyway.version}</version>
 		</dependency>
-		<!-- Since Flyway 10, the DB support is split -->
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-mysql</artifactId>
@@ -91,44 +96,47 @@
 			<artifactId>guava</artifactId>
 		</dependency>
 
-		<!-- Tests -->
+		<!-- EventBus -->
+		<dependency>
+			<groupId>org.greenrobot</groupId>
+			<artifactId>eventbus</artifactId>
+			<version>3.2.0</version>
+		</dependency>
+
+		<!-- Test deps (JUnit 5 + Mockito) -->
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
 			<version>5.10.2</version>
 			<scope>test</scope>
 		</dependency>
-        <dependency>
-            <groupId>org.greenrobot</groupId>
-            <artifactId>eventbus</artifactId>
-            <version>3.2.0</version>
-            <scope>compile</scope>
-        </dependency>
-    </dependencies>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<version>5.11.0</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
 
 	<build>
 		<plugins>
-			<!-- Flyway plugin: needs its own classpath deps -->
+			<!-- Flyway plugin -->
 			<plugin>
 				<groupId>org.flywaydb</groupId>
 				<artifactId>flyway-maven-plugin</artifactId>
 				<version>${flyway.version}</version>
-
 				<dependencies>
-					<!-- DB support module for MySQL on the PLUGIN classpath -->
 					<dependency>
 						<groupId>org.flywaydb</groupId>
 						<artifactId>flyway-mysql</artifactId>
 						<version>${flyway.version}</version>
 					</dependency>
-					<!-- JDBC driver on the PLUGIN classpath -->
 					<dependency>
 						<groupId>com.mysql</groupId>
 						<artifactId>mysql-connector-j</artifactId>
 						<version>${mysql.driver.version}</version>
 					</dependency>
 				</dependencies>
-
 				<configuration>
 					<url>jdbc:mysql://localhost:3306/flowershop?serverTimezone=UTC&amp;useSSL=false&amp;allowPublicKeyRetrieval=true</url>
 					<user>${db.user}</user>
@@ -139,6 +147,17 @@
 				</configuration>
 			</plugin>
 
+			<!-- Make JUnit 5 actually run -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>3.2.5</version>
+				<configuration>
+					<useModulePath>false</useModulePath>
+				</configuration>
+			</plugin>
+
+			<!-- Run server -->
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
@@ -148,6 +167,7 @@
 				</configuration>
 			</plugin>
 
+			<!-- Fat jar (left as you had it) -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
@@ -166,7 +186,9 @@
 					<execution>
 						<id>make-assembly</id>
 						<phase>package</phase>
-						<goals><goal>single</goal></goals>
+						<goals>
+							<goal>single</goal>
+						</goals>
 					</execution>
 				</executions>
 			</plugin>
