@@ -35,8 +35,15 @@ public class CartHandler {
                 return;
             }
             AddToCartRequest r = evt.request();
-            TX.run(s -> CartRepository.upsert(s, cid, r.getSku(),
-                    r.getSku(), null, /*unitPrice*/0.0, r.getQuantity()));
+            TX.run(s -> {
+                var existing = CartRepository.find(s, cid, r.getSku());
+                int currentQty = existing != null && existing.getQuantity() != null
+                        ? existing.getQuantity()
+                        : 0;
+                int newQty = currentQty + r.getQuantity();
+                CartRepository.upsert(s, cid, r.getSku(),
+                        r.getSku(), null, /*unitPrice*/0.0, newQty);
+            });
             int size = CartRepository.findByCustomer(cid).size();
             bus.publish(new SendToClientEvent(
                     new AddToCartResponse(true, "Added", size), evt.client()));

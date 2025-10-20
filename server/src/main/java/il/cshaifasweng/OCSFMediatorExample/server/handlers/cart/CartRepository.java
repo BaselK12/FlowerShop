@@ -15,13 +15,19 @@ public final class CartRepository {
                 CartItemRow.class).setParameter("cid", customerId).list());
     }
 
+    public static CartItemRow find(Session s, long customerId, String sku) {
+        return s.createQuery(
+                        "from CartItemRow c where c.customerId=:cid and c.sku=:sku",
+                        CartItemRow.class)
+                .setParameter("cid", customerId)
+                .setParameter("sku", sku)
+                .uniqueResultOptional()
+                .orElse(null);
+    }
+
     public static CartItemRow upsert(Session s, long customerId, String sku,
                                      String name, String pictureUrl, double unitPrice, int qty) {
-        CartItemRow row = s.createQuery(
-                        "from CartItemRow c where c.customerId=:cid and c.sku=:sku",
-                        CartItemRow.class).setParameter("cid", customerId)
-                .setParameter("sku", sku)
-                .uniqueResultOptional().orElse(null);
+        CartItemRow row = find(s, customerId, sku);
         if (row == null) {
             row = new CartItemRow();
             row.setCustomerId(customerId);
