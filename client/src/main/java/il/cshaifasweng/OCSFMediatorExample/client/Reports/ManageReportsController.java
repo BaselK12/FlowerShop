@@ -13,15 +13,25 @@ import javafx.scene.chart.LineChart;
 import javafx.scene.chart.PieChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
+import javafx.stage.FileChooser;
+import javafx.stage.Window;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.Month;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -66,6 +76,9 @@ public class ManageReportsController {
     @FXML private TableView<Map<String,Object>> Table;
 
     private final ObservableList<Map<String,Object>> rows = FXCollections.observableArrayList();
+    private ReportSchema lastSchema;
+    private List<Map<String,Object>> lastRows = new ArrayList<>();
+    private ReportRequest lastRequest;
 
     @FXML private void initialize() {
 
@@ -97,6 +110,7 @@ public class ManageReportsController {
         Table.setItems(rows);
         RowCountLabel.setText("0");
         setLoading(false);
+        ExportPDFBtn.setDisable(true);
 
 
         try {
@@ -113,7 +127,272 @@ public class ManageReportsController {
 
     @FXML
     void ExportPDF(ActionEvent event) {
+        if (lastSchema == null || lastSchema.columns == null || lastSchema.columns.isEmpty() || lastRows.isEmpty()) {
+            new Alert(Alert.AlertType.INFORMATION, "Run a report before exporting.", ButtonType.OK).showAndWait();
+            return;
+        }
 
+        Window owner = ExportPDFBtn.getScene() != null ? ExportPDFBtn.getScene().getWindow() : null;
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Save Report PDF");
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF files", "*.pdf"));
+
+        String suggested = buildSuggestedFileName();
+        if (suggested != null) {
+            chooser.setInitialFileName(suggested);
+        }
+
+        File chosen = chooser.showSaveDialog(owner);
+        if (chosen == null) {
+            return;
+        }
+
+        File target = ensurePdfExtension(chosen);
+
+        List<String> lines = buildPdfLines();
+
+        try {
+            writeSimplePdf(target, lines);
+            new Alert(Alert.AlertType.INFORMATION,
+                    "Report exported to:\n" + target.getAbsolutePath(), ButtonType.OK).showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace();
+            new Alert(Alert.AlertType.ERROR,
+                    "Failed to export PDF: " + e.getMessage(), ButtonType.OK).showAndWait();
+        }
+    }
+
+    private static ReportRequest copyRequest(ReportRequest original) {
+        if (original == null) {
+            return null;
+        }
+        ReportRequest copy = new ReportRequest();
+        copy.type = original.type;
+        copy.scope = original.scope;
+        copy.storeId = original.storeId;
+        copy.from = original.from;
+        copy.to = original.to;
+        copy.granularity = original.granularity;
+        copy.groupBy = original.groupBy;
+        copy.completedOnly = original.completedOnly;
+        return copy;
+    }
+
+    private String buildSuggestedFileName() {
+        if (lastRequest == null || lastRequest.type == null) {
+            return null;
+        }
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd");
+        StringBuilder name = new StringBuilder(lastRequest.type.name().toLowerCase(Locale.ROOT));
+        if (lastRequest.from != null && lastRequest.to != null) {
+            name.append("-").append(lastRequest.from.format(fmt)).append("-").append(lastRequest.to.format(fmt));
+        }
+        name.append("-report.pdf");
+        return name.toString();
+    }
+
+    private List<String> buildPdfLines() {
+        List<String> lines = new ArrayList<>();
+        DateTimeFormatter fmt = DateTimeFormatter.ISO_LOCAL_DATE;
+
+        if (lastRequest != null) {
+            lines.add("Report type: " + lastRequest.type);
+            lines.add("Scope: " + lastRequest.scope + (lastRequest.storeId != null ? " (#" + lastRequest.storeId + ")" : ""));
+            LocalDate from = lastRequest.from;
+            LocalDate to = lastRequest.to;
+            if (from != null || to != null) {
+                lines.add("Range: " + (from != null ? from.format(fmt) : "?") + " to " + (to != null ? to.format(fmt) : "?"));
+            }
+            lines.add("Completed orders only: " + (lastRequest.completedOnly ? "Yes" : "No"));
+        } else {
+            lines.add("Report export");
+        }
+
+        lines.add("");
+
+        List<ColumnDef> columns = lastSchema.columns;
+        int columnCount = columns.size();
+        String[] headers = new String[columnCount];
+        int[] widths = new int[columnCount];
+        for (int i = 0; i < columnCount; i++) {
+            String header = Objects.toString(columns.get(i).header, "");
+            headers[i] = header;
+            widths[i] = Math.max(widths[i], header.length());
+        }
+
+        List<String[]> dataRows = new ArrayList<>();
+        for (Map<String, Object> row : lastRows) {
+            String[] values = new String[columnCount];
+            for (int i = 0; i < columnCount; i++) {
+                ColumnDef col = columns.get(i);
+                String val = Objects.toString(row.get(col.key), "");
+                values[i] = val;
+                widths[i] = Math.max(widths[i], val.length());
+            }
+            dataRows.add(values);
+        }
+
+        if (columnCount > 0) {
+            lines.add(buildRowLine(headers, widths));
+            lines.add(buildDivider(widths));
+            for (String[] values : dataRows) {
+                lines.add(buildRowLine(values, widths));
+            }
+        } else {
+            lines.add("(No columns defined)");
+        }
+
+        lines.add("");
+        lines.add("Row count: " + lastRows.size());
+
+        return lines;
+    }
+
+    private static String buildRowLine(String[] values, int[] widths) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < values.length; i++) {
+            if (i > 0) {
+                sb.append(" | ");
+            }
+            sb.append(padRight(values[i], widths[i]));
+        }
+        return sb.toString();
+    }
+
+    private static String buildDivider(int[] widths) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < widths.length; i++) {
+            if (i > 0) {
+                sb.append("-+-");
+            }
+            sb.append(repeat('-', Math.max(1, widths[i])));
+        }
+        return sb.toString();
+    }
+
+    private static String padRight(String value, int width) {
+        if (value == null) {
+            value = "";
+        }
+        if (value.length() >= width) {
+            return value;
+        }
+        StringBuilder sb = new StringBuilder(value);
+        while (sb.length() < width) {
+            sb.append(' ');
+        }
+        return sb.toString();
+    }
+
+    private static String repeat(char c, int count) {
+        if (count <= 0) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder(count);
+        for (int i = 0; i < count; i++) {
+            sb.append(c);
+        }
+        return sb.toString();
+    }
+
+    private static File ensurePdfExtension(File chosen) {
+        if (chosen == null) {
+            return null;
+        }
+        String name = chosen.getName();
+        if (name.toLowerCase(Locale.ROOT).endsWith(".pdf")) {
+            return chosen;
+        }
+        File parent = chosen.getParentFile();
+        if (parent == null) {
+            return new File(name + ".pdf");
+        }
+        return new File(parent, name + ".pdf");
+    }
+
+    private static void writeSimplePdf(File target, List<String> lines) throws IOException {
+        if (target == null) {
+            throw new IOException("No file selected");
+        }
+
+        ByteArrayOutputStream contentStream = new ByteArrayOutputStream();
+        contentStream.write("BT\n".getBytes(StandardCharsets.US_ASCII));
+        contentStream.write("/F1 12 Tf\n".getBytes(StandardCharsets.US_ASCII));
+        contentStream.write("14 TL\n".getBytes(StandardCharsets.US_ASCII));
+        contentStream.write("72 780 Td\n".getBytes(StandardCharsets.US_ASCII));
+
+        if (lines == null || lines.isEmpty()) {
+            contentStream.write("(No data) Tj\n".getBytes(StandardCharsets.US_ASCII));
+        } else {
+            for (String line : lines) {
+                contentStream.write(("(" + escapePdfText(line) + ") Tj\n").getBytes(StandardCharsets.US_ASCII));
+                contentStream.write("T*\n".getBytes(StandardCharsets.US_ASCII));
+            }
+        }
+
+        contentStream.write("ET\n".getBytes(StandardCharsets.US_ASCII));
+        byte[] content = contentStream.toByteArray();
+
+        ByteArrayOutputStream pdf = new ByteArrayOutputStream();
+        writeAscii(pdf, "%PDF-1.4\n");
+
+        int offset1 = pdf.size();
+        writeAscii(pdf, "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
+
+        int offset2 = pdf.size();
+        writeAscii(pdf, "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n");
+
+        int offset3 = pdf.size();
+        writeAscii(pdf, "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n");
+
+        int offset4 = pdf.size();
+        writeAscii(pdf, "4 0 obj\n<< /Length " + content.length + " >>\nstream\n");
+        pdf.write(content);
+        writeAscii(pdf, "endstream\nendobj\n");
+
+        int offset5 = pdf.size();
+        writeAscii(pdf, "5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n");
+
+        int startxref = pdf.size();
+        writeAscii(pdf, "xref\n0 6\n");
+        writeAscii(pdf, "0000000000 65535 f \n");
+        writeAscii(pdf, formatXref(offset1));
+        writeAscii(pdf, formatXref(offset2));
+        writeAscii(pdf, formatXref(offset3));
+        writeAscii(pdf, formatXref(offset4));
+        writeAscii(pdf, formatXref(offset5));
+        writeAscii(pdf, "trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n" + startxref + "\n%%EOF\n");
+
+        try (FileOutputStream fos = new FileOutputStream(target)) {
+            pdf.writeTo(fos);
+        }
+    }
+
+    private static String formatXref(int offset) {
+        return String.format(Locale.ROOT, "%010d 00000 n \n", offset);
+    }
+
+    private static void writeAscii(ByteArrayOutputStream out, String text) {
+        out.writeBytes(text.getBytes(StandardCharsets.US_ASCII));
+    }
+
+    private static String escapePdfText(String text) {
+        if (text == null) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder(text.length());
+        for (int i = 0; i < text.length(); i++) {
+            char ch = text.charAt(i);
+            if (ch == '\\' || ch == '(' || ch == ')') {
+                sb.append('\\');
+            }
+            if (ch < 0x20 && ch != '\t') {
+                sb.append(' ');
+            } else {
+                sb.append(ch);
+            }
+        }
+        return sb.toString();
     }
 
     @FXML
@@ -152,6 +431,7 @@ public class ManageReportsController {
         req.groupBy = GroupByBox.getValue();
         req.completedOnly = OnlyCompletedOrdersBox.isSelected();
 
+        lastRequest = copyRequest(req);
         setLoading(true);
 
         try {
@@ -177,9 +457,12 @@ public class ManageReportsController {
     public void onReportResult(ReportResultEvent ev) {
         Platform.runLater(() -> {
             setLoading(false);
+            lastSchema = ev.schema;
+            lastRows = ev.rows == null ? new ArrayList<>() : new ArrayList<>(ev.rows);
             buildTable(ev.schema, ev.rows);
             buildCharts(ev.schema, ev.rows, ev.chartSuggestion);
-            RowCountLabel.setText(Integer.toString(ev.rows.size()));
+            RowCountLabel.setText(Integer.toString(lastRows.size()));
+            ExportPDFBtn.setDisable(lastRows.isEmpty());
         });
     }
 
@@ -197,6 +480,7 @@ public class ManageReportsController {
     private void setLoading(boolean v) {
         Loading.setVisible(v);
         RunBtn.setDisable(v);
+        ExportPDFBtn.setDisable(v || lastRows.isEmpty());
     }
 
     private void buildTable(ReportSchema schema, List<Map<String,Object>> data) {
@@ -206,7 +490,7 @@ public class ManageReportsController {
         if (schema == null || schema.columns == null) return;
 
         for (ColumnDef col : schema.columns) {
-            TableColumn<Map<String,Object>, Object> tc = new TableColumn<>(col.header);
+            TableColumn<Map<String, Object>, Object> tc = new TableColumn<>(col.header);
 
             // Column width & alignment by type
             if ("string".equalsIgnoreCase(col.type)) {
@@ -222,100 +506,17 @@ public class ManageReportsController {
 
             // Disable sorting if you want consistent report order
             // tc.setSortable(false);
-
             tc.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().get(col.key)));
             Table.getColumns().add(tc);
         }
     }
 
-    private void buildCharts(ReportSchema schema, List<Map<String,Object>> data, ChartSuggestion sugg) {
-        BarChart.getData().clear();
-        LineChart.getData().clear();
-        PieChart.getData().clear();
+    private void buildCharts(ReportSchema schema, List<Map<String,Object>> data, ChartSuggestion suggestion) {
+    BarChart.getData().clear();
+    LineChart.getData().clear();
+    PieChart.getData().clear();
 
-        if (data == null || data.isEmpty() || schema == null || schema.columns == null || schema.columns.isEmpty())
-            return;
-
-        try {
-            if (sugg != null && sugg.kind == ChartKind.PIE) {
-                for (Map<String,Object> row : data) {
-                    String cat = Objects.toString(row.get(sugg.categoryKey), "");
-                    Number val = toNumber(row.get(sugg.valueKey));
-                    if (val != null) {
-                        PieChart.Data slice = new PieChart.Data(cat, val.doubleValue());
-                        PieChart.getData().add(slice);
-                    }
-                }
-                return;
-            }
-
-            String categoryKey = (sugg != null && sugg.categoryKey != null) ? sugg.categoryKey : schema.columns.get(0).key;
-            String valueKey = (sugg != null && sugg.valueKey != null) ? sugg.valueKey : firstNumeric(schema);
-            String seriesKey = (sugg != null) ? sugg.seriesKey : null;
-            if (valueKey == null) return;
-
-            if (seriesKey == null) {
-                // Single series
-                XYChart.Series<String, Number> barSeries = new XYChart.Series<>();
-                XYChart.Series<String, Number> lineSeries = new XYChart.Series<>();
-                barSeries.setName(valueKey);
-                lineSeries.setName(valueKey);
-
-                for (Map<String,Object> row : data) {
-                    String x = Objects.toString(row.get(categoryKey), "");
-                    Number y = toNumber(row.get(valueKey));
-                    if (y != null) {
-                        barSeries.getData().add(new XYChart.Data<>(x, y));
-                        lineSeries.getData().add(new XYChart.Data<>(x, y));
-                    }
-                }
-                BarChart.getData().add(barSeries);
-                LineChart.getData().add(lineSeries);
-            } else {
-                // Multiple series
-                Map<String, XYChart.Series<String, Number>> barSeriesMap = new LinkedHashMap<>();
-                Map<String, XYChart.Series<String, Number>> lineSeriesMap = new LinkedHashMap<>();
-
-                for (Map<String,Object> row : data) {
-                    String series = Objects.toString(row.get(seriesKey), "");
-                    barSeriesMap.computeIfAbsent(series, k -> {
-                        XYChart.Series<String, Number> s = new XYChart.Series<>();
-                        s.setName(k);
-                        return s;
-                    });
-                    lineSeriesMap.computeIfAbsent(series, k -> {
-                        XYChart.Series<String, Number> s = new XYChart.Series<>();
-                        s.setName(k);
-                        return s;
-                    });
-
-                    String x = Objects.toString(row.get(categoryKey), "");
-                    Number y = toNumber(row.get(valueKey));
-                    if (y != null) {
-                        barSeriesMap.get(series).getData().add(new XYChart.Data<>(x, y));
-                        lineSeriesMap.get(series).getData().add(new XYChart.Data<>(x, y));
-                    }
-                }
-                BarChart.getData().addAll(barSeriesMap.values());
-                LineChart.getData().addAll(lineSeriesMap.values());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    if (data == null || data.isEmpty() || schema == null || schema.columns == null || schema.columns.isEmpty())
+        return;
     }
-
-    private static String firstNumeric(ReportSchema schema) {
-        for (ColumnDef c : schema.columns) {
-            if ("number".equalsIgnoreCase(c.type)) return c.key;
-        }
-        return null;
-    }
-
-    private static Number toNumber(Object o) {
-        if (o instanceof Number n) return n;
-        try { return o == null ? null : Double.parseDouble(o.toString()); }
-        catch (Exception e) { return null; }
-    }
-
-
 }

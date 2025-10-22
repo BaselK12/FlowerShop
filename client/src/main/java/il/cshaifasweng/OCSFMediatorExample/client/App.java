@@ -16,6 +16,7 @@ public class App extends Application {
     private static SimpleClient client;
     private static Stage mainStage;
 
+
     @Override
     public void start(Stage stage) throws Exception {
 
@@ -38,7 +39,7 @@ public class App extends Application {
 //        stage.show();
 
 
-        // load the create bouquet
+        // load the create bouquet-+
         scene = new Scene(loadFXML("/il/cshaifasweng/OCSFMediatorExample/client/CustomerLoginPage.fxml"));
         stage.setScene(scene);
         stage.setTitle("FlowerShop");

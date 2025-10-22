@@ -2,6 +2,10 @@ package il.cshaifasweng.OCSFMediatorExample.client.Complaint;
 
 import il.cshaifasweng.OCSFMediatorExample.client.App;
 import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Reports.GetStoresError;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Reports.GetStoresRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Reports.GetStoresResponse;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Reports.StoreOption;
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.Complaint;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Complaint.*;
 import javafx.application.Platform;
@@ -26,25 +30,40 @@ import java.util.Optional;
 
 public class ManageComplaintsController {
 
-    @FXML private Button ApplyBtn;
-    @FXML private Button BackBtn;
-    @FXML private Button CloseBtn;
+    @FXML
+    private Button ApplyBtn;
+    @FXML
+    private Button BackBtn;
+    @FXML
+    private Button CloseBtn;
 
-    @FXML private TableView<Complaint> ComplaintsTable;
+    @FXML
+    private TableView<Complaint> ComplaintsTable;
 
-    @FXML private TableColumn<Complaint, String> DateCol;
-    @FXML private TableColumn<Complaint, String> IDCol;
-    @FXML private TableColumn<Complaint, String> SummaryCol;
-    @FXML private TableColumn<Complaint, String> TypeCol;
-    @FXML private TableColumn<Complaint, String> StatusCol;
-    @FXML private TableColumn<Complaint, String> StoreCol;
+    @FXML
+    private TableColumn<Complaint, String> DateCol;
+    @FXML
+    private TableColumn<Complaint, String> IDCol;
+    @FXML
+    private TableColumn<Complaint, String> SummaryCol;
+    @FXML
+    private TableColumn<Complaint, String> TypeCol;
+    @FXML
+    private TableColumn<Complaint, String> StatusCol;
+    @FXML
+    private TableColumn<Complaint, String> StoreCol;
 
-    @FXML private CheckBox GroupBox;
+    @FXML
+    private CheckBox GroupBox;
 
-    @FXML private ComboBox<String> ScopeCombo;
-    @FXML private ComboBox<String> StatusCombo;
-    @FXML private ComboBox<String> StoreCombo;
-    @FXML private ComboBox<String> TypeCombo;
+    @FXML
+    private ComboBox<String> ScopeCombo;
+    @FXML
+    private ComboBox<String> StatusCombo;
+    @FXML
+    private ComboBox<String> StoreCombo;
+    @FXML
+    private ComboBox<String> TypeCombo;
 
     // Data
     private final ObservableList<Complaint> rows = FXCollections.observableArrayList();
@@ -67,9 +86,7 @@ public class ManageComplaintsController {
         ScopeCombo.setItems(FXCollections.observableArrayList(SCOPE_WHOLE, SCOPE_STORE));
         ScopeCombo.getSelectionModel().select(SCOPE_WHOLE);
 
-        // Store list — replace with a real fetch if you have one
-        // You can request stores from server here and fill StoreCombo in a separate @Subscribe handler.
-        StoreCombo.setItems(FXCollections.observableArrayList("Store A", "Store B", "Store C"));
+        StoreCombo.setItems(FXCollections.observableArrayList());
         StoreCombo.setDisable(true); // enabled only when SCOPE_STORE is selected
 
         TypeCombo.setItems(FXCollections.observableArrayList(
@@ -82,7 +99,8 @@ public class ManageComplaintsController {
 
         ScopeCombo.valueProperty().addListener((obs, oldV, newV) -> {
             boolean specific = Objects.equals(newV, SCOPE_STORE);
-            StoreCombo.setDisable(!specific);
+            boolean hasStores = !StoreCombo.getItems().isEmpty();
+            StoreCombo.setDisable(!specific || !hasStores);
         });
 
         // 3) Table setup
@@ -124,8 +142,10 @@ public class ManageComplaintsController {
         });
 
         // 5) Initial load
-        //requestComplaintsFromServer();
-        Platform.runLater(() -> requestComplaintsFromServer());
+        Platform.runLater(() -> {
+            requestStoresFromServer();
+            requestComplaintsFromServer();
+        });
     }
 
 
@@ -166,7 +186,30 @@ public class ManageComplaintsController {
         }
     }
 
-    ///////// subscribe functions
+    private void requestStoresFromServer() {
+        SimpleClient client;
+        try {
+            client = SimpleClient.getClient();
+        } catch (IllegalStateException ex) {
+            System.err.println("[WARN] Client not initialized. Skipping stores fetch.");
+            return;
+        }
+
+        if (!client.isConnected()) {
+            System.err.println("[WARN] Client not connected yet. Skipping stores fetch.");
+            return;
+        }
+
+        try {
+            client.sendToServer(new GetStoresRequest());
+        } catch (Exception e) {
+            e.printStackTrace();
+            showError("Failed to load stores list. Please try again later.");
+        }
+    }
+
+
+    /// ////// subscribe functions
 
 //    @Subscribe
 //    public void onGetComplaintsResponse(GetComplaintsResponse msg) {
@@ -175,7 +218,6 @@ public class ManageComplaintsController {
 //            rows.setAll(list);
 //        });
 //    }
-
     @Subscribe
     public void onGetComplaintsResponse(GetComplaintsResponse msg) {
         System.out.println("[CLIENT] Received complaints: " + msg.getComplaints().size());
@@ -186,12 +228,35 @@ public class ManageComplaintsController {
     }
 
 
-
     @Subscribe
     public void onComplaintCreatedBroadcast(ComplaintCreatedBroadcast msg) {
         if (msg == null || msg.getComplaint() == null) return;
         Platform.runLater(() -> maybeAddIfMatchesFilters(msg.getComplaint()));
     }
+
+    @Subscribe
+    public void onStoresResponse(GetStoresResponse resp) {
+        if (resp == null || resp.stores == null) return;
+        Platform.runLater(() -> {
+            ObservableList<String> storeNames = FXCollections.observableArrayList();
+            for (StoreOption option : resp.stores) {
+                if (option != null && option.name != null && !option.name.isBlank()) {
+                    storeNames.add(option.name);
+                }
+            }
+            StoreCombo.getSelectionModel().clearSelection();
+            StoreCombo.setItems(storeNames);
+            boolean specific = scopeEqualsStore(ScopeCombo.getValue());
+            StoreCombo.setDisable(!specific || storeNames.isEmpty());
+        });
+    }
+
+    @Subscribe
+    public void onStoresError(GetStoresError err) {
+        if (err == null) return;
+        Platform.runLater(() -> showError(err.message != null ? err.message : "Failed to load stores."));
+    }
+
 
     private void maybeAddIfMatchesFilters(Complaint c) {
         if (!matchesActiveFilters(c)) return;
@@ -258,7 +323,8 @@ public class ManageComplaintsController {
         }
         try {
             CloseBtn.getScene().getWindow().hide();
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     private void showError(String msg) {
@@ -291,10 +357,37 @@ public class ManageComplaintsController {
         }
     }
 
+    @Subscribe
+    public void onUpdateResponse(UpdateComplaintResponse msg) {
+        if (msg.isOk() && msg.getUpdated() != null) {
+            refreshOrReplaceRow(msg.getUpdated());
+        }
+    }
 
+    @Subscribe
+    public void onBroadcast(ComplaintUpdatedBroadcast msg) {
+        if (msg.getComplaint() != null) {
+            refreshOrReplaceRow(msg.getComplaint());
+        }
+    }
 
-
-
-
+    private void refreshOrReplaceRow(Complaint c) {
+        Platform.runLater(() -> {
+            for (int i = 0; i < ComplaintsTable.getItems().size(); i++) {
+                var row = ComplaintsTable.getItems().get(i);
+                if (row.getId().equals(c.getId())) {
+                    ComplaintsTable.getItems().set(i, c);
+                    ComplaintsTable.refresh();
+                    return;
+                }
+            }
+            // if it wasn’t in the table but matches current filters, add it
+            // matchesActiveFilters(c) is likely already in your controller
+            if (matchesActiveFilters(c)) {
+                ComplaintsTable.getItems().add(0, c);
+            }
+        });
+    }
 }
+
 

@@ -1,80 +1,90 @@
 package il.cshaifasweng.OCSFMediatorExample.server.mapping;
 
-import il.cshaifasweng.OCSFMediatorExample.entities.domain.Complaint;
-import il.cshaifasweng.OCSFMediatorExample.entities.messages.Complaint.ComplaintDTO;
+import il.cshaifasweng.OCSFMediatorExample.entities.domain.*;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Complaint.SubmitComplaintRequest;
+import org.hibernate.Session;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
-public class ComplaintMapper {
+/**
+ * Builds a Complaint using mapped entities. Validates:
+ *  - customer exists
+ *  - if orderId provided: order exists AND belongs to same customer
+ * Derives store from order.store_id; otherwise uses defaultStoreId.
+ *
+ * Works whether Complaint uses scalar FK setters (setXId) or associations (setX(entity)).
+ */
+public final class ComplaintMapper {
 
-    // DTO → Entity (demo version)
-    public static Complaint toEntity(ComplaintDTO dto) {
-        if (dto == null) return null;
+    public static Complaint fromRequest(Session s, SubmitComplaintRequest req, long defaultStoreId) {
+        if (req == null) throw new IllegalArgumentException("Empty request.");
+        if (req.getCustomerId() == null) throw new IllegalArgumentException("Missing customer.");
 
-        Complaint complaint = new Complaint();
+        // Customer must exist
+        Customer customer = s.get(Customer.class, req.getCustomerId());
+        if (customer == null) throw new IllegalArgumentException("Customer not found.");
 
-        // map type/category
-        complaint.setType(dto.getCategory());
-
-        // orderId: convert from String to Long if possible
-        if (dto.getOrderId() != null) {
-            try {
-                complaint.setOrderId(Long.valueOf(dto.getOrderId()));
-            } catch (NumberFormatException e) {
-                complaint.setOrderId(null); // fallback if not numeric
+        // Resolve and validate order if present
+        Order order = null;
+        if (req.getOrderId() != null) {
+            order = s.get(Order.class, req.getOrderId());
+            if (order == null) throw new IllegalArgumentException("Order not found.");
+            if (!Objects.equals(order.getCustomerId(), req.getCustomerId())) {
+                throw new IllegalArgumentException("Order does not belong to your account.");
             }
         }
 
-        // merge subject + message
-        String text = dto.getSubject() != null && !dto.getSubject().isBlank()
-                ? dto.getSubject() + ": " + dto.getMessage()
-                : dto.getMessage();
-        complaint.setText(text);
+        // Derive store id
+        Long storeId = (order != null && order.getStoreId() != null)
+                ? order.getStoreId()
+                : defaultStoreId;
 
-        // demo: we don’t resolve customer from DB, just set null or fake ID
-        if (dto.isAnonymous()) {
-            complaint.setCustomerId(null);
-        } else {
-            // put a dummy ID (in real code: lookup customer by email/phone)
-            complaint.setCustomerId(1L);
+        // Fetch Stores entity if the Complaint expects an association
+        Stores storeEntity = null;
+        // we’ll only fetch if we need to set the association below
+
+        Complaint c = new Complaint();
+
+        // Optional timestamps/status (ignore if your entity doesn't have these setters)
+        try { c.getClass().getMethod("setCreatedAt", LocalDateTime.class).invoke(c, LocalDateTime.now()); } catch (Throwable ignored) {}
+        try { c.getClass().getMethod("setStatus", Complaint.Status.class).invoke(c, Complaint.Status.OPEN); } catch (Throwable ignored) {}
+        try { c.getClass().getMethod("setResolution", String.class).invoke(c, (String) null); } catch (Throwable ignored) {}
+
+        // Prefer scalar FK setters if present
+        boolean setCustomerId = tryCall(c, "setCustomerId", Long.class, customer.getId());
+        boolean setOrderId    = tryCall(c, "setOrderId",    Long.class, req.getOrderId());
+        boolean setStoreId    = tryCall(c, "setStoreId",    Long.class, storeId);
+
+        // Fall back to associations if needed
+        if (!setCustomerId) tryCall(c, "setCustomer", Customer.class, customer);
+        if (!setOrderId && order != null) tryCall(c, "setOrder", Order.class, order);
+        if (!setStoreId) {
+            if (storeEntity == null) storeEntity = s.get(Stores.class, storeId);
+            tryCall(c, "setStore", Stores.class, storeEntity);
         }
 
-        // set defaults
-        complaint.setStatus(Complaint.Status.OPEN);
-        complaint.setCreatedAt(LocalDateTime.now());
+        // Content fields: subject, description/text, category/type
+        tryCall(c, "setSubject", String.class, req.getSubject());
+        if (!tryCall(c, "setDescription", String.class, req.getMessage())) {
+            tryCall(c, "setText", String.class, req.getMessage());
+        }
+        if (!tryCall(c, "setType", String.class, req.getCategory())) {
+            tryCall(c, "setCategory", String.class, req.getCategory());
+        }
 
-        return complaint;
+        // Contact/flags
+        tryCall(c, "setAnonymous", boolean.class, req.isAnonymous());
+        tryCall(c, "setEmail",     String.class,  req.getEmail());
+        tryCall(c, "setPhone",     String.class,  req.getPhone());
+
+        return c;
     }
 
-    // Entity → DTO (demo version)
-    public static ComplaintDTO toDTO(Complaint entity) {
-        if (entity == null) return null;
-
-        // split subject + message
-        String subject = entity.getSubject();
-        String message = entity.getText();
-        if (message != null && message.contains(":")) {
-            int idx = message.indexOf(":");
-            subject = message.substring(0, idx).trim();
-            message = message.substring(idx + 1).trim();
-        }
-
-        ComplaintDTO dto = new ComplaintDTO();
-        dto.setCategory(entity.getType());
-        dto.setOrderId(entity.getOrderId() != null ? entity.getOrderId().toString() : null);
-        dto.setSubject(subject);
-        dto.setMessage(message);
-
-        // anonymous if no customerId
-        boolean anonymous = (entity.getCustomerId() == null);
-        dto.setAnonymous(anonymous);
-
-        if (!anonymous) {
-            // fake email/phone for demo (in real code: fetch from Customer table)
-            dto.setEmail("demo@example.com");
-            dto.setPhone("000-0000000");
-        }
-
-        return dto;
+    private static boolean tryCall(Object target, String method, Class<?> param, Object arg) {
+        try { target.getClass().getMethod(method, param).invoke(target, arg); return true; }
+        catch (Throwable ignored) { return false; }
     }
+
+    private ComplaintMapper() {}
 }

@@ -13,6 +13,8 @@ import il.cshaifasweng.OCSFMediatorExample.server.handlers.catalog.GetCatalogHan
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.catalog.GetCategoriesHandler;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.catalog.GetPromotionsHandler;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.complaints.GetComplaintsHandler;
+import il.cshaifasweng.OCSFMediatorExample.server.handlers.complaints.SubmitComplaintHandler;
+import il.cshaifasweng.OCSFMediatorExample.server.handlers.complaints.UpdateComplaintHandler;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.employee.*;
 import il.cshaifasweng.OCSFMediatorExample.server.session.TX;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.cart.CartHandler;
@@ -40,6 +42,10 @@ public class App {
         new OrdersHandler(bus);
         new PaymentsHandler(bus);
         new CartHandler(bus);
+        new GetComplaintsHandler(bus);
+        new SubmitComplaintHandler(bus);
+        new UpdateComplaintHandler(bus);
+
 
 
         // Employees handlers

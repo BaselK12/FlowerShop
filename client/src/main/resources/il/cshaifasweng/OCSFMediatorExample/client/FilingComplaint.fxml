@@ -64,8 +64,8 @@
             </GridPane>
             <HBox alignment="CENTER_RIGHT" prefHeight="100.0" prefWidth="200.0" spacing="10.0">
                <children>
-                  <Button fx:id="CancelBtn" mnemonicParsing="false" text="Cancel" />
-                  <Button fx:id="SubmitBtn" mnemonicParsing="false" text="Submit" />
+                   <Button fx:id="CancelBtn" mnemonicParsing="false" text="Cancel" onAction="#onCancel" cancelButton="true"/>
+                   <Button fx:id="SubmitBtn" mnemonicParsing="false" text="Submit" onAction="#onSubmit" defaultButton="true"/>
                </children>
             </HBox>
          </children>

@@ -4,6 +4,7 @@ import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
 import il.cshaifasweng.OCSFMediatorExample.client.ui.Nav;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.LoginRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.LoginResponse;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.AccountOverviewRequest;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -24,7 +25,6 @@ public class CustomerLoginPageController {
     @FXML private TextField EmailTxt;
     @FXML private PasswordField PassTxt;
 
-    // proper observable flag so bindings actually update
     private final BooleanProperty loggingIn = new SimpleBooleanProperty(false);
 
     private boolean isValidEmail(String s) {
@@ -37,7 +37,6 @@ public class CustomerLoginPageController {
             EventBus.getDefault().register(this);
         }
 
-        // Disable login when fields empty, email invalid, or mid-request
         LoginBtn.disableProperty().bind(
                 EmailTxt.textProperty().isEmpty()
                         .or(PassTxt.textProperty().isEmpty())
@@ -50,7 +49,6 @@ public class CustomerLoginPageController {
         ErrorLabel.setText("");
     }
 
-    // Call this before leaving the screen to avoid duplicate subscribers
     public void onClose() {
         if (EventBus.getDefault().isRegistered(this)) {
             EventBus.getDefault().unregister(this);
@@ -92,7 +90,6 @@ public class CustomerLoginPageController {
         }
     }
 
-    // SUBSCRIBE DIRECTLY to LoginResponse since SimpleClient posts raw messages
     @Subscribe
     public void onLoginResponse(LoginResponse r) {
         Platform.runLater(() -> {
@@ -100,15 +97,24 @@ public class CustomerLoginPageController {
                 if (r.isOk()) {
                     ErrorLabel.setText("");
 
-                    // Optional guard to fail loudly if FXML is missing during dev
-                    URL url = getClass().getResource("/il/cshaifasweng/OCSFMediatorExample/client/Catalog/CatalogView.fxml");
+                    // HYDRATE SESSION RIGHT AFTER SUCCESSFUL LOGIN
+                    try {
+                        // 0 tells the server to infer the customer from the logged-in session
+                        SimpleClient.getClient().sendSafely(new AccountOverviewRequest(0));
+                    } catch (Exception ex) {
+                        // Not fatal for navigation; complaint screen can still lazy-hydrate (Step 2)
+                        ex.printStackTrace();
+                    }
+
+                    // Optional guard to catch missing FXML during development
+                    URL url = getClass().getResource("/il/cshaifasweng/OCSFMediatorExample/client/ManageComplaints.fxml");
                     if (url == null) {
-                        ErrorLabel.setText("MyAccount.fxml not found on classpath");
+                        ErrorLabel.setText("FilingComplaint.fxml not found on classpath");
                         return;
                     }
 
                     onClose(); // unregister before navigation
-                    Nav.go(LoginBtn, "/il/cshaifasweng/OCSFMediatorExample/client/Catalog/CatalogView.fxml");
+                    Nav.go(LoginBtn, "/il/cshaifasweng/OCSFMediatorExample/client/ManageComplaints.fxml");
                 } else {
                     ErrorLabel.setText(r.getReason() != null ? r.getReason() : "Login failed");
                 }
