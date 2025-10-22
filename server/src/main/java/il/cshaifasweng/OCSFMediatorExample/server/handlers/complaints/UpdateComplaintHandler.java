@@ -5,6 +5,7 @@ import il.cshaifasweng.OCSFMediatorExample.entities.messages.Complaint.*;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.SendToClientEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.UpdateComplaintRequestedEvent;
+import il.cshaifasweng.OCSFMediatorExample.server.session.SessionManager;
 import il.cshaifasweng.OCSFMediatorExample.server.session.TX;
 import org.hibernate.Session;
 
@@ -34,8 +35,19 @@ public class UpdateComplaintHandler {
                     return c;
                 });
 
+                // acknowledge requester
+                if (evt.getClient() != null) {
+                    bus.publish(new SendToClientEvent(
+                            new UpdateComplaintResponse(true, null, updated),
+                            evt.getClient()
+                    ));
+                }
+
                 // broadcast so tables refresh elsewhere
-                bus.publish(new SendToClientEvent(new ComplaintUpdatedBroadcast(updated), null));
+                ComplaintUpdatedBroadcast broadcast = new ComplaintUpdatedBroadcast(updated);
+                for (SessionManager.Session session : SessionManager.get().allSessions()) {
+                    bus.publish(new SendToClientEvent(broadcast, session.client()));
+                }
 
             } catch (Exception ex) {
                 ex.printStackTrace();

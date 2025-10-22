@@ -512,11 +512,147 @@ public class ManageReportsController {
     }
 
     private void buildCharts(ReportSchema schema, List<Map<String,Object>> data, ChartSuggestion suggestion) {
-    BarChart.getData().clear();
-    LineChart.getData().clear();
-    PieChart.getData().clear();
+        BarChart.getData().clear();
+        LineChart.getData().clear();
+        PieChart.getData().clear();
 
-    if (data == null || data.isEmpty() || schema == null || schema.columns == null || schema.columns.isEmpty())
-        return;
+        if (data == null || data.isEmpty() || schema == null || schema.columns == null || schema.columns.isEmpty()) {
+            return;
+        }
+
+        ChartKind kind = suggestion != null && suggestion.kind != null ? suggestion.kind : ChartKind.BAR;
+        String categoryKey = suggestion != null ? suggestion.categoryKey : null;
+        String valueKey = suggestion != null ? suggestion.valueKey : null;
+        String seriesKey = suggestion != null ? suggestion.seriesKey : null;
+
+        if (categoryKey == null || !hasColumn(schema, categoryKey)) {
+            categoryKey = firstColumnOfType(schema, "string");
+        }
+        if (categoryKey == null && !schema.columns.isEmpty()) {
+            categoryKey = schema.columns.get(0).key;
+        }
+
+        if (valueKey == null || !hasColumn(schema, valueKey)) {
+            valueKey = firstColumnOfType(schema, "number");
+        }
+        if (valueKey == null) {
+            for (ColumnDef column : schema.columns) {
+                if (!Objects.equals(column.key, categoryKey)) {
+                    valueKey = column.key;
+                    break;
+                }
+            }
+        }
+
+        if (valueKey == null || categoryKey == null) {
+            return;
+        }
+
+        switch (kind) {
+            case LINE -> buildSeriesChart(LineChart, data, categoryKey, valueKey, seriesKey);
+            case PIE -> buildPieChart(data, categoryKey, valueKey);
+            case BAR -> buildSeriesChart(BarChart, data, categoryKey, valueKey, seriesKey);
+        }
+
+        selectChartTab(kind);
+    }
+
+    private void buildSeriesChart(XYChart<String, Number> chart,
+                                  List<Map<String, Object>> data,
+                                  String categoryKey,
+                                  String valueKey,
+                                  String seriesKey) {
+        Map<String, XYChart.Series<String, Number>> seriesMap = new LinkedHashMap<>();
+
+        for (Map<String, Object> row : data) {
+            String category = Objects.toString(row.get(categoryKey), "(blank)");
+            Double value = toDouble(row.get(valueKey));
+            if (value == null) continue;
+
+            String seriesName = valueKey;
+            if (seriesKey != null && hasValue(row, seriesKey)) {
+                seriesName = Objects.toString(row.get(seriesKey), "(blank)");
+            }
+
+            XYChart.Series<String, Number> series = seriesMap.computeIfAbsent(seriesName, key -> {
+                XYChart.Series<String, Number> s = new XYChart.Series<>();
+                s.setName(key);
+                return s;
+            });
+            series.getData().add(new XYChart.Data<>(category, value));
+        }
+
+        chart.getData().setAll(new ArrayList<>(seriesMap.values()));
+    }
+
+    private void buildPieChart(List<Map<String, Object>> data,
+                               String categoryKey,
+                               String valueKey) {
+        Map<String, Double> slices = new LinkedHashMap<>();
+
+        for (Map<String, Object> row : data) {
+            String category = Objects.toString(row.get(categoryKey), "(blank)");
+            Double value = toDouble(row.get(valueKey));
+            if (value == null) continue;
+            slices.merge(category, value, Double::sum);
+        }
+
+        List<PieChart.Data> pieData = new ArrayList<>();
+        for (Map.Entry<String, Double> entry : slices.entrySet()) {
+            pieData.add(new PieChart.Data(entry.getKey(), entry.getValue()));
+        }
+        PieChart.getData().setAll(pieData);
+    }
+
+    private void selectChartTab(ChartKind kind) {
+        if (ChartsTabs == null || ChartsTabs.getTabs() == null) return;
+
+        int index = switch (kind) {
+            case BAR -> 0;
+            case LINE -> 1;
+            case PIE -> 2;
+        };
+
+        if (index >= 0 && index < ChartsTabs.getTabs().size()) {
+            ChartsTabs.getSelectionModel().select(index);
+        }
+    }
+
+    private boolean hasColumn(ReportSchema schema, String key) {
+        if (schema == null || schema.columns == null) return false;
+        for (ColumnDef column : schema.columns) {
+            if (Objects.equals(column.key, key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean hasValue(Map<String, Object> row, String key) {
+        return row.containsKey(key) && row.get(key) != null;
+    }
+
+    private String firstColumnOfType(ReportSchema schema, String type) {
+        if (schema == null || schema.columns == null) return null;
+        for (ColumnDef column : schema.columns) {
+            if (type.equalsIgnoreCase(column.type)) {
+                return column.key;
+            }
+        }
+        return null;
+    }
+
+    private Double toDouble(Object raw) {
+        if (raw instanceof Number number) {
+            return number.doubleValue();
+        }
+        if (raw instanceof String str) {
+            try {
+                return Double.parseDouble(str.trim());
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
     }
 }
