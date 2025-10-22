@@ -46,6 +46,12 @@ import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Cart.AddToCartReque
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Cart.CartUpdateRequestedEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Cart.ContinueShoppingRequestedEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Cart.CheckoutRequestedEvent;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Complaint.SubmitComplaintRequest;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.SubmitComplaintRequestEvent;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Complaint.UpdateComplaintRequest;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.UpdateComplaintRequestedEvent;
+
+
 
 
 
@@ -93,6 +99,10 @@ public class SimpleServer extends ObservableServer {
 					default -> bus.publish(new SendToClientEvent(
 							new ErrorResponse("Unknown command: " + s), client));
 				}
+			} else if (msg instanceof UpdateComplaintRequest rr) {
+				bus.publish(new UpdateComplaintRequestedEvent(rr, client));
+			} else if (msg instanceof SubmitComplaintRequest req) {
+				bus.publish(new SubmitComplaintRequestEvent(req, client));
 			} else if (msg instanceof GetCartRequest req) {
 				bus.publish(new GetCartRequestedEvent(req, client));
 			} else if (msg instanceof AddToCartRequest req) {

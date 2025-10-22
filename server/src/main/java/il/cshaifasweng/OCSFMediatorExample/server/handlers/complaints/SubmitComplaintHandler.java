@@ -1,65 +1,60 @@
 package il.cshaifasweng.OCSFMediatorExample.server.handlers.complaints;
 
-import il.cshaifasweng.OCSFMediatorExample.entities.domain.Complaint;
-import il.cshaifasweng.OCSFMediatorExample.entities.domain.Complaint.Status;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Complaint.SubmitComplaintRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Complaint.SubmitComplaintResponse;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.SubmitComplaintRequestEvent;
-import il.cshaifasweng.OCSFMediatorExample.server.session.HbBoot;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ConnectionToClient;
+import il.cshaifasweng.OCSFMediatorExample.server.mapping.ComplaintMapper;
+import il.cshaifasweng.OCSFMediatorExample.server.session.TX;
 import org.hibernate.Session;
-import org.hibernate.Transaction;
-
-import java.time.LocalDateTime;
 
 public class SubmitComplaintHandler {
 
-    public void handle(SubmitComplaintRequestEvent event) {
-        SubmitComplaintRequest request = event.getRequest();
-        ConnectionToClient client = event.getClient();
 
-        // Convert request → Complaint entity
-        Complaint complaint = new Complaint();
-        complaint.setCustomerId(request.getCustomerId());
-        complaint.setOrderId(request.getOrderId());
-        complaint.setType(request.getCategory());          // mapped to 'type' in Complaint
-        complaint.setSubject(request.getSubject());
-        complaint.setText(request.getMessage());          // mapped to 'text' in Complaint
-        complaint.setAnonymous(request.isAnonymous());
-        complaint.setEmail(request.getEmail());
-        complaint.setPhone(request.getPhone());
+    private static final long DEFAULT_STORE_ID = 1;
 
-        // Initialize default fields
-        complaint.setCreatedAt(LocalDateTime.now());
-        complaint.setStatus(Status.OPEN);
+    /** Your App.java does: new SubmitComplaintHandler(bus); */
+    public SubmitComplaintHandler(ServerBus bus) {
+        register(bus);
+        System.out.println("[SRV/SubmitComplaintHandler] subscribed");
+    }
 
-        try (Session session = HbBoot.sf().openSession()) {
-            Transaction tx = session.beginTransaction();
-            session.persist(complaint);
-            tx.commit();
+    /** Also allow manual registration if you’re into that. */
+    public SubmitComplaintHandler() {}
 
-            // Send success response (convert ID to String)
-            SubmitComplaintResponse resp = new SubmitComplaintResponse(
-                    true,
-                    null,
-                    complaint.getId() != null ? complaint.getId().toString() : null
-            );
-            client.sendToClient(resp);
+    /** Wire the handler to the bus. */
+    public void register(ServerBus bus) {
+        bus.subscribe(SubmitComplaintRequestEvent.class, this::handle);
+    }
 
-        } catch (Exception e) {
-            e.printStackTrace();
+    /** Validate, persist, reply. */
+    private void handle(SubmitComplaintRequestEvent evt) {
+        final SubmitComplaintRequest req = evt.getRequest();
+        final ConnectionToClient client = evt.getClient();
 
-            // Send failure response
-            SubmitComplaintResponse resp = new SubmitComplaintResponse(
-                    false,
-                    e.getMessage(),
-                    null
-            );
-            try {
-                client.sendToClient(resp);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
+        try {
+            String complaintId = TX.call((Session s) -> {
+                var entity = ComplaintMapper.fromRequest(s, req, DEFAULT_STORE_ID);
+                s.persist(entity);
+                s.flush(); // ensure id is generated
+                Object key = s.getIdentifier(entity);
+                return key == null ? null : String.valueOf(key);
+            });
+
+            // DTO ctor: (ok, reason, complaintId)
+            safeSend(client, new SubmitComplaintResponse(true, null, complaintId));
+
+        } catch (IllegalArgumentException ex) {
+            safeSend(client, new SubmitComplaintResponse(false, ex.getMessage(), null));
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            safeSend(client, new SubmitComplaintResponse(false, "Server error while submitting complaint.", null));
         }
+    }
+
+    private void safeSend(ConnectionToClient client, Object msg) {
+        try { client.sendToClient(msg); } catch (Exception ignore) {}
     }
 }

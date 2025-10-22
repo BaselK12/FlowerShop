@@ -1,6 +1,7 @@
 package il.cshaifasweng.OCSFMediatorExample.client.Cart;
 
 import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
+import il.cshaifasweng.OCSFMediatorExample.client.ui.Nav;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.*;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.CartItem;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.CartState;
@@ -134,7 +135,7 @@ public class CartController {
     public void onContinueResponse(ContinueShoppingResponse response) {
         Platform.runLater(() -> {
             System.out.println("Continue response: " + response.getMessage());
-            // TODO: navigate back to catalog scene if you have a Nav.go(...)
+            Nav.go(ContinueBtn,"/il/cshaifasweng/OCSFMediatorExample/client/Catalog/CatalogView.fxml");
         });
     }
 
@@ -151,7 +152,7 @@ public class CartController {
         });
     }
 
-    // Optional: call this when leaving the view to avoid ghost subscriptions
+
     public void dispose() {
         if (EventBus.getDefault().isRegistered(this)) {
             EventBus.getDefault().unregister(this);
