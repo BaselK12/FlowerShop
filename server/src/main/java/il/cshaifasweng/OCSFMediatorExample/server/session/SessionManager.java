@@ -3,6 +3,8 @@ package il.cshaifasweng.OCSFMediatorExample.server.session;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ConnectionToClient;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -79,5 +81,9 @@ public final class SessionManager {
 
     public Optional<Session> getByUsername(String username) {
         return Optional.ofNullable(byUser.get(username));
+    }
+
+    public Collection<Session> allSessions() {
+        return new ArrayList<>(byClient.values());
     }
 }
