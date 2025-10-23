@@ -1,0 +1,129 @@
+/* =========================================================
+   Create Bouquet — Elegant & Romantic Unified Theme
+   Safe for IntelliJ & SceneBuilder (no pseudo selectors)
+   ========================================================= */
+
+/* ---------- Root Palette ---------- */
+.root, .root-app {
+    -blush:       #E8A7B3;
+    -mauve:       #D8A7B1;
+    -ivory:       #FFF9F9;
+    -beige:       #F5E2D3;
+    -rosewood:    #5A4E4E;
+    -ink:         #3A2D2D;
+
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-background-color: linear-gradient(#FFF9F9, #F5E2D3);
+    -fx-text-fill: -ink;
+}
+
+/* ---------- Header Bar ---------- */
+.header-bar {
+    -fx-background-color: -mauve;
+    -fx-padding: 12 20;
+    -fx-alignment: center-left;
+}
+
+.title-label {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.total-price-label {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+
+/* ---------- Section Panes ---------- */
+.section-pane {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 12;
+    -fx-spacing: 10;
+}
+
+.section-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -rosewood;
+    -fx-padding: 4 0 6 0;
+}
+
+/* ---------- Tables ---------- */
+.table-view {
+    -fx-border-color: -mauve;
+    -fx-background-color: -ivory;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-font-size: 13px;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: -mauve;
+}
+
+.table-view .column-header, .table-view .filler {
+    -fx-size: 28px;
+    -fx-border-color: transparent;
+    -fx-background-color: -mauve;
+}
+
+.table-view .label {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+}
+
+.table-row-cell {
+    -fx-border-color: transparent;
+    -fx-background-color: -ivory;
+}
+
+.table-cell {
+    -fx-padding: 6 8;
+    -fx-text-fill: -ink;
+}
+
+/* ---------- ScrollPanes ---------- */
+.scroll-pane {
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+}
+
+/* ---------- Buttons ---------- */
+.button {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-padding: 6 16;
+    -fx-cursor: hand;
+}
+
+/* Primary: Save / Checkout */
+.btn-primary {
+    -fx-background-color: -blush;
+    -fx-text-fill: #FFFFFF;
+}
+
+/* Secondary: Clear */
+.btn-secondary {
+    -fx-background-color: transparent;
+    -fx-border-color: -mauve;
+    -fx-text-fill: -rosewood;
+}
+
+/* ---------- Footer Bar ---------- */
+.footer-bar {
+    -fx-background-color: -mauve;
+    -fx-padding: 10 20;
+    -fx-alignment: center-right;
+}
+
+/* ---------- Utility ---------- */
+Region {
+    -fx-background-color: transparent;
+}

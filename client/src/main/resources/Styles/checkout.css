@@ -1,179 +1,162 @@
-/* Root background */
-.root {
-    -fx-background-color: linear-gradient(to bottom, #101420, #0b0d10 60%);
-    -fx-text-fill: #e8edf4;
-    -fx-font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial;
+/* =========================================================
+   Checkout Page — Elegant & Romantic Unified Theme
+   IntelliJ-safe (no pseudo-classes, no invalid syntax)
+   ========================================================= */
+
+/* ---------- Global Palette ---------- */
+.root, .app {
+    -blush:       #E8A7B3;
+    -mauve:       #D8A7B1;
+    -ivory:       #FFF9F9;
+    -beige:       #F5E2D3;
+    -rosewood:    #5A4E4E;
+    -headerText:  #FFF9F9;
+    -ink:         #3A2D2D;
+
+    -fx-background-color: linear-gradient(#FFF9F9, #F5E2D3);
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-text-fill: -ink;
 }
 
-/* Main app container (the card shell) */
-.app {
-    -fx-background-color: linear-gradient(to bottom, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    -fx-border-color: rgba(255,255,255,0.06);
-    -fx-border-radius: 14;
-    -fx-background-radius: 14;
-    -fx-padding: 18 18 12 18;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 20, 0.3, 0, 10);
-}
-
-/* Step badges */
-.badge {
-    -fx-background-color: #1b2230;
-    -fx-text-fill: #7f8ea3;
-    -fx-padding: 6 12;
-    -fx-border-color: rgba(255,255,255,0.06);
-    -fx-border-radius: 999;
-    -fx-background-radius: 999;
-    -fx-font-size: 13px;
-}
-.badge.active {
-    -fx-background-color: #23314a;
-    -fx-text-fill: #d7e5ff;
-    -fx-border-color: #3a527a;
-}
-
-/* Card panels */
+/* ---------- Section Cards ---------- */
 .card {
-    -fx-background-color: #141820;
-    -fx-border-color: rgba(255,255,255,0.06);
-    -fx-border-radius: 14;
-    -fx-background-radius: 14;
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
     -fx-padding: 20;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 6, 0, 0, 1);
 }
 
-/* Titles & muted text */
+/* ---------- Headings ---------- */
 .h2 {
+    -fx-text-fill: -rosewood;
     -fx-font-size: 18px;
-    -fx-font-weight: 600;
-}
-.muted {
-    -fx-text-fill: #7f8ea3;
-    -fx-font-size: 12px;
-}
-
-/* Form labels & fields */
-.label {
-    -fx-text-fill: #b9c7da;
-    -fx-font-size: 13px;
-}
-
-.text-field, .combo-box, .date-picker, .text-area {
-    -fx-background-color: #0e131b;
-    -fx-border-color: #2a3444;
-    -fx-border-radius: 10;
-    -fx-background-radius: 10;
-    -fx-text-fill: #e8edf4;
-    -fx-prompt-text-fill: #5e6b7e;
-    -fx-padding: 8 10;
-}
-.text-area {
-    -fx-min-height: 72;
-}
-
-/* Buttons */
-.button {
-    -fx-background-color: #131a25;
-    -fx-text-fill: #e8edf4;
-    -fx-font-weight: 600;
-    -fx-border-radius: 10;
-    -fx-background-radius: 10;
-    -fx-border-color: #2a3444;
-    -fx-padding: 8 14;
-}
-.button:hover {
-    -fx-background-color: #1a2230;
-}
-.button.primary {
-    -fx-background-color: linear-gradient(to bottom, #2ecc71, #24b862);
-    -fx-border-color: #23a85a;
-    -fx-text-fill: #08140c;
-}
-.button.secondary {
-    -fx-background-color: #232d3f;
-    -fx-text-fill: #e8edf4;
-}
-
-/* Segmented controls */
-.segmented {
-    -fx-background-color: transparent;
-    -fx-border-color: #2a3444;
-    -fx-border-radius: 10;
-}
-.toggle-button {
-    -fx-background-color: #0f1621;
-    -fx-text-fill: #bcd0e9;
-    -fx-font-weight: 600;
-    -fx-padding: 8 14;
-    -fx-border-width: 0;
-}
-.toggle-button:selected {
-    -fx-background-color: #1b2636;
-    -fx-text-fill: #e6f0ff;
-}
-
-/* Totals box */
-.totals {
-    -fx-background-color: #0f1420;
-    -fx-border-color: #2a3444;
-    -fx-border-style: dashed;
-    -fx-border-radius: 10;
-    -fx-background-radius: 10;
-    -fx-padding: 12;
-}
-.totals .label {
-    -fx-font-size: 13px;
-}
-
-/* Notes (messages under buttons) */
-.note {
-    -fx-font-size: 11px;
-    -fx-text-fill: #7f8ea3;
-}
-.note.ok {
-    -fx-text-fill: #8ae99a;
-}
-.note.warn {
-    -fx-text-fill: #ffd479;
-}
-.note.err {
-    -fx-text-fill: #ff8b8b;
-}
-
-
-/* === Error Highlight === */
-.error-field {
-    -fx-border-color: #e74c3c;
-    -fx-border-width: 2;
-    -fx-border-radius: 4;
-    -fx-background-color: derive(#e74c3c, 98%);
-}
-
-/* === Dialog Alert Styling === */
-.dialog-pane {
-    -fx-background-color: #2f3640;        /* dark slate background */
-    -fx-border-color: #e74c3c;            /* red accent border */
-    -fx-border-width: 2;
-    -fx-border-radius: 6;
-    -fx-background-radius: 6;
-}
-
-.dialog-pane .header-panel {
-    -fx-background-color: #353b48;        /* slightly lighter header */
-    -fx-border-color: transparent transparent #e74c3c transparent;
-    -fx-border-width: 0 0 2 0;
-}
-
-.dialog-pane .content.label {
-    -fx-text-fill: white;                 /* white text for readability */
-    -fx-font-size: 14px;
-}
-
-.dialog-pane .button-bar .button {
-    -fx-background-color: #e74c3c;
-    -fx-text-fill: white;
-    -fx-background-radius: 4;
     -fx-font-weight: bold;
 }
 
-.dialog-pane .button-bar .button:hover {
-    -fx-background-color: #ff7675;
+.muted {
+    -fx-text-fill: #6A5A5A;
+    -fx-font-size: 13px;
+    -fx-font-style: italic;
+}
+
+/* ---------- Badges (Method / Payment / Review Steps) ---------- */
+.badge {
+    -fx-background-color: -mauve;
+    -fx-text-fill: -headerText;
+    -fx-font-weight: bold;
+    -fx-background-radius: 999;
+    -fx-padding: 6 14;
+    -fx-font-size: 13px;
+}
+.active {
+    -fx-background-color: -blush;
+}
+
+/* ---------- Inputs ---------- */
+.text-field, .text-area, .combo-box, .date-picker {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 6 10;
+    -fx-font-size: 13px;
+    -fx-text-fill: -ink;
+}
+
+.text-area {
+    -fx-control-inner-background: -ivory;
+    -fx-wrap-text: true;
+}
+
+.text-field:hover, .combo-box:hover, .date-picker:hover {
+    -fx-border-color: -blush;
+    -fx-effect: dropshadow(gaussian, rgba(232,167,179,0.30), 4, 0, 0, 1);
+}
+
+/* ---------- Toggle Segment Buttons ---------- */
+.segmented {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 4;
+    -fx-spacing: 4;
+}
+
+.toggle-button {
+    -fx-background-color: transparent;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-font-weight: bold;
+    -fx-text-fill: -rosewood;
+    -fx-font-size: 13px;
+}
+.toggle-button:selected {
+    -fx-background-color: -blush;
+    -fx-text-fill: -headerText;
+}
+
+/* ---------- Buttons ---------- */
+.button {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-padding: 6 16;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 4, 0, 0, 1);
+}
+
+/* Primary: Next / Confirm / Pay */
+.primary {
+    -fx-background-color: -blush;
+    -fx-text-fill: -headerText;
+}
+
+/* Secondary: Back */
+.secondary {
+    -fx-background-color: transparent;
+    -fx-border-color: -mauve;
+    -fx-text-fill: -rosewood;
+}
+
+/* ---------- Totals Box ---------- */
+.totals {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 12;
+    -fx-spacing: 6;
+}
+
+/* ---------- Gift Section ---------- */
+.check-box {
+    -fx-text-fill: -rosewood;
+    -fx-font-size: 13px;
+}
+
+/* ---------- Navigation Region ---------- */
+#navigationBox, #nav1 {
+    -fx-padding: 8;
+    -fx-spacing: 10;
+}
+
+/* ---------- Text Styling ---------- */
+.label {
+    -fx-text-fill: -ink;
+    -fx-font-size: 13px;
+}
+
+.text-area .content {
+    -fx-background-color: -ivory;
+}
+
+#ErrorLabel {
+    -fx-text-fill: #B33A3A;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
 }

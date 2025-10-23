@@ -15,7 +15,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane fx:id="rootPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="520.0" minWidth="800.0" prefHeight="600.0" prefWidth="960.0" styleClass="root-app" stylesheets="@../../../../Styles/complaints.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.Complaint.ComplaintDetailsController">
+<BorderPane fx:id="rootPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="520.0" minWidth="800.0" prefHeight="600.0" prefWidth="960.0" styleClass="root-app" stylesheets="@../../../../Styles/ComplaintsDetails.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.Complaint.ComplaintDetailsController">
     <left>
         <VBox fx:id="leftPane" maxWidth="360.0" minWidth="280.0" prefHeight="200.0" prefWidth="320.0" spacing="10.0" styleClass="left-panel" BorderPane.alignment="CENTER">
             <padding>
@@ -31,7 +31,7 @@
                 <Separator prefWidth="200.0" />
                 <GridPane fx:id="metaGrid" hgap="8.0" styleClass="meta-grid" vgap="8.0">
                     <columnConstraints>
-                        <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" minWidth="100.0" prefWidth="120.0" />
+                        <ColumnConstraints halignment="LEFT" hgrow="SOMETIMES" minWidth="100.0" prefWidth="120.0" />
                         <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" prefWidth="100.0" />
                     </columnConstraints>
                     <rowConstraints>
@@ -49,7 +49,7 @@
                         <Label styleClass="meta-label" text="Store:" GridPane.rowIndex="4" />
                         <Label styleClass="meta-label" text="Created At:" GridPane.rowIndex="5" />
                         <Label styleClass="meta-label" text="Complaint ID:" />
-                        <Label fx:id="complaintIdValue" styleClass="meta-value" text="id..." GridPane.columnIndex="1" />
+                        <Label fx:id="complaintIdValue" prefHeight="17.0" prefWidth="47.0" styleClass="meta-value" text="id..." GridPane.columnIndex="1" />
                         <Label fx:id="emailValue" styleClass="meta-value" text="emailValue" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                         <Label fx:id="phoneValue" styleClass="meta-value" text="phoneValue" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                         <Label fx:id="orderIdValue" styleClass="meta-value" text="orderIdValue" GridPane.columnIndex="1" GridPane.rowIndex="3" />
@@ -82,12 +82,12 @@
                                 <!-- Actions toolbar -->
                                 <HBox fx:id="actionsBar" spacing="8.0">
                                     <children>
-                                        <Button fx:id="startBtn"   text="Start"    onAction="#onStart"    />
-                                        <Button fx:id="resolveBtn" text="Resolve"  onAction="#onResolve"  />
-                                        <Button fx:id="rejectBtn"  text="Reject"   onAction="#onReject"   />
+                                        <Button fx:id="startBtn" onAction="#onStart" text="Start" />
+                                        <Button fx:id="resolveBtn" onAction="#onResolve" text="Resolve" />
+                                        <Button fx:id="rejectBtn" onAction="#onReject" text="Reject" />
                                         <Region HBox.hgrow="ALWAYS" />
-                                        <Button fx:id="saveBtn"    text="Save"     onAction="#onSaveNotes"/>
-                                        <Button fx:id="closeBtn"   text="Close"    onAction="#handleClose"/>
+                                        <Button fx:id="saveBtn" onAction="#onSaveNotes" text="Save" />
+                                        <Button fx:id="closeBtn" onAction="#handleClose" text="Close" />
                                     </children>
                                 </HBox>
 

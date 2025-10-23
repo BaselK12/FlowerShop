@@ -1,0 +1,77 @@
+/* =========================================================
+   Customer Login Page — Elegant & Romantic Theme
+   Safe for SceneBuilder / IntelliJ (no pseudo selectors)
+   ========================================================= */
+
+/* ---------- Root & Palette ---------- */
+.root {
+    -blush:       #E8A7B3;
+    -mauve:       #D8A7B1;
+    -ivory:       #FFF9F9;
+    -beige:       #F5E2D3;
+    -rosewood:    #5A4E4E;
+    -ink:         #3A2D2D;
+
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-background-color: linear-gradient(#FFF9F9, #F5E2D3);
+    -fx-text-fill: -ink;
+}
+
+/* ---------- General Labels ---------- */
+.label {
+    -fx-text-fill: -rosewood;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+/* ---------- Error Label ---------- */
+#ErrorLabel {
+    -fx-text-fill: #C0392B;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+/* ---------- Text Fields ---------- */
+.text-field, .password-field {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-font-size: 13px;
+    -fx-text-fill: -ink;
+    -fx-padding: 4 8;
+}
+
+/* ---------- Buttons ---------- */
+.button {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-cursor: hand;
+    -fx-padding: 6 14;
+}
+
+/* Primary (Login) */
+#LoginBtn {
+    -fx-background-color: -blush;
+    -fx-text-fill: #FFFFFF;
+}
+
+/* Secondary (Register) */
+#RegisterBtn {
+    -fx-background-color: transparent;
+    -fx-border-color: -mauve;
+    -fx-text-fill: -rosewood;
+}
+
+/* Neutral (Back) */
+#BackBtn {
+    -fx-background-color: -mauve;
+    -fx-text-fill: #FFFFFF;
+}
+
+/* ---------- Utility ---------- */
+AnchorPane {
+    -fx-background-color: linear-gradient(#FFF9F9, #F5E2D3);
+}
