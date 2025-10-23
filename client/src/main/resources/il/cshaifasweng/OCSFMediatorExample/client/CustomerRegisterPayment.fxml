@@ -12,7 +12,6 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-
 <VBox fx:id="paymentMainContainer" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="394.0" prefWidth="420.0" spacing="12.0" stylesheets="@../../../../Styles/CustomerPayment.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <padding>
       <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
@@ -50,6 +49,9 @@
                   <ComboBox fx:id="monthExpiryCombo" prefWidth="150.0" promptText="MM" />
                   <ComboBox fx:id="yearExpiryCombo" prefWidth="150.0" promptText="YY" />
                </children>
+               <padding>
+                  <Insets right="30.0" />
+               </padding>
             </HBox>
             <TextField fx:id="cvvText" promptText="123" GridPane.columnIndex="1" GridPane.rowIndex="3" />
          </children>
