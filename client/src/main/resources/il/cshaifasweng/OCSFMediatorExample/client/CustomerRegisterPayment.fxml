@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+
+
+<VBox fx:id="paymentMainContainer" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="394.0" prefWidth="420.0" spacing="12.0" stylesheets="@../../../../Styles/CustomerPayment.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
+   <padding>
+      <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+   </padding>
+   <children>
+      <Label fx:id="paymentTitleLabel" text="Payment Information:" />
+      <Label fx:id="paymentErrorLabel" wrapText="true" />
+      <HBox fx:id="summaryRowTotal" alignment="CENTER_LEFT" prefHeight="55.0" prefWidth="390.0" spacing="10.0">
+         <children>
+            <Label fx:id="totalTextLabel" text="Total to pay: " />
+            <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+            <Label fx:id="totalValueLabel" text="0" />
+         </children>
+      </HBox>
+      <GridPane fx:id="paymentGrid" alignment="CENTER_LEFT" hgap="12.0" vgap="10.0">
+        <columnConstraints>
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+        </columnConstraints>
+        <rowConstraints>
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+        </rowConstraints>
+         <children>
+            <Label fx:id="cardHolderLabel" text="Card holder name:" />
+            <Label fx:id="cardNumberLabel" text="Card Number:" GridPane.rowIndex="1" />
+            <Label fx:id="ExpiryDateLabel" text="Expiry Date:" GridPane.rowIndex="2" />
+            <Label fx:id="cvvLabel" text="CVV" GridPane.rowIndex="3" />
+            <TextField fx:id="CardNumberText" promptText="xxxx-xxxx-xxxx-xxxx" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+            <TextField fx:id="CardHolderText" GridPane.columnIndex="1" />
+            <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="8.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
+               <children>
+                  <ComboBox fx:id="monthExpiryCombo" prefWidth="150.0" promptText="MM" />
+                  <ComboBox fx:id="yearExpiryCombo" prefWidth="150.0" promptText="YY" />
+               </children>
+            </HBox>
+            <TextField fx:id="cvvText" promptText="123" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+         </children>
+      </GridPane>
+      <HBox alignment="CENTER_LEFT" prefHeight="43.0" prefWidth="390.0" spacing="10.0">
+         <children>
+            <Button fx:id="backBtn" mnemonicParsing="false" prefHeight="33.0" prefWidth="151.0" text="Back" />
+            <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+            <Button fx:id="confirmBtn" mnemonicParsing="false" prefHeight="33.0" prefWidth="234.0" text="Confirm Payment" />
+         </children>
+      </HBox>
+   </children>
+</VBox>

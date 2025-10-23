@@ -1,0 +1,163 @@
+/* =========================================================
+   Customer Register — Elegant & Romantic (IntelliJ-Safe, no pseudo/derive)
+   ========================================================= */
+
+/* 1) Root + palette lookups */
+.root {
+    -blush:       #E8A7B3;
+    -mauve:       #D8A7B1;
+    -ivory:       #FFF9F9;
+    -beige:       #F5E2D3;
+    -rosewood:    #5A4E4E;
+    -headerText:  #FFF9F9;
+    -ink:         #3A2D2D;
+
+    -fx-background-color: linear-gradient(#FFF9F9, #F5E2D3);
+    -fx-text-fill: -ink;
+    -fx-font-family: "Segoe UI", sans-serif;
+}
+
+/* 2) Labels */
+.label {
+    -fx-text-fill: -ink;
+    -fx-font-size: 13px;
+    -fx-font-weight: normal;
+}
+
+/* Error Label */
+#ErrorLabel {
+    -fx-text-fill: #B33A3A;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+/* 3) TextField + PasswordField */
+.text-field, .password-field {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 6 10;
+    -fx-font-size: 13px;
+    -fx-text-fill: -ink;
+    -fx-prompt-text-fill: #9E8C8C;
+}
+
+/* Hover feedback (used instead of :focused for IntelliJ-safe styling) */
+.text-field:hover, .password-field:hover {
+    -fx-border-color: -blush;
+    -fx-background-color: white;
+    -fx-effect: dropshadow(gaussian, rgba(232,167,179,0.30), 4, 0, 0, 1);
+}
+
+/* 4) ComboBox */
+.combo-box {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-font-size: 13px;
+    -fx-text-fill: -ink;
+}
+
+.combo-box:hover {
+    -fx-border-color: -blush;
+    -fx-effect: dropshadow(gaussian, rgba(232,167,179,0.30), 4, 0, 0, 1);
+}
+
+/* 5) CheckBox */
+.check-box {
+    -fx-font-size: 13px;
+    -fx-text-fill: -ink;
+}
+.check-box:hover {
+    -fx-text-fill: -blush;
+}
+
+/* 6) Buttons */
+.button {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-cursor: hand;
+    -fx-padding: 6 18;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 4, 0, 0, 1);
+}
+
+/* Back Button */
+#BackBtn {
+    -fx-background-color: -mauve;
+    -fx-text-fill: -headerText;
+}
+#BackBtn:hover {
+    -fx-background-color: -blush;
+}
+
+/* Register Button */
+#RegisterBtn {
+    -fx-background-color: -blush;
+    -fx-text-fill: -headerText;
+}
+#RegisterBtn:hover {
+    -fx-background-color: -mauve;
+}
+
+/* 7) Account Description Label
+   (replacing derive(-ink,30%) with a precomputed softer ink) */
+#accountDescriptionLabel {
+    -fx-text-fill: #6A5A5A; /* soft-ink */
+    -fx-font-style: italic;
+    -fx-font-size: 12px;
+}
+
+/* 8) Containers (Store + Premium) */
+#storeContainerHbox, #PremiumContainer {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 8;
+}
+
+/* 9) Premium Note Label */
+#PremiumNoteLabel {
+    -fx-text-fill: -ink;
+    -fx-font-size: 13px;
+}
+
+/* 10) GridPane and general spacing */
+.grid-pane {
+    -fx-vgap: 8;
+    -fx-hgap: 12;
+}
+
+/* 11) HBox for buttons */
+.hbox {
+    -fx-alignment: CENTER_RIGHT;
+}
+
+/* 12) Subtle placeholder styling */
+.text-input {
+    -fx-prompt-text-fill: #A58F8F;
+}
+
+/* ---------------------------------------------------------
+   optional: if you want runtime focus styling, re-enable
+   these blocks (Scene Builder/IntelliJ may warn, but JavaFX
+   runtime supports them). Commented out to keep IDE clean.
+
+.text-field:focused, .password-field:focused {
+    -fx-border-color: -blush;
+    -fx-background-color: white;
+    -fx-effect: dropshadow(gaussian, rgba(232,167,179,0.30), 4, 0, 0, 1);
+}
+
+.combo-box:focused {
+    -fx-border-color: -blush;
+    -fx-effect: dropshadow(gaussian, rgba(232,167,179,0.30), 4, 0, 0, 1);
+}
+
+#accountDescriptionLabel { -fx-text-fill: derive(-ink, 30%); }
+---------------------------------------------------------- */
