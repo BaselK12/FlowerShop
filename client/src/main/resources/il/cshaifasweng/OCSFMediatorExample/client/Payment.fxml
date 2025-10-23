@@ -17,7 +17,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" stylesheets="@../../../../Styles/Payment.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <center>
       <TabPane fx:id="checkoutTab" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
         <tabs>
@@ -58,7 +58,7 @@
                                     <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                 </rowConstraints>
                                  <children>
-                                    <Label prefHeight="17.0" prefWidth="58.0" text="Subtotalel" />
+                                    <Label prefHeight="17.0" prefWidth="62.0" text="Subtotalel" />
                                     <Label alignment="CENTER" prefHeight="17.0" prefWidth="54.0" text="Discount" GridPane.rowIndex="1" />
                                     <Label prefHeight="17.0" prefWidth="51.0" text="Shipping" GridPane.rowIndex="2" />
                                     <Label text="Tax" GridPane.rowIndex="3" />
