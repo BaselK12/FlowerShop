@@ -1,0 +1,124 @@
+/* =========================================================
+   Manage Complaints — Elegant & Romantic Unified Theme
+   Safe for SceneBuilder / IntelliJ (no pseudo selectors)
+   ========================================================= */
+
+/* ---------- Root Palette ---------- */
+.root {
+    -blush:       #E8A7B3;
+    -mauve:       #D8A7B1;
+    -ivory:       #FFF9F9;
+    -beige:       #F5E2D3;
+    -rosewood:    #5A4E4E;
+    -ink:         #3A2D2D;
+
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-background-color: linear-gradient(#FFF9F9, #F5E2D3);
+    -fx-text-fill: -ink;
+}
+
+/* ---------- Header / Title ---------- */
+.title-label {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -rosewood;
+}
+
+/* ---------- Buttons ---------- */
+.button {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 6 14;
+    -fx-cursor: hand;
+}
+
+/* Primary Action Button */
+.primary-button {
+    -fx-background-color: -blush;
+    -fx-text-fill: #FFFFFF;
+}
+
+/* Secondary Button (Back) */
+.secondary-button {
+    -fx-background-color: transparent;
+    -fx-border-color: -mauve;
+    -fx-text-fill: -rosewood;
+}
+
+/* Danger / Close Button */
+.danger-button {
+    -fx-background-color: #C75C5C;
+    -fx-text-fill: #FFFFFF;
+}
+
+/* ---------- ComboBox & CheckBox ---------- */
+.combo-box, .check-box {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-text-fill: -ink;
+    -fx-font-size: 13px;
+}
+
+/* ---------- Table Styling ---------- */
+.complaints-table {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-font-size: 13px;
+}
+
+.complaints-table .column-header-background {
+    -fx-background-color: -mauve;
+}
+
+.complaints-table .column-header,
+.complaints-table .filler {
+    -fx-background-color: -mauve;
+    -fx-border-color: transparent;
+}
+
+.complaints-table .label {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+}
+
+.complaints-table .table-row-cell {
+    -fx-background-color: -ivory;
+}
+
+.complaints-table .table-cell {
+    -fx-padding: 6 8;
+    -fx-text-fill: -ink;
+}
+
+/* ---------- Panels & Layouts ---------- */
+VBox, HBox, GridPane {
+    -fx-spacing: 10;
+}
+
+.separator {
+    -fx-background-color: -mauve;
+}
+
+.label {
+    -fx-text-fill: -rosewood;
+    -fx-font-size: 13px;
+}
+
+/* ---------- SplitPane ---------- */
+.split-pane {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+/* ---------- Utility ---------- */
+AnchorPane {
+    -fx-background-color: transparent;
+}

@@ -15,21 +15,21 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane prefHeight="364.0" prefWidth="423.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.Complaint.FilingComplaintController">
+<AnchorPane prefHeight="546.0" prefWidth="423.0" stylesheets="@../../../../Styles/FillingComplaint.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.Complaint.FilingComplaintController">
    <padding>
       <Insets bottom="16.0" left="16.0" right="16.0" top="16.0" />
    </padding>
    <children>
-      <VBox layoutX="29.0" layoutY="23.0" prefHeight="351.0" prefWidth="362.0" spacing="12.0">
+      <VBox layoutX="29.0" layoutY="23.0" prefHeight="486.0" prefWidth="362.0" spacing="12.0">
          <children>
             <Label prefHeight="20.0" prefWidth="143.0" text="Submit a Complaint">
                <font>
                   <Font size="14.0" />
                </font>
             </Label>
-            <GridPane hgap="10.0" prefHeight="293.0" prefWidth="367.0" vgap="10.0">
+            <GridPane hgap="10.0" prefHeight="386.0" prefWidth="352.0" vgap="10.0">
               <columnConstraints>
-                <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" minWidth="100.0" prefWidth="100.0" />
+                <ColumnConstraints halignment="LEFT" hgrow="SOMETIMES" minWidth="100.0" prefWidth="100.0" />
                 <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" prefWidth="100.0" />
               </columnConstraints>
               <rowConstraints>
@@ -45,7 +45,7 @@
               </rowConstraints>
                <children>
                   <Label text="Category:" />
-                  <ComboBox fx:id="CategoryBox" prefWidth="150.0" GridPane.columnIndex="1" />
+                  <ComboBox fx:id="CategoryBox" prefHeight="30.0" prefWidth="150.0" GridPane.columnIndex="1" />
                   <Label text="Order ID:" GridPane.rowIndex="1" />
                   <TextField fx:id="OrderTxt" promptText="eg. ORD - 12345" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                   <Label text="Subject:" GridPane.rowIndex="2" />
@@ -61,11 +61,17 @@
                   <CheckBox fx:id="ConfirmCheck" mnemonicParsing="false" text="I confirm the information is accurate" GridPane.columnIndex="1" GridPane.rowIndex="7" />
                   <Label fx:id="ErrorLabel" textFill="RED" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="8" />
                </children>
+               <VBox.margin>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </VBox.margin>
+               <padding>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </padding>
             </GridPane>
-            <HBox alignment="CENTER_RIGHT" prefHeight="100.0" prefWidth="200.0" spacing="10.0">
+            <HBox alignment="CENTER_RIGHT" prefHeight="25.0" prefWidth="362.0" spacing="10.0">
                <children>
-                   <Button fx:id="CancelBtn" mnemonicParsing="false" text="Cancel" onAction="#onCancel" cancelButton="true"/>
-                   <Button fx:id="SubmitBtn" mnemonicParsing="false" text="Submit" onAction="#onSubmit" defaultButton="true"/>
+                   <Button fx:id="CancelBtn" cancelButton="true" mnemonicParsing="false" onAction="#onCancel" text="Cancel" />
+                   <Button fx:id="SubmitBtn" defaultButton="true" mnemonicParsing="false" onAction="#onSubmit" text="Submit" />
                </children>
             </HBox>
          </children>

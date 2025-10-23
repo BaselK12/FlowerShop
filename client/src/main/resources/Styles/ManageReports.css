@@ -1,0 +1,153 @@
+/* =========================================================
+   Manage Reports — Elegant & Romantic Unified Theme
+   Safe for SceneBuilder / IntelliJ (no pseudo selectors)
+   ========================================================= */
+
+/* ---------- Root & Palette ---------- */
+.root {
+    -blush:       #E8A7B3;
+    -mauve:       #D8A7B1;
+    -ivory:       #FFF9F9;
+    -beige:       #F5E2D3;
+    -rosewood:    #5A4E4E;
+    -ink:         #3A2D2D;
+
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-background-color: linear-gradient(#FFF9F9, #F5E2D3);
+    -fx-text-fill: -ink;
+}
+
+/* ---------- Labels ---------- */
+.label {
+    -fx-text-fill: -rosewood;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+/* ---------- ComboBoxes & Inputs ---------- */
+.combo-box,
+.date-picker,
+.check-box {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-text-fill: -ink;
+    -fx-font-size: 13px;
+    -fx-padding: 4 8;
+}
+
+/* ---------- Buttons ---------- */
+.button {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 6 14;
+    -fx-cursor: hand;
+}
+
+/* Primary Action Button (Run / Apply) */
+#RunBtn {
+    -fx-background-color: -blush;
+    -fx-text-fill: #FFFFFF;
+}
+
+/* Secondary Action (Export PDF, Date range buttons) */
+#ExportPDFBtn,
+#D7Btn,
+#D30Btn,
+#QTRBtn {
+    -fx-background-color: transparent;
+    -fx-border-color: -mauve;
+    -fx-text-fill: -rosewood;
+}
+
+/* ---------- Charts ---------- */
+.chart {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+/* Chart Axis */
+.chart-plot-background {
+    -fx-background-color: -ivory;
+}
+
+.chart-legend {
+    -fx-background-color: transparent;
+    -fx-text-fill: -rosewood;
+}
+
+/* ---------- Table ---------- */
+.table-view {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-font-size: 13px;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: -mauve;
+}
+
+.table-view .column-header,
+.table-view .filler {
+    -fx-background-color: -mauve;
+    -fx-border-color: transparent;
+}
+
+.table-view .label {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+}
+
+.table-view .table-cell {
+    -fx-padding: 6 8;
+    -fx-text-fill: -ink;
+}
+
+/* ---------- Tabs ---------- */
+.tab-pane {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+.tab-header-background {
+    -fx-background-color: -mauve;
+}
+
+.tab {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-text-fill: -rosewood;
+}
+
+/* ---------- SplitPane ---------- */
+.split-pane {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+/* ---------- Progress Indicator ---------- */
+.progress-indicator {
+    -fx-progress-color: -blush;
+}
+
+/* ---------- Utility Layouts ---------- */
+HBox, VBox {
+    -fx-spacing: 10;
+}
+
+AnchorPane {
+    -fx-background-color: transparent;
+}

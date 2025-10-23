@@ -1,0 +1,86 @@
+/* =========================================================
+   Filing Complaint — Elegant & Romantic Unified Theme
+   Safe for SceneBuilder / IntelliJ (no pseudo selectors)
+   ========================================================= */
+
+/* ---------- Root & Palette ---------- */
+.root {
+    -blush:       #E8A7B3;
+    -mauve:       #D8A7B1;
+    -ivory:       #FFF9F9;
+    -beige:       #F5E2D3;
+    -rosewood:    #5A4E4E;
+    -ink:         #3A2D2D;
+
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-background-color: linear-gradient(#FFF9F9, #F5E2D3);
+    -fx-text-fill: -ink;
+}
+
+/* ---------- Labels ---------- */
+.label {
+    -fx-text-fill: -rosewood;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+/* Form Title */
+VBox > .label:first-child {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -rosewood;
+}
+
+/* Error Label */
+#ErrorLabel {
+    -fx-text-fill: #C0392B;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+/* ---------- Inputs ---------- */
+.text-field,
+.text-area,
+.combo-box,
+.check-box {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-text-fill: -ink;
+    -fx-font-size: 13px;
+    -fx-padding: 4 8;
+}
+
+/* ---------- Buttons ---------- */
+.button {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 6 14;
+    -fx-cursor: hand;
+}
+
+/* Primary Action (Submit) */
+#SubmitBtn {
+    -fx-background-color: -blush;
+    -fx-text-fill: #FFFFFF;
+}
+
+/* Secondary Action (Cancel) */
+#CancelBtn {
+    -fx-background-color: transparent;
+    -fx-border-color: -mauve;
+    -fx-text-fill: -rosewood;
+}
+
+/* ---------- Layout Containers ---------- */
+VBox, HBox, GridPane {
+    -fx-spacing: 10;
+}
+
+/* ---------- Utility ---------- */
+AnchorPane {
+    -fx-background-color: linear-gradient(#FFF9F9, #F5E2D3);
+}

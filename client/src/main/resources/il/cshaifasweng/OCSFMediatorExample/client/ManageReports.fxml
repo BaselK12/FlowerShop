@@ -24,24 +24,21 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
-            prefHeight="720.0" prefWidth="1200.0"
-            xmlns="http://javafx.com/javafx/21.0.1" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="il.cshaifasweng.OCSFMediatorExample.client.Reports.ManageReportsController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="720.0" prefWidth="1238.0" stylesheets="@../../../../Styles/ManageReports.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.Reports.ManageReportsController">
     <top>
         <VBox prefHeight="200.0" prefWidth="100.0" spacing="8.0" BorderPane.alignment="CENTER">
             <padding>
                 <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
             </padding>
             <children>
-                <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="10.0">
+                <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="5.0">
                     <children>
                         <Label prefHeight="20.0" prefWidth="91.0" text="Report:">
                             <font>
                                 <Font size="14.0" />
                             </font>
                         </Label>
-                        <ComboBox fx:id="ReportTypeBox" prefWidth="220.0" />
+                        <ComboBox fx:id="ReportTypeBox" prefHeight="36.0" prefWidth="162.0" />
                         <Label prefHeight="20.0" prefWidth="89.0" text="Scope:">
                             <font>
                                 <Font size="14.0" />
@@ -53,7 +50,7 @@
                                 <Font size="14.0" />
                             </font>
                         </Label>
-                        <ComboBox fx:id="StoreBox" prefWidth="220.0" promptText="Select Store" />
+                        <ComboBox fx:id="StoreBox" prefHeight="36.0" prefWidth="176.0" promptText="Select Store" />
                         <Label prefHeight="20.0" prefWidth="116.0" text="Granularity:">
                             <font>
                                 <Font size="14.0" />
@@ -65,17 +62,15 @@
                                 <Font size="14.0" />
                             </font>
                         </Label>
-                        <ComboBox fx:id="GroupByBox" prefWidth="180.0" />
+                        <ComboBox fx:id="GroupByBox" prefHeight="36.0" prefWidth="137.0" />
                         <Pane prefHeight="84.0" prefWidth="200.0" HBox.hgrow="ALWAYS">
                             <children>
-                                <Button fx:id="RunBtn" layoutX="16.0" layoutY="27.0"
-                                        mnemonicParsing="false" onAction="#runReport" text="Run">
+                                <Button fx:id="RunBtn" layoutY="27.0" mnemonicParsing="false" onAction="#runReport" text="Run">
                                     <font>
                                         <Font size="14.0" />
                                     </font>
                                 </Button>
-                                <Button fx:id="ExportPDFBtn" layoutX="100.0" layoutY="27.0"
-                                        mnemonicParsing="false" onAction="#ExportPDF" text="Export PDF" disable="true">
+                                <Button fx:id="ExportPDFBtn" disable="true" layoutX="52.0" layoutY="26.0" mnemonicParsing="false" onAction="#ExportPDF" text="Export PDF">
                                     <font>
                                         <Font size="14.0" />
                                     </font>
