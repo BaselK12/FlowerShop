@@ -28,12 +28,12 @@
             <ComboBox fx:id="RoleFilter" prefHeight="25.0" prefWidth="160.0" promptText="Role" />
             <CheckBox fx:id="ActiveOnly" mnemonicParsing="false" prefHeight="29.0" prefWidth="104.0" text="Active Only" />
             <Separator orientation="VERTICAL" prefHeight="0.0" prefWidth="5.0" />
-            <Button fx:id="AddBtn" mnemonicParsing="false" prefHeight="25.0" prefWidth="55.0" text="Add" />
-            <Button fx:id="EditBTn" disable="true" mnemonicParsing="false" prefHeight="25.0" prefWidth="55.0" text="Edit" />
-            <Button fx:id="DeleteBtn" disable="true" mnemonicParsing="false" prefHeight="25.0" prefWidth="65.0" text="Delete" textFill="RED" />
+            <Button fx:id="AddBtn" mnemonicParsing="false" prefHeight="29.0" prefWidth="77.0" text="Add" />
+            <Button fx:id="EditBTn" disable="true" mnemonicParsing="false" prefHeight="29.0" prefWidth="71.0" text="Edit" />
+            <Button fx:id="DeleteBtn" disable="true" mnemonicParsing="false" prefHeight="29.0" prefWidth="77.0" text="Delete" textFill="RED" />
             <Separator orientation="VERTICAL" prefHeight="0.0" prefWidth="0.0" />
-            <Button fx:id="RefreshBtn" mnemonicParsing="false" prefHeight="25.0" prefWidth="64.0" text="Refresh" />
-            <Pane prefHeight="29.0" prefWidth="151.0" />
+            <Button fx:id="RefreshBtn" mnemonicParsing="false" prefHeight="29.0" prefWidth="81.0" text="Refresh" />
+            <Pane prefHeight="29.0" prefWidth="113.0" />
             <Label prefHeight="27.0" prefWidth="120.0" text="Manage Employees" />
          </items>
       </ToolBar>

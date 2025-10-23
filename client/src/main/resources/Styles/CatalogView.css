@@ -1,0 +1,228 @@
+/* =========================================================
+   Catalog — Elegant & Romantic Unified Theme
+   IntelliJ-Safe (no pseudo-classes)
+   ========================================================= */
+
+/* 1) Root + Typography */
+.catalog-root {
+    -blush:       #E8A7B3;
+    -mauve:       #D8A7B1;
+    -ivory:       #FFF9F9;
+    -beige:       #F5E2D3;
+    -rosewood:    #5A4E4E;
+    -headerText:  #FFF9F9;
+    -ink:         #3A2D2D;
+
+    -fx-background-color: linear-gradient(#FFF9F9, #F5E2D3);
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+    -fx-text-fill: -ink;
+}
+
+/* Muted helper text */
+.hint {
+    -fx-text-fill: #6A5A5A;
+    -fx-font-size: 0.9em;
+    -fx-font-style: italic;
+}
+
+/* =========================================================
+   Toolbar + Inputs
+   ========================================================= */
+.toolbar {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-width: 0 0 2 0;
+    -fx-padding: 8 12;
+    -fx-spacing: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 6, 0, 0, 2);
+}
+
+.hero-section {
+    -fx-background-color: linear-gradient(to right, #FFF9F9, #F5E2D3);
+    -fx-padding: 30;
+    -fx-alignment: center;
+}
+
+/* Rounded “pill” inputs */
+.pill-input {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 999;
+    -fx-background-radius: 999;
+    -fx-padding: 6 12;
+    -fx-font-size: 1em;
+    -fx-text-fill: -ink;
+    -fx-prompt-text-fill: #9E8C8C;
+}
+
+/* =========================================================
+   Promotions Section
+   ========================================================= */
+.promotions-box {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 10;
+    -fx-spacing: 8;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+}
+
+#promotionsTitle {
+    -fx-text-fill: -rosewood;
+    -fx-font-weight: bold;
+    -fx-font-size: 1.1em;
+}
+
+/* Horizontal row of promo cards */
+.promo-row {
+    -fx-spacing: 12;
+}
+
+/* Promo ribbon for sale tags */
+.promo-ribbon {
+    -fx-background-color: linear-gradient(to right, -blush, -mauve);
+    -fx-text-fill: -headerText;
+    -fx-font-weight: bold;
+    -fx-padding: 2 8;
+    -fx-background-radius: 6;
+}
+
+/* =========================================================
+   Catalog Grid + Item Card
+   ========================================================= */
+.catalog-grid {
+    -fx-hgap: 16;
+    -fx-vgap: 16;
+    -fx-padding: 12;
+}
+
+.card {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 14;
+    -fx-background-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 4, 0, 0, 2);
+}
+.card.hovered {
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 8, 0, 0, 4);
+}
+
+/* Content inside the card */
+.card-content {
+    -fx-padding: 10;
+    -fx-spacing: 6;
+}
+
+/* Title, description, price */
+.item-title {
+    -fx-text-fill: -rosewood;
+    -fx-font-size: 1.1em;
+    -fx-font-weight: bold;
+}
+.item-short {
+    -fx-text-fill: #6A5A5A;
+    -fx-font-size: 0.9em;
+}
+.item-price {
+    -fx-text-fill: -blush;
+    -fx-font-weight: bold;
+}
+
+/* Category chip */
+.category-chip {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 999;
+    -fx-background-radius: 999;
+    -fx-text-fill: -rosewood;
+    -fx-font-size: 0.75em;
+    -fx-padding: 2 8;
+}
+
+/* =========================================================
+   Buttons
+   ========================================================= */
+.btn-primary {
+    -fx-background-color: -blush;
+    -fx-text-fill: -headerText;
+    -fx-font-weight: bold;
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+    -fx-padding: 6 14;
+}
+.btn-primary.hovered {
+    -fx-background-color: -mauve;
+}
+.btn-primary:disabled {
+    -fx-background-color: #C7B6B6;
+    -fx-text-fill: -headerText;
+}
+
+.btn-outline {
+    -fx-background-color: transparent;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 999;
+    -fx-background-radius: 999;
+    -fx-text-fill: -ink;
+    -fx-font-weight: bold;
+    -fx-padding: 6 14;
+}
+.btn-outline.hovered {
+    -fx-background-color: rgba(216,167,177,0.15);
+}
+
+/* Plain button (close icons, etc.) */
+.btn-plain {
+    -fx-background-color: transparent;
+    -fx-text-fill: -blush;
+    -fx-font-size: 1.2em;
+}
+
+/* =========================================================
+   Dialog / Modal
+   ========================================================= */
+.details-dialog {
+    -fx-background-color: -ivory;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.20), 10, 0, 0, 4);
+}
+
+.dialog-header {
+    -fx-border-color: -mauve;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 8;
+}
+.dialog-body {
+    -fx-padding: 12;
+    -fx-spacing: 8;
+}
+.dialog-footer {
+    -fx-padding: 8;
+    -fx-spacing: 10;
+    -fx-alignment: center-right;
+}
+
+/* =========================================================
+   Status Bar (bottom area)
+   ========================================================= */
+.status-bar {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-width: 1 0 0 0;
+    -fx-padding: 6 12;
+    -fx-spacing: 8;
+}
+
+/* Cart item count pill */
+.cart-pill {
+    -fx-background-color: -blush;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 999;
+    -fx-background-radius: 999;
+    -fx-text-fill: -headerText;
+    -fx-font-weight: bold;
+    -fx-padding: 2 8;
+}

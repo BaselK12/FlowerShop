@@ -15,11 +15,11 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane fx:id="CatalogController" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="700.0" prefWidth="1200.0" styleClass="catalog-root" stylesheets="@/Styles/catalog.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.Catalog.CatalogViewController">
+<BorderPane fx:id="CatalogController" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="700.0" prefWidth="1200.0" styleClass="catalog-root" stylesheets="@../../../../../Styles/CatalogView.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.Catalog.CatalogViewController">
    <top>
       <VBox fx:id="topBox" prefHeight="336.0" prefWidth="1200.0" BorderPane.alignment="CENTER">
          <children>
-            <HBox fx:id="headerBar" alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="1200.0" spacing="12.0" styleClass="toolbar" stylesheets="@../../../../../Styles/catalog.css">
+            <HBox fx:id="headerBar" alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="1200.0" spacing="12.0" styleClass="toolbar" stylesheets="@../../../../../Styles/CatalogView.css">
                <padding>
                   <Insets bottom="16.0" left="16.0" right="16.0" top="16.0" />
                </padding>
@@ -31,7 +31,7 @@
                               <Font name="System Bold" size="20.0" />
                            </font>
                         </Label>
-                        <Label styleClass="item-title" stylesheets="@../../../../../Styles/catalog.css" text="Flower Shop Catalog">
+                        <Label styleClass="item-title" stylesheets="@../../../../../Styles/CatalogView.css" text="Flower Shop Catalog">
                            <font>
                               <Font size="18.0" />
                            </font>
@@ -41,7 +41,7 @@
                   <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
                   <HBox fx:id="cartBox" alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="6.0">
                      <children>
-                        <Button fx:id="cartBtn" mnemonicParsing="false" styleClass="btn-outline" stylesheets="@../../../../../Styles/catalog.css" text="🛒">
+                        <Button fx:id="cartBtn" mnemonicParsing="false" styleClass="btn-outline" stylesheets="@../../../../../Styles/CatalogView.css" text="🛒">
                            <font>
                               <Font size="18.0" />
                            </font>
@@ -49,7 +49,7 @@
                               <Cursor fx:constant="HAND" />
                            </cursor>
                         </Button>
-                        <Label fx:id="cartCountLabel" styleClass="cart-pill" stylesheets="@../../../../../Styles/catalog.css" text="0 items" />
+                        <Label fx:id="cartCountLabel" styleClass="cart-pill" stylesheets="@../../../../../Styles/CatalogView.css" text="0 items" />
                      </children>
                      <padding>
                         <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
@@ -57,33 +57,33 @@
                   </HBox>
                </children>
             </HBox>
-            <HBox fx:id="toolbar" alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="16.0" styleClass="toolbar" stylesheets="@../../../../../Styles/catalog.css">
+            <HBox fx:id="toolbar" alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="16.0" styleClass="toolbar" stylesheets="@../../../../../Styles/CatalogView.css">
                <padding>
                   <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
                </padding>
                <children>
-                  <TextField fx:id="searchField" prefHeight="36.0" prefWidth="300.0" promptText="Search flower, e.g. rose, orchid..." styleClass="pill-input" stylesheets="@../../../../../Styles/catalog.css">
+                  <TextField fx:id="searchField" prefHeight="36.0" prefWidth="300.0" promptText="Search flower, e.g. rose, orchid..." styleClass="pill-input" stylesheets="@../../../../../Styles/CatalogView.css">
                      <font>
                         <Font size="16.0" />
                      </font>
                   </TextField>
-                  <ComboBox fx:id="categoryCombo" prefHeight="36.0" prefWidth="200.0" styleClass="pill-input" stylesheets="@../../../../../Styles/catalog.css">
+                  <ComboBox fx:id="categoryCombo" prefHeight="36.0" prefWidth="200.0" styleClass="pill-input" stylesheets="@../../../../../Styles/CatalogView.css">
                      <cursor>
                         <Cursor fx:constant="HAND" />
                      </cursor></ComboBox>
-                  <ComboBox fx:id="promoModeCombo" prefHeight="36.0" prefWidth="220.0" styleClass="pill-input" stylesheets="@../../../../../Styles/catalog.css">
+                  <ComboBox fx:id="promoModeCombo" prefHeight="36.0" prefWidth="220.0" styleClass="pill-input" stylesheets="@../../../../../Styles/CatalogView.css">
                      <cursor>
                         <Cursor fx:constant="HAND" />
                      </cursor></ComboBox>
                   <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
-                  <Label prefHeight="25.0" prefWidth="156.0" styleClass="hint" stylesheets="@../../../../../Styles/catalog.css" text="Double-click an item for details">
+                  <Label prefHeight="25.0" prefWidth="156.0" styleClass="hint" stylesheets="@../../../../../Styles/CatalogView.css" text="Double-click an item for details">
                      <font>
                         <Font size="16.0" />
                      </font>
                   </Label>
                </children>
             </HBox>
-            <VBox fx:id="promotionsBox" prefHeight="269.0" prefWidth="1200.0" spacing="10.0" styleClass="promotions-box" stylesheets="@../../../../../Styles/catalog.css">
+            <VBox fx:id="promotionsBox" prefHeight="269.0" prefWidth="1200.0" spacing="10.0" styleClass="promotions-box" stylesheets="@../../../../../Styles/CatalogView.css">
                <padding>
                   <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
                </padding>
@@ -95,7 +95,7 @@
                   </Label>
                   <ScrollPane fx:id="promotionsScroll" fitToHeight="true" prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: white;" vbarPolicy="NEVER">
                      <content>
-                        <HBox fx:id="promotionsStrip" alignment="CENTER_LEFT" prefHeight="160.0" prefWidth="1175.0" spacing="12.0" styleClass="promo-row" stylesheets="@../../../../../Styles/catalog.css" />
+                        <HBox fx:id="promotionsStrip" alignment="CENTER_LEFT" prefHeight="160.0" prefWidth="1175.0" spacing="12.0" styleClass="promo-row" stylesheets="@../../../../../Styles/CatalogView.css" />
                      </content>
                   </ScrollPane>
                </children></VBox>
@@ -107,7 +107,7 @@
         <content>
           <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="448.0" prefWidth="1198.0">
                <children>
-                  <TilePane fx:id="itemsGrid" hgap="16.0" layoutX="475.0" prefHeight="448.0" prefWidth="1198.0" styleClass="catalog-grid" stylesheets="@../../../../../Styles/catalog.css" tileAlignment="CENTER_LEFT" vgap="16.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                  <TilePane fx:id="itemsGrid" hgap="16.0" layoutX="475.0" prefHeight="448.0" prefWidth="1198.0" styleClass="catalog-grid" stylesheets="@../../../../../Styles/CatalogView.css" tileAlignment="CENTER_LEFT" vgap="16.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                      <padding>
                         <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
                      </padding>

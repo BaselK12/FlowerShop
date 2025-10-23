@@ -1,0 +1,131 @@
+/* =========================================================
+   Catalog Item Card — Elegant & Romantic Unified Theme
+   IntelliJ-safe, gradient-safe version
+   ========================================================= */
+
+.root, .card {
+    -blush:       #E8A7B3;   /* primary pink accent */
+    -mauve:       #D8A7B1;   /* soft mauve tone */
+    -ivory:       #FFF9F9;   /* base background */
+    -beige:       #F5E2D3;   /* warm neutral */
+    -rosewood:    #5A4E4E;   /* dark ink */
+    -headerText:  #FFF9F9;   /* bright on dark */
+    -ink:         #3A2D2D;   /* main text */
+
+    -fx-background-color: linear-gradient(#FFF9F9, #F5E2D3);
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-text-fill: -ink;
+}
+
+/* ---------------- Card Container ---------------- */
+.card {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 14;
+    -fx-background-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 4, 0, 0, 2);
+}
+
+.card.hovered {
+    -fx-border-color: -blush;
+    -fx-effect: dropshadow(gaussian, rgba(232,167,179,0.35), 8, 0, 0, 3);
+}
+
+/* ---------------- Image Stack ---------------- */
+#imageStack {
+    -fx-background-radius: 14 14 0 0;
+    -fx-border-radius: 14 14 0 0;
+}
+
+/* ---------------- Promo Ribbon ---------------- */
+.promo-ribbon {
+    /* JavaFX gradient format: linear-gradient(color1, color2) */
+    -fx-background-color: linear-gradient(#E8A7B3, #D8A7B1);
+    -fx-text-fill: -headerText;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-padding: 3 8;
+    -fx-background-radius: 6;
+}
+
+/* ---------------- Content Box ---------------- */
+.card-content {
+    -fx-background-color: -ivory;
+    -fx-padding: 10;
+    -fx-spacing: 6;
+    -fx-border-radius: 0 0 14 14;
+    -fx-background-radius: 0 0 14 14;
+}
+
+/* ---------------- Category Chip ---------------- */
+.category-chip {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 999;
+    -fx-background-radius: 999;
+    -fx-text-fill: -rosewood;
+    -fx-font-size: 11px;
+    -fx-padding: 2 8;
+}
+
+/* ---------------- Text Styles ---------------- */
+.item-title {
+    -fx-text-fill: -rosewood;
+    -fx-font-weight: bold;
+    -fx-font-size: 15px;
+}
+
+.item-short {
+    -fx-text-fill: #6A5A5A;
+    -fx-font-size: 12px;
+}
+
+.item-price {
+    -fx-text-fill: -blush;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+
+/* ---------------- Buttons ---------------- */
+.button {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-padding: 6 16;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 4, 0, 0, 1);
+}
+
+/* Primary Button */
+.btn-primary {
+    -fx-background-color: -blush;
+    -fx-text-fill: -headerText;
+}
+
+.btn-primary.hovered {
+    -fx-background-color: -mauve;
+}
+
+/* Outline Button */
+.btn-outline {
+    -fx-background-color: transparent;
+    -fx-border-color: -mauve;
+    -fx-text-fill: -ink;
+}
+
+.btn-outline.hovered {
+    -fx-background-color: rgba(216,167,177,0.15);
+}
+
+/* ---------------- Actions Row ---------------- */
+.actions {
+    -fx-spacing: 10;
+    -fx-padding: 8 0 0 0;
+    -fx-alignment: center-left;
+}
+
+/* ---------------- Hover Glow ---------------- */
+.button.hovered {
+    -fx-effect: dropshadow(gaussian, rgba(232,167,179,0.25), 4, 0, 0, 1);
+}
