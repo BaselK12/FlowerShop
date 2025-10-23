@@ -12,9 +12,9 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1280.0" style="-fx-background-color: #f5f6fa;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.Account.MyAccountController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1280.0" stylesheets="@../../../../../Styles/MyAccount.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.Account.MyAccountController">
    <left>
-      <VBox fx:id="sideBar" minHeight="260.0" minWidth="220.0" prefHeight="200.0" prefWidth="240.0" spacing="12.0" style="-fx-background-color: #2c3e50;" BorderPane.alignment="CENTER_LEFT">
+      <VBox fx:id="sideBar" minHeight="260.0" minWidth="220.0" prefHeight="200.0" prefWidth="240.0" spacing="12.0" BorderPane.alignment="CENTER_LEFT">
          <padding>
             <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
          </padding>
@@ -24,7 +24,7 @@
                   <Font size="20.0" />
                </font>
             </Label>
-            <ToggleButton fx:id="ProfileBtn" maxHeight="40.0" maxWidth="1.7976931348623157E308" minHeight="36.0" mnemonicParsing="false" prefHeight="36.0" selected="true" style="-fx-background-radius: 8;" text="Profile">
+            <ToggleButton fx:id="ProfileBtn" maxHeight="40.0" maxWidth="1.7976931348623157E308" minHeight="36.0" mnemonicParsing="false" prefHeight="36.0" selected="true" text="Profile">
                <font>
                   <Font size="14.0" />
                </font>
@@ -38,7 +38,7 @@
                   <Cursor fx:constant="HAND" />
                </cursor>
             </ToggleButton>
-            <ToggleButton fx:id="CouponsBtn" maxHeight="40.0" maxWidth="1.7976931348623157E308" minHeight="36.0" mnemonicParsing="false" prefHeight="36.0" style="-fx-background-radius: 8;" text="Coupons" toggleGroup="$navGroup">
+            <ToggleButton fx:id="CouponsBtn" maxHeight="40.0" maxWidth="1.7976931348623157E308" minHeight="36.0" mnemonicParsing="false" prefHeight="36.0" text="Coupons" toggleGroup="$navGroup">
                <font>
                   <Font size="14.0" />
                </font>
@@ -49,7 +49,7 @@
                   <Cursor fx:constant="HAND" />
                </cursor>
             </ToggleButton>
-            <ToggleButton fx:id="OrdersBtn" maxHeight="40.0" maxWidth="1.7976931348623157E308" minHeight="36.0" mnemonicParsing="false" prefHeight="36.0" style="-fx-background-radius: 8;" text="Past Orders" toggleGroup="$navGroup">
+            <ToggleButton fx:id="OrdersBtn" maxHeight="40.0" maxWidth="1.7976931348623157E308" minHeight="36.0" mnemonicParsing="false" prefHeight="36.0" text="Past Orders" toggleGroup="$navGroup">
                <font>
                   <Font size="14.0" />
                </font>
@@ -60,7 +60,7 @@
                   <Cursor fx:constant="HAND" />
                </cursor>
             </ToggleButton>
-            <ToggleButton fx:id="PaymentsBtn" maxHeight="40.0" maxWidth="1.7976931348623157E308" minHeight="36.0" mnemonicParsing="false" prefHeight="36.0" style="-fx-background-radius: 8;" text="Payment Methods" toggleGroup="$navGroup">
+            <ToggleButton fx:id="PaymentsBtn" maxHeight="40.0" maxWidth="1.7976931348623157E308" minHeight="36.0" mnemonicParsing="false" prefHeight="36.0" text="Payment Methods" toggleGroup="$navGroup">
                <font>
                   <Font size="14.0" />
                </font>
