@@ -16,6 +16,8 @@ import il.cshaifasweng.OCSFMediatorExample.server.handlers.complaints.GetComplai
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.complaints.SubmitComplaintHandler;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.complaints.UpdateComplaintHandler;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.employee.*;
+import il.cshaifasweng.OCSFMediatorExample.server.handlers.reports.GetReportHandler;
+import il.cshaifasweng.OCSFMediatorExample.server.handlers.reports.GetStoresHandler;
 import il.cshaifasweng.OCSFMediatorExample.server.session.TX;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.cart.CartHandler;
 // optional smoke (delete after sanity check)
@@ -45,6 +47,9 @@ public class App {
         new GetComplaintsHandler(bus);
         new SubmitComplaintHandler(bus);
         new UpdateComplaintHandler(bus);
+        new GetStoresHandler(bus);
+        new GetReportHandler(bus);
+
 
 
 
