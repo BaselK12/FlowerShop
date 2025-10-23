@@ -1,0 +1,101 @@
+/* =========================================================
+   Admin Login — Elegant & Romantic Unified Theme
+   IntelliJ-Safe (no pseudo-classes)
+   ========================================================= */
+
+/* 1) Root + palette */
+.root {
+    -blush:       #E8A7B3;   /* primary pink */
+    -mauve:       #D8A7B1;   /* secondary */
+    -ivory:       #FFF9F9;   /* base background */
+    -beige:       #F5E2D3;   /* warm tone */
+    -rosewood:    #5A4E4E;   /* deep accent */
+    -headerText:  #FFF9F9;   /* light text on dark */
+    -ink:         #3A2D2D;   /* main text color */
+
+    -fx-background-color: linear-gradient(#FFF9F9, #F5E2D3);
+    -fx-text-fill: -ink;
+    -fx-font-family: "Segoe UI", sans-serif;
+}
+
+/* 2) Labels */
+.label {
+    -fx-text-fill: -ink;
+    -fx-font-size: 13px;
+}
+
+/* Error label */
+#ErrorLabel {
+    -fx-text-fill: #B33A3A;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+/* 3) Text fields and password fields */
+.text-field, .password-field {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 6 10;
+    -fx-font-size: 13px;
+    -fx-text-fill: -ink;
+    -fx-prompt-text-fill: #9E8C8C;
+}
+
+/* Optional hover-safe class (no pseudo-class) */
+.text-field.hovered, .password-field.hovered {
+    -fx-border-color: -blush;
+    -fx-background-color: white;
+    -fx-effect: dropshadow(gaussian, rgba(232,167,179,0.30), 4, 0, 0, 1);
+}
+
+/* 4) Buttons */
+.button {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-padding: 6 18;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 4, 0, 0, 1);
+}
+
+/* Back button (soft mauve) */
+#BackBtn {
+    -fx-background-color: -mauve;
+    -fx-text-fill: -headerText;
+}
+#BackBtn.hovered {
+    -fx-background-color: -blush;
+}
+
+/* Login button (primary blush) */
+#LoginBtn {
+    -fx-background-color: -blush;
+    -fx-text-fill: -headerText;
+}
+#LoginBtn.hovered {
+    -fx-background-color: -mauve;
+}
+
+/* Register button (neutral outline) */
+#RegisterBtn {
+    -fx-background-color: transparent;
+    -fx-border-color: -mauve;
+    -fx-text-fill: -ink;
+}
+#RegisterBtn.hovered {
+    -fx-background-color: rgba(216,167,177,0.15);
+}
+
+/* 5) Layout */
+.anchor-pane {
+    -fx-padding: 20;
+    -fx-background-color: transparent;
+}
+
+/* 6) Optional shared hover glow class for all buttons */
+.button.hovered {
+    -fx-effect: dropshadow(gaussian, rgba(232,167,179,0.25), 4, 0, 0, 1);
+}
