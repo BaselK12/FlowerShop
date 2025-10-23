@@ -1,0 +1,121 @@
+/* =========================================================
+   Item Details Dialog — Elegant & Romantic Theme
+   IntelliJ-safe (no pseudo-classes or invalid gradients)
+   ========================================================= */
+
+/* ---------- Root Palette ---------- */
+.root, .details-dialog {
+    -blush:       #E8A7B3;
+    -mauve:       #D8A7B1;
+    -ivory:       #FFF9F9;
+    -beige:       #F5E2D3;
+    -rosewood:    #5A4E4E;
+    -headerText:  #FFF9F9;
+    -ink:         #3A2D2D;
+
+    -fx-background-color: linear-gradient(#FFF9F9, #F5E2D3);
+    -fx-text-fill: -ink;
+    -fx-font-family: "Segoe UI", sans-serif;
+}
+
+/* ---------- Dialog Container ---------- */
+.details-dialog {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.20), 10, 0, 0, 4);
+}
+
+/* ---------- Header ---------- */
+.dialog-header {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 10;
+    -fx-spacing: 10;
+}
+
+/* ---------- Title Text ---------- */
+.item-title {
+    -fx-text-fill: -rosewood;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+}
+
+/* ---------- Close Button ---------- */
+.btn-plain {
+    -fx-background-color: transparent;
+    -fx-text-fill: -blush;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+/* ---------- Body ---------- */
+.dialog-body {
+    -fx-background-color: -ivory;
+    -fx-padding: 12;
+    -fx-spacing: 10;
+}
+
+.item-short {
+    -fx-text-fill: #6A5A5A;
+    -fx-font-size: 13px;
+}
+
+.item-price {
+    -fx-text-fill: -blush;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+
+/* ---------- Category Chip ---------- */
+.category-chip {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 999;
+    -fx-background-radius: 999;
+    -fx-text-fill: -rosewood;
+    -fx-font-size: 11px;
+    -fx-padding: 2 8;
+}
+
+/* ---------- Footer ---------- */
+.dialog-footer {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-width: 1 0 0 0;
+    -fx-padding: 10;
+    -fx-spacing: 12;
+    -fx-alignment: center-right;
+}
+
+/* ---------- Buttons ---------- */
+.button {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-padding: 6 16;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 4, 0, 0, 1);
+}
+
+/* Primary: Add to Cart */
+.btn-primary {
+    -fx-background-color: -blush;
+    -fx-text-fill: -headerText;
+}
+
+/* Outline: Close */
+.btn-outline {
+    -fx-background-color: transparent;
+    -fx-border-color: -mauve;
+    -fx-text-fill: -ink;
+}
+
+/* Optional hovered look (can be toggled programmatically) */
+.button.hovered {
+    -fx-effect: dropshadow(gaussian, rgba(232,167,179,0.25), 4, 0, 0, 1);
+}
