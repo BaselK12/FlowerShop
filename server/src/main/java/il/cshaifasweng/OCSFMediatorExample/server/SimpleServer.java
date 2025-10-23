@@ -50,6 +50,11 @@ import il.cshaifasweng.OCSFMediatorExample.entities.messages.Complaint.SubmitCom
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.SubmitComplaintRequestEvent;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Complaint.UpdateComplaintRequest;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.UpdateComplaintRequestedEvent;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Reports.GetStoresRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Reports.GetReportRequest;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Reports.GetStoresRequestedEvent;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Reports.GetReportRequestedEvent;
+
 
 
 
@@ -99,6 +104,10 @@ public class SimpleServer extends ObservableServer {
 					default -> bus.publish(new SendToClientEvent(
 							new ErrorResponse("Unknown command: " + s), client));
 				}
+			} else if (msg instanceof GetStoresRequest rr) {
+				bus.publish(new GetStoresRequestedEvent(rr, client));
+			} else if (msg instanceof GetReportRequest rr) {
+				bus.publish(new GetReportRequestedEvent(rr, client));
 			} else if (msg instanceof UpdateComplaintRequest rr) {
 				bus.publish(new UpdateComplaintRequestedEvent(rr, client));
 			} else if (msg instanceof SubmitComplaintRequest req) {

@@ -30,6 +30,7 @@ public class App extends Application {
         client = new SimpleClient(serverIP, 3050);
         client.openConnection();
         SimpleClient.setClient(client);
+        GlobalErrors.install();
 
 
         // boot the first view
@@ -40,7 +41,7 @@ public class App extends Application {
 
 
         // load the create bouquet-+
-        scene = new Scene(loadFXML("/il/cshaifasweng/OCSFMediatorExample/client/CustomerLoginPage.fxml"));
+        scene = new Scene(loadFXML("/il/cshaifasweng/OCSFMediatorExample/client/ManageReports.fxml"));
         stage.setScene(scene);
         stage.setTitle("FlowerShop");
         stage.show();

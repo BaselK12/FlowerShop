@@ -1,7 +1,6 @@
 package il.cshaifasweng.OCSFMediatorExample.server.handlers;
 
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.Order;
-import il.cshaifasweng.OCSFMediatorExample.entities.domain.Status;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.CheckOut.ConfirmRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.CheckOut.ConfirmResponse;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.CheckOut.OrderDTO;
@@ -23,13 +22,11 @@ public class ConfirmRequestHandler {
             OrderDTO dto = req.getOrder();
 
             try {
-                // Prefer session, fallback to DTO
                 Long sessionCustomerId = SessionRegistry.get(evt.client());
                 Long effectiveCustomerId = (sessionCustomerId != null)
                         ? sessionCustomerId
                         : (dto != null ? dto.getCustomerId() : null);
 
-                // Persist the order
                 Order saved = TX.call(session -> {
                     Order order = OrderMapper.fromDTO(dto);
 
@@ -40,19 +37,17 @@ public class ConfirmRequestHandler {
                         order.setCreatedAt(LocalDateTime.now());
                     }
                     if (order.getStatus() == null) {
-                        order.setStatus(Status.PENDING);
+                        order.setStatus(Order.Status.INITIATED); // use the inner enum
                     }
 
                     session.persist(order);
                     return order;
                 });
 
-                // Mirror to in-memory repo so Past Orders can show immediately
                 if (saved.getCustomerId() != null) {
                     OrdersRepository.add(saved);
                 }
 
-                // Reply to client
                 ConfirmResponse res = new ConfirmResponse(
                         saved.getId(),
                         "Order confirmed successfully",
@@ -64,7 +59,7 @@ public class ConfirmRequestHandler {
                         + " (customerId=" + saved.getCustomerId() + ")");
 
             } catch (Exception ex) {
-                // spare me the sermon about logging frameworks, here’s a readable line
+                ex.printStackTrace();
                 System.err.println("[SERVER] Failed to confirm order: " + ex.getMessage());
 
                 ConfirmResponse res = new ConfirmResponse(
