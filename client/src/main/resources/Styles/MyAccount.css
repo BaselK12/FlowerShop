@@ -1,0 +1,121 @@
+/* =========================================================
+   My Account — Elegant & Romantic Theme (IntelliJ-Safe)
+   No pseudo-classes (uses manual style classes instead)
+   ========================================================= */
+
+/* 1) Root + palette */
+.root {
+    -blush:       #E8A7B3;
+    -mauve:       #D8A7B1;
+    -ivory:       #FFF9F9;
+    -beige:       #F5E2D3;
+    -rosewood:    #5A4E4E;
+    -headerText:  #FFF9F9;
+    -ink:         #3A2D2D;
+
+    -fx-background-color: linear-gradient(#FFF9F9, #F5E2D3);
+    -fx-text-fill: -ink;
+    -fx-font-family: "Segoe UI", sans-serif;
+}
+
+/* 2) Sidebar (VBox) */
+#sideBar {
+    -fx-background-color: -rosewood;
+    -fx-padding: 20;
+    -fx-spacing: 12;
+    -fx-background-radius: 0 16 16 0;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 6, 0, 0, 2);
+}
+
+/* 3) Sidebar Header Label */
+#sideBar > .label {
+    -fx-text-fill: -headerText;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+}
+
+/* 4) Navigation Toggle Buttons */
+.toggle-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: -headerText;
+    -fx-font-size: 14px;
+    -fx-background-radius: 8;
+    -fx-padding: 8 14;
+    -fx-alignment: CENTER_LEFT;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-effect: none;
+}
+
+/* Optional hover state — use via .hovered class */
+.toggle-button.hovered {
+    -fx-background-color: rgba(255,255,255,0.15);
+}
+
+/* Active navigation button — use via .active class */
+.toggle-button.active {
+    -fx-background-color: -blush;
+    -fx-text-fill: -headerText;
+    -fx-effect: dropshadow(gaussian, rgba(232,167,179,0.4), 4, 0, 0, 1);
+}
+
+/* 5) Logout and Close Buttons */
+#LogOutBtn, #CloseBtn {
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 6 18;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 3, 0, 0, 1);
+}
+
+/* Logout — warning style */
+#LogOutBtn {
+    -fx-background-color: #FCEAEA;
+    -fx-text-fill: #B33A3A;
+}
+#LogOutBtn.hovered {
+    -fx-background-color: #E8A7B3;
+    -fx-text-fill: -headerText;
+}
+
+/* Close Button — soft mauve */
+#CloseBtn {
+    -fx-background-color: -mauve;
+    -fx-text-fill: -headerText;
+}
+#CloseBtn.hovered {
+    -fx-background-color: -blush;
+}
+
+/* 6) Content Area (StackPane) */
+#ContentStack {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 8, 0, 0, 2);
+}
+
+/* 7) General Label Styling */
+.label {
+    -fx-text-fill: -ink;
+    -fx-font-size: 13px;
+}
+
+/* 8) Buttons and text defaults */
+.button {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+}
+
+/* 9) Optional hover class for all buttons */
+.button.hovered {
+    -fx-effect: dropshadow(gaussian, rgba(232,167,179,0.30), 4, 0, 0, 1);
+}

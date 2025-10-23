@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox fx:id="ordersRoot" maxHeight="-Infinity" maxWidth="1000.0" minHeight="-Infinity" minWidth="-Infinity" prefHeight="456.0" prefWidth="920.0" spacing="12.0" style="-fx-background-color: transparent;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.Account.PastOrdersViewController">
+<VBox fx:id="ordersRoot" maxHeight="-Infinity" maxWidth="1000.0" minHeight="-Infinity" minWidth="-Infinity" prefHeight="456.0" prefWidth="920.0" spacing="12.0" stylesheets="@../../../../../Styles/PastOrdersView.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.Account.PastOrdersViewController">
    <padding>
       <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
    </padding>
@@ -38,7 +38,7 @@
                </padding>
             </Label>
             <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
-            <Button fx:id="btnRefreshOrders" minHeight="32.0" mnemonicParsing="false" style="-fx-background-color: #9b59b6; -fx-background-radius: 8;" text="Refresh" textFill="WHITE" />
+            <Button fx:id="btnRefreshOrders" minHeight="32.0" mnemonicParsing="false" text="Refresh" textFill="WHITE" />
          </children>
       </HBox>
       <HBox fx:id="ordersFilters" alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="10.0">
@@ -47,8 +47,8 @@
             <DatePicker fx:id="fromDatePicker" promptText="From date" />
             <DatePicker fx:id="toDatePicker" promptText="To date" />
             <ComboBox fx:id="statusFilter" prefWidth="160.0" promptText="Status" />
-            <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
-            <Button fx:id="btnApplyFilters" minHeight="32.0" minWidth="60.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="65.0" style="-fx-background-color: #3498db; -fx-background-radius: 8;" text="Apply" textFill="WHITE" />
+            <Region prefHeight="71.0" prefWidth="76.0" HBox.hgrow="ALWAYS" />
+            <Button fx:id="btnApplyFilters" minHeight="32.0" minWidth="90.0" mnemonicParsing="false" prefHeight="32.0" prefWidth="100.0" text="Apply" textFill="WHITE" />
          </children>
       </HBox>
       <StackPane fx:id="ordersTableStack" prefHeight="150.0" prefWidth="200.0">
@@ -82,7 +82,7 @@
       </StackPane>
       <HBox fx:id="ordersActions" alignment="CENTER_RIGHT" prefHeight="100.0" prefWidth="200.0" spacing="10.0">
          <children>
-            <Button fx:id="btnOrderDetails" minHeight="32.0" mnemonicParsing="false" prefHeight="36.0" style="-fx-background-color: #3498db; -fx-background-radius: 8;" text="View Details" textFill="WHITE" />
+            <Button fx:id="btnOrderDetails" minHeight="32.0" mnemonicParsing="false" prefHeight="36.0" text="View Details" textFill="WHITE" />
          </children>
       </HBox>
    </children>

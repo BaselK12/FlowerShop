@@ -11,7 +11,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox fx:id="paymentsRoot" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="555.0" prefWidth="920.0" spacing="12.0" style="-fx-background-color: transparent;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.Account.PaymentsViewController">
+<VBox fx:id="paymentsRoot" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="555.0" prefWidth="920.0" spacing="12.0" stylesheets="@../../../../../Styles/PaymentView.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.Account.PaymentsViewController">
    <padding>
       <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
    </padding>
@@ -32,18 +32,18 @@
                </HBox.margin>
             </Label>
             <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
-            <Button fx:id="btnRefreshPayments" minHeight="32.0" mnemonicParsing="false" style="-fx-background-color: #9b59b6; -fx-background-radius: 8;" text="Refresh" textFill="WHITE" />
+            <Button fx:id="btnRefreshPayments" minHeight="32.0" mnemonicParsing="false" text="Refresh" textFill="WHITE" />
          </children>
       </HBox>
       <StackPane fx:id="paymentsTableStack" prefHeight="300.0" prefWidth="200.0">
          <children>
             <TableView fx:id="paymentsTable" prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: white; -fx-background-radius: 8; -fx-padding: 6;">
                <columns>
-                  <TableColumn fx:id="colCardType"   minWidth="60.0" prefWidth="70.0" text="Type"/>
-                  <TableColumn fx:id="colCardNumber"                 prefWidth="120.0" text="Card Number"/>
-                  <TableColumn fx:id="colExpiryDate"                 prefWidth="75.0"  text="Expiry"/>
-                  <TableColumn fx:id="colAmount"                     prefWidth="80.0"  text="Amount"/>
-                  <TableColumn fx:id="colStatus"                     prefWidth="90.0"  text="Status"/>
+                  <TableColumn fx:id="colCardType" minWidth="60.0" prefWidth="70.0" text="Type" />
+                  <TableColumn fx:id="colCardNumber" prefWidth="120.0" text="Card Number" />
+                  <TableColumn fx:id="colExpiryDate" prefWidth="75.0" text="Expiry" />
+                  <TableColumn fx:id="colAmount" prefWidth="80.0" text="Amount" />
+                  <TableColumn fx:id="colStatus" prefWidth="90.0" text="Status" />
                </columns>
 
                <columnResizePolicy>
@@ -57,7 +57,7 @@
                         <Font size="16.0" />
                      </font>
                   </Label>
-                  <Button fx:id="btnEmptyAddPayment" mnemonicParsing="false" style="-fx-background-color: #3498db; -fx-background-radius: 8;" text="Add Payment Method" textFill="WHITE">
+                  <Button fx:id="btnEmptyAddPayment" mnemonicParsing="false" text="Add Payment Method" textFill="WHITE">
                      <font>
                         <Font size="16.0" />
                      </font>
@@ -68,8 +68,8 @@
       </StackPane>
       <HBox fx:id="paymentsActions" alignment="CENTER_RIGHT" prefHeight="100.0" prefWidth="200.0" spacing="10.0">
          <children>
-            <Button fx:id="btnRemovePayment" mnemonicParsing="false" style="-fx-background-color: red; -fx-background-radius: 8;" text="Remove" textFill="WHITE" />
-            <Button fx:id="btnAddPayment" mnemonicParsing="false" style="-fx-background-color: green; -fx-background-radius: 8;" text="Add" textFill="WHITE" />
+            <Button fx:id="btnRemovePayment" mnemonicParsing="false" text="Remove" textFill="WHITE" />
+            <Button fx:id="btnAddPayment" mnemonicParsing="false" text="Add" textFill="WHITE" />
          </children>
       </HBox>
    </children>
