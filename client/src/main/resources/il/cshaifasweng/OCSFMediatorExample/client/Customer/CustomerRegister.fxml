@@ -15,7 +15,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="424.0" stylesheets="@../../../../Styles/customer-register.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.Customer.CustomerRegisterController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="424.0" stylesheets="@../../../../../Styles/customer-register.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.Customer.CustomerRegisterController">
    <VBox alignment="CENTER_LEFT" layoutX="4.0" layoutY="28.0" prefHeight="350.0" prefWidth="416.0" spacing="12.0">
       <children>
           <Label fx:id="ErrorLabel" prefHeight="17.0" prefWidth="260.0" wrapText="true" />

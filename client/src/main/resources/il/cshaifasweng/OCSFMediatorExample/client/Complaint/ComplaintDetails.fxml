@@ -15,7 +15,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane fx:id="rootPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="520.0" minWidth="800.0" prefHeight="600.0" prefWidth="960.0" styleClass="root-app" stylesheets="@../../../../Styles/ComplaintsDetails.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.Complaint.ComplaintDetailsController">
+<BorderPane fx:id="rootPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="520.0" minWidth="800.0" prefHeight="600.0" prefWidth="960.0" styleClass="root-app" stylesheets="@../../../../../Styles/ComplaintsDetails.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.Complaint.ComplaintDetailsController">
     <left>
         <VBox fx:id="leftPane" maxWidth="360.0" minWidth="280.0" prefHeight="200.0" prefWidth="320.0" spacing="10.0" styleClass="left-panel" BorderPane.alignment="CENTER">
             <padding>
