@@ -340,7 +340,7 @@ public class ManageComplaintsController {
     private void openComplaintDetails(Complaint complaint) {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/il/cshaifasweng/OCSFMediatorExample/client/ComplaintDetails.fxml")
+                    getClass().getResource("/il/cshaifasweng/OCSFMediatorExample/client/Complaint/ComplaintDetails.fxml")
             );
             Parent root = loader.load();
 

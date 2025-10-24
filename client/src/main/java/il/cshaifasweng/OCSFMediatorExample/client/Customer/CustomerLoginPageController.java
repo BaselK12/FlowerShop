@@ -64,7 +64,7 @@ public class CustomerLoginPageController {
     @FXML
     public void RegisterBtnOnAction(ActionEvent e) {
         onClose();
-        Nav.go(RegisterBtn, "/il/cshaifasweng/OCSFMediatorExample/client/CustomerRegister.fxml");
+        Nav.go(RegisterBtn, "/il/cshaifasweng/OCSFMediatorExample/client/Customer/CustomerRegister.fxml");
     }
 
     @FXML
@@ -107,14 +107,14 @@ public class CustomerLoginPageController {
                     }
 
                     // Optional guard to catch missing FXML during development
-                    URL url = getClass().getResource("/il/cshaifasweng/OCSFMediatorExample/client/ManageComplaints.fxml");
+                    URL url = getClass().getResource("/il/cshaifasweng/OCSFMediatorExample/client/Complaint/ManageComplaints.fxml");
                     if (url == null) {
                         ErrorLabel.setText("FilingComplaint.fxml not found on classpath");
                         return;
                     }
 
                     onClose(); // unregister before navigation
-                    Nav.go(LoginBtn, "/il/cshaifasweng/OCSFMediatorExample/client/ManageComplaints.fxml");
+                    Nav.go(LoginBtn, "/il/cshaifasweng/OCSFMediatorExample/client/Complaint/ManageComplaints.fxml");
                 } else {
                     ErrorLabel.setText(r.getReason() != null ? r.getReason() : "Login failed");
                 }

@@ -92,7 +92,7 @@ public class MyAccountController {
         try { SimpleClient.getClient().closeConnection(); } catch (Exception ignored) {}
         ClientSession.clear();
         Session.clear();
-        Nav.go(ContentStack, "/il/cshaifasweng/OCSFMediatorExample/client/CustomerLoginPage.fxml");
+        Nav.go(ContentStack, "/il/cshaifasweng/OCSFMediatorExample/client/Customer/CustomerLoginPage.fxml");
     }
 
     private void handleClose() {
