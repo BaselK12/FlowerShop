@@ -41,7 +41,7 @@ public class App extends Application {
 
 
         // load the create bouquet-+
-        scene = new Scene(loadFXML("/il/cshaifasweng/OCSFMediatorExample/client/ManageReports.fxml"));
+        scene = new Scene(loadFXML("/il/cshaifasweng/OCSFMediatorExample/client/Customer/CustomerLoginPage.fxml"));
         stage.setScene(scene);
         stage.setTitle("FlowerShop");
         stage.show();

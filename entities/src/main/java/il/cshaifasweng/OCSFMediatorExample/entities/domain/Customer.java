@@ -35,6 +35,17 @@ public class Customer {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "store_id")
+    private Stores store;
+
+    @Column(name = "is_premium", nullable = false)
+    private boolean premium = false;
+
+    @Column(name = "premium_since")
+    private Instant premiumSince;
+
+
     /* ---------- lifecycle hooks ---------- */
 
     @PrePersist
@@ -77,4 +88,17 @@ public class Customer {
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public Stores getStore() { return store; }
+    public void setStore(Stores store) { this.store = store; }
+
+    public boolean isPremium() { return premium; }
+    public void setPremium(boolean premium) { this.premium = premium; }
+
+    public Instant getPremiumSince() { return premiumSince; }
+    public void setPremiumSince(Instant premiumSince) { this.premiumSince = premiumSince; }
+
+
+
+
 }

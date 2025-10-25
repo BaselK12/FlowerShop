@@ -10,12 +10,18 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
+
+import java.util.Map;
 
 public class CustomerRegisterController {
 
@@ -23,6 +29,18 @@ public class CustomerRegisterController {
     private static volatile String returnToFxml =
             "/il/cshaifasweng/OCSFMediatorExample/client/Customer/CustomerLoginPage.fxml";
     public static void setReturnTo(String fxml) { returnToFxml = fxml; }
+
+    @FXML private ComboBox<String> accountTypeCombo;
+    @FXML private Label accountDescriptionLabel;
+
+    @FXML private HBox storeContainerHbox; // stays hidden; we're mapping directly by choice
+    @FXML private ComboBox<String> storeCombo; // unused now; leave it alone
+
+    @FXML private VBox PremiumContainer;
+    @FXML private Label PremiumNoteLabel;
+    @FXML private CheckBox PremiumAgreementCheck;
+    @FXML private CheckBox PremiumOptInCheck;
+
 
     @FXML private Button BackBtn;
     @FXML private PasswordField ConfirmTxt;
@@ -37,6 +55,18 @@ public class CustomerRegisterController {
 
     // NEW: busy flag to combine with validation
     private final BooleanProperty busy = new SimpleBooleanProperty(false);
+    private static final String CH_HAIFA      = "Flowershop Haifa Branch";
+    private static final String CH_TEL_AVIV   = "Flowershop Tel Aviv Branch";
+    private static final String CH_JERUSALEM  = "Flowershop Jerusalem Branch";
+    private static final String CH_BEERSHEBA  = "Flowershop Beersheba Branch";
+    private static final String CH_GLOBAL     = "Global Account";
+
+    private static final Map<String, Long> STORE_IDS = Map.of(
+            CH_HAIFA,     1L,
+            CH_TEL_AVIV,  2L,
+            CH_JERUSALEM, 3L,
+            CH_BEERSHEBA, 4L
+    );
 
     @FXML
     private void initialize() {
@@ -47,43 +77,70 @@ public class CustomerRegisterController {
             System.out.println("[RegisterUI] EventBus registered");
         }
 
-        // Validation binding
+        // Populate account types
+        accountTypeCombo.getItems().setAll(
+                CH_HAIFA, CH_TEL_AVIV, CH_JERUSALEM, CH_BEERSHEBA, CH_GLOBAL
+        );
+
+        accountTypeCombo.getSelectionModel().selectedItemProperty().addListener((obs, oldV, sel) -> {
+            if (sel == null) {
+                accountDescriptionLabel.setText("");
+                storeContainerHbox.setVisible(false);
+                return;
+            }
+            switch (sel) {
+                case CH_GLOBAL -> {
+                    accountDescriptionLabel.setText("Global Account: valid in all branches. No store binding.");
+                    storeContainerHbox.setVisible(false);
+                }
+                case CH_HAIFA, CH_TEL_AVIV, CH_JERUSALEM, CH_BEERSHEBA -> {
+                    accountDescriptionLabel.setText("Branch account: tied to selected branch for local perks and support.");
+                    storeContainerHbox.setVisible(false); // we map by choice; no second selection needed
+                }
+                default -> {
+                    accountDescriptionLabel.setText("");
+                    storeContainerHbox.setVisible(false);
+                }
+            }
+        });
+
+        // Premium UI
+        PremiumNoteLabel.setText("Premium accounts get 10% discount on all orders above 50 shekels");
+        PremiumContainer.setVisible(false);
+
+        PremiumOptInCheck.selectedProperty().addListener((obs, was, isNow) -> {
+            PremiumContainer.setVisible(isNow);
+            if (!isNow) {
+                PremiumAgreementCheck.setSelected(false);
+            }
+        });
+
+        // Basic validation binding that you already had, plus our new checks
         BooleanBinding invalidForm =
                 Bindings.createBooleanBinding(
                                 () -> !isValidEmail(EmailTxt.getText().trim()),
                                 EmailTxt.textProperty()
                         )
                         .or(NameTxt.textProperty().isEmpty())
-                        .or(PassTxt.textProperty().length().lessThan(6))
+                        .or(PassTxt.textProperty().isEmpty())
+                        .or(ConfirmTxt.textProperty().isEmpty())
                         .or(Bindings.createBooleanBinding(
                                 () -> !PassTxt.getText().equals(ConfirmTxt.getText()),
                                 PassTxt.textProperty(), ConfirmTxt.textProperty()
+                        ))
+                        .or(Bindings.createBooleanBinding(
+                                () -> accountTypeCombo.getSelectionModel().getSelectedItem() == null,
+                                accountTypeCombo.getSelectionModel().selectedItemProperty()
+                        ))
+                        .or(Bindings.createBooleanBinding(
+                                () -> PremiumOptInCheck.isSelected() && !PremiumAgreementCheck.isSelected(),
+                                PremiumOptInCheck.selectedProperty(), PremiumAgreementCheck.selectedProperty()
                         ));
 
-        // Button disable is now: busy OR invalid
-        RegisterBtn.disableProperty().bind(busy.or(invalidForm));
+        RegisterBtn.disableProperty().bind(invalidForm);
+        Runnable logValidity = () -> System.out.println("[RegisterUI] form valid = " + !invalidForm.get());
 
-        // Live logging for your sanity
-        Runnable logValidity = () -> {
-            boolean emailOk = isValidEmail(EmailTxt.getText().trim());
-            boolean nameOk  = !NameTxt.getText().trim().isEmpty();
-            boolean passOk  = PassTxt.getText() != null && PassTxt.getText().length() >= 6;
-            boolean matchOk = PassTxt.getText().equals(ConfirmTxt.getText());
-            boolean disabled = RegisterBtn.isDisabled();
-            System.out.println("[RegisterUI] valid? email=" + emailOk +
-                    " name=" + nameOk + " passLen>=6=" + passOk +
-                    " confirmMatch=" + matchOk + " busy=" + busy.get() +
-                    " -> disabled=" + disabled);
-        };
-        RegisterBtn.disabledProperty().addListener((o,a,b) -> logValidity.run());
-        EmailTxt.textProperty().addListener((o,a,b) -> logValidity.run());
-        NameTxt.textProperty().addListener((o,a,b) -> logValidity.run());
-        PassTxt.textProperty().addListener((o,a,b) -> logValidity.run());
-        ConfirmTxt.textProperty().addListener((o,a,b) -> logValidity.run());
-
-        // Wire actions explicitly
         RegisterBtn.setOnAction(e -> {
-            System.out.println("[RegisterUI] Register clicked");
             RegisterBtnOnAction();
         });
         BackBtn.setOnAction(e -> {
@@ -92,7 +149,6 @@ public class CustomerRegisterController {
             Nav.go(BackBtn, returnToFxml);
         });
 
-        // Enter to submit
         EmailTxt.setOnAction(e -> RegisterBtn.fire());
         ConfirmTxt.setOnAction(e -> RegisterBtn.fire());
 
@@ -106,34 +162,106 @@ public class CustomerRegisterController {
 
     @FXML
     private void RegisterBtnOnAction() {
-        if (inFlight) {
-            System.out.println("[RegisterUI] Ignored, request in flight");
+        ErrorLabel.setText("");
+
+        final String email = EmailTxt.getText().trim();
+        final String name = NameTxt.getText().trim();
+        final String phone = PhoneTxt.getText().trim();
+        final String pass = PassTxt.getText();
+
+        final String choice = accountTypeCombo.getSelectionModel().getSelectedItem();
+        final boolean premium = PremiumOptInCheck.isSelected();
+
+        if (premium && !PremiumAgreementCheck.isSelected()) {
+            ErrorLabel.setText("You must agree to the yearly Premium fee.");
             return;
         }
+
+        // If premium, open your existing popup and wait for confirmation
+        if (premium) {
+            try {
+                FXMLLoader fx = new FXMLLoader(getClass().getResource(
+                        "/il/cshaifasweng/OCSFMediatorExample/client/Customer/CustomerRegisterPayment.fxml"));
+                Parent root = fx.load();
+
+                // Use your existing controller and show 100₪ price
+                CustomerRegisterPaymentController ctrl = fx.getController();
+                ctrl.setTotalToPay(100.0);
+
+                Stage dialog = new Stage();
+                dialog.initModality(Modality.APPLICATION_MODAL);
+                dialog.initOwner(RegisterBtn.getScene().getWindow());
+                dialog.setTitle("Premium Payment");
+                dialog.setResizable(false);
+                dialog.setScene(new Scene(root));
+
+                // We cannot call private fields, so we use fx:id lookups
+                final boolean[] approved = { false };
+
+                Label errLbl = (Label) root.lookup("#paymentErrorLabel");
+                Button backBtn = (Button) root.lookup("#backBtn");
+
+                // When the controller writes "Payment confirmed successfully!" we close and mark approved
+                if (errLbl != null) {
+                    errLbl.textProperty().addListener((obs, oldV, now) -> {
+                        if (now != null && now.startsWith("Payment confirmed")) {
+                            approved[0] = true;
+                            dialog.close();
+                        }
+                    });
+                }
+
+                // Back button should close the dialog and cancel
+                if (backBtn != null) {
+                    backBtn.addEventHandler(javafx.event.ActionEvent.ACTION, e2 -> {
+                        approved[0] = false;
+                        dialog.close();
+                    });
+                }
+
+                dialog.showAndWait();
+
+                if (!approved[0]) {
+                    ErrorLabel.setText("Payment was cancelled or not confirmed.");
+                    return;
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                ErrorLabel.setText("Could not open payment dialog.");
+                return;
+            }
+        }
+
+        // Map choice to store id (null means global)
+        Long storeId = null;
+        if (!CH_GLOBAL.equals(choice)) {
+            storeId = STORE_IDS.get(choice);
+            if (storeId == null) {
+                ErrorLabel.setText("Unknown branch selection.");
+                return;
+            }
+        }
+
+        setBusy(true);
         try {
-            ErrorLabel.setText("");
-            final String name   = NameTxt.getText().trim();
-            final String email  = EmailTxt.getText().trim();
-            final String phone  = PhoneTxt.getText().trim().isEmpty() ? null : PhoneTxt.getText().trim();
-            final String pass   = PassTxt.getText();
-            final String confirm= ConfirmTxt.getText();
-
-            if (!isValidEmail(email)) { ErrorLabel.setText("Please enter a valid email."); System.out.println("[RegisterUI] invalid email: " + email); return; }
-            if (name.isEmpty())       { ErrorLabel.setText("Name is required."); System.out.println("[RegisterUI] empty name"); return; }
-            if (pass == null || pass.length() < 6) { ErrorLabel.setText("Password must be at least 6 characters."); System.out.println("[RegisterUI] short password"); return; }
-            if (!pass.equals(confirm)){ ErrorLabel.setText("Passwords do not match."); System.out.println("[RegisterUI] confirm mismatch"); return; }
-
-            System.out.println("[RegisterUI] Sending RegisterRequest -> " + email);
-            setBusy(true);
-            inFlight = true;
-
-            SimpleClient.getClient().sendToServer(new RegisterRequest(email, pass, name, phone));
-        } catch (Exception e) {
-            e.printStackTrace();
+            // NOTE: you must add this constructor to your RegisterRequest (see Fix 2)
+            var req = new RegisterRequest(
+                    email,
+                    pass,
+                    name,
+                    phone.isBlank() ? null : phone,
+                    storeId,     // null -> Global
+                    premium
+            );
+            SimpleClient.getClient().sendToServer(req);
+        } catch (Exception ex) {
+            ex.printStackTrace();
             setBusy(false);
-            inFlight = false;
+            ErrorLabel.setText("Failed to send request.");
         }
     }
+
+
 
     @Subscribe
     public void onRegisterResponse(RegisterResponse r) {
