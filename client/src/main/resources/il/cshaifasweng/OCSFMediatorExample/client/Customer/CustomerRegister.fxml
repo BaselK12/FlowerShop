@@ -56,9 +56,10 @@
                <ComboBox fx:id="storeCombo" prefWidth="200.0" promptText="Select store:" />
             </children>
          </HBox>
+         <CheckBox fx:id="PremiumOptInCheck" text="Upgrade to Premium (100₪/year)"/>
          <VBox fx:id="PremiumContainer" prefHeight="41.0" prefWidth="386.0" visible="false">
             <children>
-               <Label fx:id="PremiumNoteLabel" text="Yearly fee: 100₪. 10% discount for purchases above 50₪." />
+               <Label fx:id="PremiumNoteLabel" text="Premium accounts get 10% discount on all orders above 50 shekels" />
                <CheckBox fx:id="PremiumAgreementCheck" mnemonicParsing="false" text="I agree to pay the yearly fee" />
             </children>
          </VBox>
