@@ -1,6 +1,7 @@
 package il.cshaifasweng.OCSFMediatorExample.client.Admin;
 
 import il.cshaifasweng.OCSFMediatorExample.client.App;
+import il.cshaifasweng.OCSFMediatorExample.client.ui.Nav;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.DeleteFlowerRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.DeleteFlowerResponse;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.*;
@@ -31,7 +32,18 @@ public class AdminDashboardController {
     @FXML private TableColumn<FlowerDTO, String> colFlowerPrice;
     @FXML private TableColumn<FlowerDTO, String> colFlowersCategory;
     @FXML private TableColumn<FlowerDTO, Void> colFlowerActions;
+
+
     @FXML private Button btnDeleteFlower;
+    @FXML private Button LogOutBtn;
+    @FXML private Button reportsBtn;
+    @FXML private Button employeesBtn;
+    @FXML private Button ComplaintsBtn;
+
+    @FXML private ScrollPane CenterStack;
+
+
+
     @FXML private VBox flowerSelectBox;
     @FXML private TableView<PromotionRow> pastPromoTable;
     @FXML private TableColumn<PromotionRow, String> colPromoTitle;
@@ -54,6 +66,14 @@ public class AdminDashboardController {
 
         requestFlowers();
         requestPromotions();
+
+        // Header buttons: wire navigation
+        reportsBtn.setOnAction(e ->
+                Nav.go(CenterStack, "/il/cshaifasweng/OCSFMediatorExample/client/ManageReports.fxml"));
+        employeesBtn.setOnAction(e ->
+                Nav.go(CenterStack, "/il/cshaifasweng/OCSFMediatorExample/client/Employee/ManageEmployees.fxml"));
+        ComplaintsBtn.setOnAction(e ->
+                Nav.go(CenterStack, "/il/cshaifasweng/OCSFMediatorExample/client/Complaint/ManageComplaints.fxml"));
     }
 
     // =================== SETUP HELPERS ===================
@@ -134,6 +154,8 @@ public class AdminDashboardController {
         }
         onDeleteFlower(selected);
     }
+
+
 
     // =================== EVENTBUS RESPONSES ===================
     @Subscribe
