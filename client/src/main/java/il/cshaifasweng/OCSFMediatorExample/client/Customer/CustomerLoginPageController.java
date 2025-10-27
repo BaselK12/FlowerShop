@@ -12,10 +12,16 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
+import java.io.IOException;
 import java.net.URL;
 
 public class CustomerLoginPageController {
@@ -63,9 +69,27 @@ public class CustomerLoginPageController {
 
     @FXML
     public void RegisterBtnOnAction(ActionEvent e) {
-        onClose();
-        Nav.go(RegisterBtn, "/il/cshaifasweng/OCSFMediatorExample/client/Customer/CustomerRegister.fxml");
+        try {
+            // Load the FXML
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/il/cshaifasweng/OCSFMediatorExample/client/Customer/CustomerRegister.fxml"));
+            Parent root = loader.load();
+
+            // Create a new Stage (window)
+            Stage stage = new Stage();
+            stage.setTitle("Register");
+            stage.setScene(new Scene(root));
+            stage.initModality(Modality.APPLICATION_MODAL); // Optional: blocks interaction with other windows
+            stage.show(); // or stage.showAndWait() if you want to wait until it closes
+
+            // Optional: close current window if you want
+            // ((Stage) RegisterBtn.getScene().getWindow()).close();
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
     }
+
 
     @FXML
     public void LoginBtnOnAction(ActionEvent e) {
