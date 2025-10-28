@@ -43,7 +43,7 @@
             <children>
                 <Button fx:id="BackBtn" cancelButton="true" mnemonicParsing="false" onAction="#BackBtnOnAction" prefHeight="29.0" prefWidth="70.0" text="Back" wrapText="true" />
                 <Button fx:id="LoginBtn" defaultButton="true" mnemonicParsing="false" onAction="#LoginBtnOnAction" text="Login" wrapText="true" />
-                <Button fx:id="RegisterBtn" mnemonicParsing="false" onAction="#RegisterBtnOnAction" prefHeight="88.0" prefWidth="92.0" text="Register" />
+                <Button fx:id="RegisterBtn" mnemonicParsing="false" prefHeight="88.0" prefWidth="92.0" text="Register" />
             </children>
             <padding>
                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />

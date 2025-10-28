@@ -3,6 +3,7 @@ package il.cshaifasweng.OCSFMediatorExample.client.employee;
 
 
 import il.cshaifasweng.OCSFMediatorExample.client.App;
+import il.cshaifasweng.OCSFMediatorExample.client.ui.Nav;
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.EmployeeRole;
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.Gender;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.*;
@@ -28,7 +29,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
 
+
 public class ManageEmployeesController {
+
+    private static volatile String returnToFxml =
+            "/il/cshaifasweng/OCSFMediatorExample/client/Admin/AdminDashboard.fxml";
+    public static void setReturnTo(String fxml) { returnToFxml = fxml; }
 
     // Toolbar
     @FXML private CheckBox ActiveOnly;
@@ -40,6 +46,8 @@ public class ManageEmployeesController {
     @FXML private Button DeleteBtn;
     @FXML private Button EditBTn;
     @FXML private Button RefreshBtn;
+
+    @FXML private Button BackBtn;
 
     // Table and Columns
     @FXML private TableView<EmployeeVM> TableView;
@@ -139,6 +147,11 @@ public class ManageEmployeesController {
         EditBTn.setOnAction(e -> onEdit());
         DeleteBtn.setOnAction(e -> onDelete());
         RefreshBtn.setOnAction(e -> fetchEmployees());
+        BackBtn.setOnAction(e -> {
+            System.out.println("[RegisterUI] Back clicked -> " + returnToFxml);
+            cleanup();
+            Nav.go(BackBtn, returnToFxml);
+        });
 
         // Initial load
         Platform.runLater(() -> {fetchEmployees();});
@@ -332,6 +345,13 @@ public class ManageEmployeesController {
             case Male   -> "Male";
             case Other  -> "Other";
         };
+    }
+
+    private void cleanup() {
+        if (EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().unregister(this);
+            System.out.println("[RegisterUI] EventBus unregistered");
+        }
     }
 
 
