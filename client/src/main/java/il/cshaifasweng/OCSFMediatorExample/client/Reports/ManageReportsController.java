@@ -1,6 +1,7 @@
 package il.cshaifasweng.OCSFMediatorExample.client.Reports;
 
 import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
+import il.cshaifasweng.OCSFMediatorExample.client.ui.Nav;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Reports.*;
 
 import javafx.application.Platform;
@@ -39,10 +40,12 @@ import java.util.*;
 
 public class ManageReportsController {
 
+    private static volatile String returnToFxml =
+            "/il/cshaifasweng/OCSFMediatorExample/client/Admin/AdminDashboard.fxml";
+    public static void setReturnTo(String fxml) { returnToFxml = fxml; }
+
     @FXML private TabPane ChartsTabs;
     @FXML private BarChart<String, Number> BarChart;
-    @FXML private PieChart PieChart;
-    @FXML private LineChart<String, Number> LineChart;
     @FXML private ProgressIndicator Loading;
     @FXML private CheckBox OnlyCompletedOrdersBox;
     @FXML private Button QTRBtn, RunBtn, D30Btn, D7Btn, ExportPDFBtn;
@@ -54,6 +57,8 @@ public class ManageReportsController {
     @FXML private ComboBox<String> GroupByBox;
     @FXML private DatePicker ToDate, FromDate;
     @FXML private TableView<Map<String,Object>> Table;
+
+    @FXML private Button BackBtn;
 
     private final ObservableList<Map<String,Object>> rows = FXCollections.observableArrayList();
     private ReportSchema lastSchema;
@@ -96,6 +101,12 @@ public class ManageReportsController {
 
         setLoading(false);
         if (ExportPDFBtn != null) ExportPDFBtn.setDisable(true);
+
+        BackBtn.setOnAction(e -> {
+            System.out.println("[RegisterUI] Back clicked -> " + returnToFxml);
+            cleanup();
+            Nav.go(BackBtn, returnToFxml);
+        });
 
         try {
             SimpleClient.getClient().sendToServer(new GetStoresRequest());
@@ -240,8 +251,6 @@ public class ManageReportsController {
 
     private void buildCharts(ReportSchema schema, List<Map<String,Object>> data, ChartSuggestion suggestion) {
         if (BarChart != null) BarChart.getData().clear();
-        if (LineChart != null) LineChart.getData().clear();
-        if (PieChart != null) PieChart.getData().clear();
 
         if (data == null || data.isEmpty() || schema == null || schema.columns == null || schema.columns.isEmpty()) {
             return;
@@ -274,8 +283,6 @@ public class ManageReportsController {
         if (valueKey == null || categoryKey == null) return;
 
         switch (kind) {
-            case LINE -> { if (LineChart != null) buildSeriesChart(LineChart, data, categoryKey, valueKey, seriesKey); }
-            case PIE  -> { if (PieChart != null) buildPieChart(data, categoryKey, valueKey); }
             case BAR  -> { if (BarChart != null) buildSeriesChart(BarChart, data, categoryKey, valueKey, seriesKey); }
         }
 
@@ -312,26 +319,6 @@ public class ManageReportsController {
         chart.getData().setAll(new ArrayList<>(seriesMap.values()));
     }
 
-    private void buildPieChart(List<Map<String, Object>> data,
-                               String categoryKey,
-                               String valueKey) {
-        if (PieChart == null) return;
-
-        Map<String, Double> slices = new LinkedHashMap<>();
-
-        for (Map<String, Object> row : data) {
-            String category = Objects.toString(row.get(categoryKey), "(blank)");
-            Double value = toDouble(row.get(valueKey));
-            if (value == null) continue;
-            slices.merge(category, value, Double::sum);
-        }
-
-        List<PieChart.Data> pieData = new ArrayList<>();
-        for (Map.Entry<String, Double> entry : slices.entrySet()) {
-            pieData.add(new PieChart.Data(entry.getKey(), entry.getValue()));
-        }
-        PieChart.getData().setAll(pieData);
-    }
 
     private void selectChartTab(ChartKind kind) {
         if (ChartsTabs == null || ChartsTabs.getTabs() == null) return;
@@ -641,4 +628,12 @@ public class ManageReportsController {
             a.showAndWait();
         });
     }
+
+    private void cleanup() {
+        if (EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().unregister(this);
+            System.out.println("[RegisterUI] EventBus unregistered");
+        }
+    }
+
 }

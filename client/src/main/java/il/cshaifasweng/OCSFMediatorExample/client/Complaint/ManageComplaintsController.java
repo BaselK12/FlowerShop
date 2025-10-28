@@ -2,6 +2,7 @@ package il.cshaifasweng.OCSFMediatorExample.client.Complaint;
 
 import il.cshaifasweng.OCSFMediatorExample.client.App;
 import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
+import il.cshaifasweng.OCSFMediatorExample.client.ui.Nav;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Reports.GetStoresError;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Reports.GetStoresRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Reports.GetStoresResponse;
@@ -29,6 +30,10 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class ManageComplaintsController {
+
+    private static volatile String returnToFxml =
+            "/il/cshaifasweng/OCSFMediatorExample/client/Admin/AdminDashboard.fxml";
+    public static void setReturnTo(String fxml) { returnToFxml = fxml; }
 
     @FXML
     private Button ApplyBtn;
@@ -127,7 +132,12 @@ public class ManageComplaintsController {
 
         // 4) Buttons
         ApplyBtn.setOnAction(e -> requestComplaintsFromServer());
-        BackBtn.setOnAction(e -> safeClose());
+        BackBtn.setOnAction(e -> {
+            System.out.println("[RegisterUI] Back clicked -> " + returnToFxml);
+            cleanup();
+            Nav.go(BackBtn, returnToFxml);
+        });
+
         CloseBtn.setOnAction(e -> safeClose());
 
         ComplaintsTable.setRowFactory(tv -> {
@@ -387,6 +397,13 @@ public class ManageComplaintsController {
                 ComplaintsTable.getItems().add(0, c);
             }
         });
+    }
+
+    private void cleanup() {
+        if (EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().unregister(this);
+            System.out.println("[RegisterUI] EventBus unregistered");
+        }
     }
 }
 

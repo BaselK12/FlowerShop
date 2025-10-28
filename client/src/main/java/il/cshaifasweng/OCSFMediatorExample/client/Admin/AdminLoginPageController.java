@@ -1,5 +1,6 @@
 package il.cshaifasweng.OCSFMediatorExample.client.Admin;
 import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
+import il.cshaifasweng.OCSFMediatorExample.client.ui.Nav;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.LoginRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Role;
 
@@ -10,8 +11,13 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import org.greenrobot.eventbus.EventBus;
 
 public class AdminLoginPageController {
+
+    private static volatile String returnToFxml =
+            "/il/cshaifasweng/OCSFMediatorExample/client/HomePage/HomePage.fxml";
+    public static void setReturnTo(String fxml) { returnToFxml = fxml; }
 
     @FXML // fx:id="BackBtn"
     private Button BackBtn; // Value injected by FXMLLoader
@@ -53,6 +59,12 @@ public class AdminLoginPageController {
                                 EmailTxt.textProperty()))
         );
         ErrorLabel.setText(""); // start clean
+        BackBtn.setOnAction(e -> {
+            System.out.println("[RegisterUI] Back clicked -> " + returnToFxml);
+            cleanup();
+            Nav.go(BackBtn, returnToFxml);
+        });
+
     }
 
     @FXML
@@ -60,17 +72,6 @@ public class AdminLoginPageController {
         try {
             // send a msg that an admin pressed back from login page
             SimpleClient.getClient().sendToServer("AdminLoginPage Back");
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @FXML
-    public void RegisterBtnOnAction(ActionEvent event) {
-        try {
-            // send a msg that an Admin pressed register from login page
-            SimpleClient.getClient().sendToServer("AdminLoginPage register");
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -93,6 +94,13 @@ public class AdminLoginPageController {
         }
         catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void cleanup() {
+        if (EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().unregister(this);
+            System.out.println("[RegisterUI] EventBus unregistered");
         }
     }
 
