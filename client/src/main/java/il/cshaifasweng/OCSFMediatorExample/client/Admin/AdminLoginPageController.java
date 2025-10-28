@@ -1,10 +1,16 @@
 package il.cshaifasweng.OCSFMediatorExample.client.Admin;
+import il.cshaifasweng.OCSFMediatorExample.client.App;
 import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
 import il.cshaifasweng.OCSFMediatorExample.client.ui.Nav;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Admin.AdminLoginRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Admin.AdminLoginResponse;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.LoginRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Role;
 
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -12,12 +18,17 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+
+import java.net.URL;
 
 public class AdminLoginPageController {
 
     private static volatile String returnToFxml =
             "/il/cshaifasweng/OCSFMediatorExample/client/HomePage/HomePage.fxml";
     public static void setReturnTo(String fxml) { returnToFxml = fxml; }
+    private final BooleanProperty loggingIn = new SimpleBooleanProperty(false);
+
 
     @FXML // fx:id="BackBtn"
     private Button BackBtn; // Value injected by FXMLLoader
@@ -50,6 +61,9 @@ public class AdminLoginPageController {
 
     @FXML
     private void initialize() {
+        if (!EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().register(this);
+        }
         // Disable Login until basic validation passes
         LoginBtn.disableProperty().bind(
                 EmailTxt.textProperty().isEmpty()
@@ -64,7 +78,6 @@ public class AdminLoginPageController {
             cleanup();
             Nav.go(BackBtn, returnToFxml);
         });
-
     }
 
     @FXML
@@ -90,12 +103,47 @@ public class AdminLoginPageController {
                 return;
             }
             // send a msg that an Admin pressed login from login page
-            SimpleClient.getClient().sendToServer(new LoginRequest(email, pass, Role.ADMIN));
+            App.getClient().sendToServer(new AdminLoginRequest(email, pass));
         }
         catch (Exception e) {
             e.printStackTrace();
         }
     }
+
+    @Subscribe
+    public void onAdminLoginResponse(AdminLoginResponse r) {
+        Platform.runLater(() -> {
+            try {
+                if (r.isSuccess()) {
+                    ErrorLabel.setText("");
+
+                    // HYDRATE SESSION OR ADMIN DASHBOARD INIT (optional)
+                    try {
+                        // Example: request admin dashboard data if needed
+                        // SimpleClient.getClient().sendSafely(new AdminDashboardRequest());
+                    } catch (Exception ex) {
+                        ex.printStackTrace(); // non-fatal
+                    }
+
+                    // Verify FXML path for admin dashboard or management view
+                    URL url = getClass().getResource("/il/cshaifasweng/OCSFMediatorExample/client/Admin/AdminDashboard.fxml");
+                    if (url == null) {
+                        ErrorLabel.setText("AdminDashboard.fxml not found on classpath");
+                        return;
+                    }
+
+                    cleanup();
+                    Nav.go(LoginBtn, "/il/cshaifasweng/OCSFMediatorExample/client/Admin/AdminDashboard.fxml");
+
+                } else {
+                    ErrorLabel.setText(r.getMessage() != null ? r.getMessage() : "Admin login failed");
+                }
+            } finally {
+                loggingIn.set(false);
+            }
+        });
+    }
+
 
     private void cleanup() {
         if (EventBus.getDefault().isRegistered(this)) {
