@@ -28,21 +28,25 @@ import java.util.Objects;
 
 public class ProfileViewController implements RequiresSession {
 
-    // View mode
+    // Main Containers
     @FXML private VBox ProfileBox;
     @FXML private AnchorPane cardProfileView;
+    @FXML private AnchorPane CardProfileEditPane;
+
+    // View Mode Elements
     @FXML private Label NameLabel;
     @FXML private Label EmailLabel;
     @FXML private Label PhoneLabel;
+    @FXML private Label accountTypeLabel;
     @FXML private Button EditBtn;
 
-    // Edit mode
-    @FXML private AnchorPane CardProfileEditPane;
+    // Edit Mode Elements
     @FXML private TextField NameField;
     @FXML private TextField EmailField;
     @FXML private TextField PhoneEmail; // misnamed in FXML; it's the phone field
     @FXML private Button CancelBtn;
     @FXML private Button SaveBtn;
+
 
     // State
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
