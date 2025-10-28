@@ -126,7 +126,7 @@
                               <Insets bottom="16.0" left="16.0" right="16.0" top="16.0" />
                            </padding>
                            <children>
-                              <Label styleClass="section-title" text="Past Promotions" />
+                              <Label styleClass="section-title" text="Promotions" />
                               <TableView fx:id="pastPromoTable" prefHeight="280.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
                                  <columns>
                                     <TableColumn fx:id="colPromoTitle" prefWidth="220.0" text="Title" />

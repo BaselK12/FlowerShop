@@ -22,7 +22,6 @@ public class ItemDetailsController {
     @FXML private ImageView modalImage;
     @FXML private Label modalCategoryChip;
     @FXML private Label modalPrice;
-    @FXML private Label modalPromotion;
     @FXML private Label modalDescription;
     @FXML private Button modalCloseBtn;
     @FXML private Button modalAddToCartBtn;
@@ -60,11 +59,9 @@ public class ItemDetailsController {
 
         if (item.getPromotion() != null && item.getPromotion().isActive() && effectivePrice < price) {
             modalPrice.setText(String.format("Price: $%.2f  (Now: $%.2f)", price, effectivePrice));
-            modalPromotion.setText("Promotion: " + item.getPromotion().getName());
-            modalPromotion.setVisible(true);
+
         } else {
             modalPrice.setText(String.format("Price: $%.2f", price));
-            modalPromotion.setVisible(false);
         }
 
         // Image

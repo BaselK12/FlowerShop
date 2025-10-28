@@ -1,5 +1,6 @@
 package il.cshaifasweng.OCSFMediatorExample.client.Catalog;
 
+import il.cshaifasweng.OCSFMediatorExample.client.App;
 import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
 import il.cshaifasweng.OCSFMediatorExample.client.bus.events.ServerMessageEvent;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.AddToCartResponse;
@@ -47,9 +48,9 @@ public class CatalogViewController {
 
         // kick off initial loads
         try {
-            SimpleClient.getClient().sendSafely(new GetCategoriesRequest());
-            SimpleClient.getClient().sendSafely(new GetPromotionsRequest());
-            SimpleClient.getClient().sendSafely(new GetCatalogRequest(null, null, null, false));
+            App.getClient().sendToServer(new GetCategoriesRequest());
+            App.getClient().sendToServer(new GetPromotionsRequest());
+            App.getClient().sendToServer(new GetCatalogRequest(null, null, null, false));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -73,75 +74,71 @@ public class CatalogViewController {
         }
     }
 
-    // ====================== EventBus: listen to the WRAPPER ======================
+
+    // ====================== EVENT-BUS Handlers ======================
 
     @Subscribe
-    public void onServer(ServerMessageEvent ev) {
-        Object p = ev.getPayload();
-
-        if (p instanceof GetCategoriesResponse r) {
-            Platform.runLater(() -> handleCategories(r));
-        } else if (p instanceof GetPromotionsResponse r) {
-            Platform.runLater(() -> handlePromotions(r));
-        } else if (p instanceof GetCatalogResponse r) {
-            Platform.runLater(() -> handleCatalog(r));
-        } else if (p instanceof AddToCartResponse r) {
-            Platform.runLater(() -> handleAddToCart(r));
-        }
-        // else ignore other messages, or log if you’re feeling nosy
-    }
-
-    // ====================== Handlers ======================
-
-    private void handleCategories(GetCategoriesResponse response) {
+    public void handleCategories(GetCategoriesResponse response) {
         if (response == null || response.getCategories() == null) return;
 
-        allCategories = response.getCategories();
-        if (categoryCombo == null) return;
+        Platform.runLater(()->{
+            allCategories = response.getCategories();
+            if (categoryCombo == null) return;
 
-        categoryCombo.getItems().clear();
-        categoryNameToId.clear();
+            categoryCombo.getItems().clear();
+            categoryNameToId.clear();
 
-        categoryCombo.getItems().add("All");
-        for (CategoryDTO cat : allCategories) {
-            String display = cat.getDisplayName() != null ? cat.getDisplayName() : cat.getName();
-            categoryCombo.getItems().add(display);
-            categoryNameToId.put(display, cat.getId());
-        }
-        categoryCombo.getSelectionModel().selectFirst();
+            categoryCombo.getItems().add("All");
+            for (CategoryDTO cat : allCategories) {
+                String display = cat.getDisplayName() != null ? cat.getDisplayName() : cat.getName();
+                categoryCombo.getItems().add(display);
+                categoryNameToId.put(display, cat.getId());
+            }
+            categoryCombo.getSelectionModel().selectFirst();
+        });
+
     }
 
-    private void handlePromotions(GetPromotionsResponse response) {
+    @Subscribe
+    public void handlePromotions(GetPromotionsResponse response) {
         if (response == null || response.getPromotions() == null) return;
 
-        allPromotions = response.getPromotions();
-        if (promoModeCombo == null) return;
+        Platform.runLater(()->{
+            allPromotions = response.getPromotions();
+            if (promoModeCombo == null) return;
 
-        promoModeCombo.getItems().clear();
-        promoModeCombo.getItems().add("All");
-        promoModeCombo.getItems().add("Non-Promotions");
+            promoModeCombo.getItems().clear();
+            promoModeCombo.getItems().add("All");
+            promoModeCombo.getItems().add("Non-Promotions");
 
-        allPromotions.stream()
-                .sorted(Comparator.comparing(PromotionDTO::getName, Comparator.nullsLast(String::compareToIgnoreCase)))
-                .map(PromotionDTO::toString)
-                .forEach(promoModeCombo.getItems()::add);
+            allPromotions.stream()
+                    .sorted(Comparator.comparing(PromotionDTO::getName, Comparator.nullsLast(String::compareToIgnoreCase)))
+                    .map(PromotionDTO::toString)
+                    .forEach(promoModeCombo.getItems()::add);
 
-        promoModeCombo.getSelectionModel().selectFirst();
+            promoModeCombo.getSelectionModel().selectFirst();
+        });
     }
 
-    private void handleCatalog(GetCatalogResponse response) {
+    @Subscribe
+    public void handleCatalog(GetCatalogResponse response) {
         if (response == null || response.getFlowers() == null) return;
-        allFlowers = response.getFlowers();
-        renderItems(allFlowers);
+        Platform.runLater(()->{
+            allFlowers = response.getFlowers();
+            renderItems(allFlowers);
+        });
     }
 
-    private void handleAddToCart(AddToCartResponse response) {
+    @Subscribe
+    public void handleAddToCart(AddToCartResponse response) {
         if (cartCountLabel == null || response == null) return;
-        if (response.isSuccess()) {
-            cartCountLabel.setText(response.getCartSize() + " items");
-        } else {
-            cartCountLabel.setText("Add to cart failed");
-        }
+        Platform.runLater(()->{
+            if (response.isSuccess()) {
+                cartCountLabel.setText(response.getCartSize() + " items");
+            } else {
+                cartCountLabel.setText("Add to cart failed");
+            }
+        });
     }
 
     // ====================== Filtering ======================
@@ -151,13 +148,8 @@ public class CatalogViewController {
         String selectedCategory = categoryCombo != null ? categoryCombo.getValue() : null;
         String selectedPromo = promoModeCombo != null ? promoModeCombo.getValue() : null;
 
-        Long categoryId = null;
         Long promotionId = null;
         boolean onlyActivePromotions = false;
-
-        if (selectedCategory != null && !"All".equals(selectedCategory)) {
-            categoryId = categoryNameToId.get(selectedCategory);
-        }
 
         if (selectedPromo != null && !"All".equals(selectedPromo)) {
             if ("Non-Promotions".equals(selectedPromo)) {
@@ -177,12 +169,12 @@ public class CatalogViewController {
 
         try {
             GetCatalogRequest req = new GetCatalogRequest(
-                    categoryId != null ? categoryId.toString() : null,
+                    (selectedCategory != null && !"All".equals(selectedCategory)) ? selectedCategory : null,
                     (promotionId != null && promotionId > 0) ? promotionId : null,
                     search.isBlank() ? null : search,
                     onlyActivePromotions
             );
-            SimpleClient.getClient().sendSafely(req);
+            App.getClient().sendToServer(req);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -230,14 +222,13 @@ public class CatalogViewController {
 
     private void openDetails(FlowerDTO flower) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("ItemDetails.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/il/cshaifasweng/OCSFMediatorExample/client/Catalog/ItemDetails.fxml"));
             Scene scene = new Scene(loader.load());
 
             ItemDetailsController detailsController = loader.getController();
             detailsController.setItem(flower, loggedIn);
 
             Stage stage = new Stage();
-            stage.initModality(Modality.APPLICATION_MODAL);
             stage.setTitle("Flower Details");
             stage.setScene(scene);
             stage.showAndWait();
