@@ -25,6 +25,7 @@ public class MyAccountController {
     @FXML private ToggleButton CouponsBtn;
     @FXML private ToggleButton OrdersBtn;
     @FXML private ToggleButton PaymentsBtn;
+    @FXML private ToggleButton ComplaintsBtn;   // << NEW
 
     @FXML private Button LogOutBtn;
     @FXML private Button CloseBtn;
@@ -37,6 +38,7 @@ public class MyAccountController {
     @FXML
     private void initialize() {
         ClientSession.install();
+
         // Keep UI state and loaded view in sync
         ProfileBtn.setSelected(true);
         loadView("/il/cshaifasweng/OCSFMediatorExample/client/Account/ProfileView.fxml");
@@ -53,6 +55,8 @@ public class MyAccountController {
                 loadView("/il/cshaifasweng/OCSFMediatorExample/client/Account/PastOrdersView.fxml");
             } else if (newToggle == PaymentsBtn) {
                 loadView("/il/cshaifasweng/OCSFMediatorExample/client/Account/PaymentsView.fxml");
+            } else if (newToggle == ComplaintsBtn) { // << NEW
+                loadView("/il/cshaifasweng/OCSFMediatorExample/client/Account/CustomerComplaintsView.fxml");
             }
         });
 
@@ -60,7 +64,6 @@ public class MyAccountController {
         LogOutBtn.setOnAction(e -> handleLogout());
         CloseBtn.setOnAction(e -> handleClose());
     }
-
 
     private void loadView(String fxmlPath) {
         try {
@@ -75,7 +78,7 @@ public class MyAccountController {
 
                 Object c = loader.getController();
                 if (c instanceof RequiresSession rs) {
-                    long id = ClientSession.getCustomerId();  // << use the cached id
+                    long id = ClientSession.getCustomerId();  // use the cached id
                     rs.setCustomerId(id);
                 }
                 cache.put(fxmlPath, view);
@@ -87,9 +90,9 @@ public class MyAccountController {
         }
     }
 
-
     private void handleLogout() {
         try { SimpleClient.getClient().closeConnection(); } catch (Exception ignored) {}
+        cache.clear();                // << NEW: dump cached views on logout
         ClientSession.clear();
         Session.clear();
         Nav.go(ContentStack, "/il/cshaifasweng/OCSFMediatorExample/client/Customer/CustomerLoginPage.fxml");

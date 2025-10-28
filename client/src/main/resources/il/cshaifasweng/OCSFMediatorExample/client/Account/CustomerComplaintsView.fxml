@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+            fx:controller="il.cshaifasweng.OCSFMediatorExample.client.Account.CustomerComplaintsController">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="12" BorderPane.alignment="CENTER">
+            <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
+            <Label text="My Complaints"/>
+            <Button fx:id="FileComplaintBtn" text="File a complaint"/>  <!-- add this -->
+            <Region HBox.hgrow="ALWAYS"/>
+            <TextField fx:id="searchField" promptText="Search subject / status / order" prefWidth="260"/>
+        </HBox>
+    </top>
+
+    <center>
+        <TableView fx:id="table">
+            <columns>
+                <TableColumn fx:id="idCol" text="ID" prefWidth="80"/>
+                <TableColumn fx:id="subjectCol" text="Subject" prefWidth="220"/>
+                <TableColumn fx:id="typeCol" text="Type" prefWidth="140"/>
+                <TableColumn fx:id="statusCol" text="Status" prefWidth="140"/>
+                <TableColumn fx:id="orderCol" text="Order" prefWidth="110"/>
+                <TableColumn fx:id="createdCol" text="Created" prefWidth="180"/>
+            </columns>
+            <placeholder><Label text="No complaints yet."/></placeholder>
+        </TableView>
+    </center>
+
+    <bottom>
+        <HBox alignment="CENTER_RIGHT">
+            <padding><Insets top="10" right="10" bottom="10" left="10"/></padding>
+            <Label fx:id="countLabel"/>
+        </HBox>
+    </bottom>
+</BorderPane>

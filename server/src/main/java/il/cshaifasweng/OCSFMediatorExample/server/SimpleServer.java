@@ -2,6 +2,7 @@ package il.cshaifasweng.OCSFMediatorExample.server;
 
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.*;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Admin.AdminLoginRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Complaint.GetCustomerComplaintsRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.GetOrdersRequest;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Account.*;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.DeleteFlowerRequest;
@@ -88,7 +89,21 @@ public class SimpleServer extends ObservableServer {
 					default -> bus.publish(new SendToClientEvent(
 							new ErrorResponse("Unknown command: " + s), client));
 				}
-			} else if (msg instanceof SetStoreRequest rr) {
+			} else if (msg instanceof GetCustomerComplaintsRequest rr) {
+				bus.publish(new ComplaintsFetchRequestedEvent(
+						null,   // status
+						null,   // type
+						null,   // storeId
+						rr.getCustomerId(), // <-- scope to this customer
+						null,   // orderId
+						null,   // from
+						null,   // to
+						null,   // q
+						"createdAt", true,   // sort desc
+						0, 100,              // page, pageSize
+						client
+				));
+			}else if (msg instanceof SetStoreRequest rr) {
 			bus.publish(new SetStoreRequestedEvent(rr, client));
 			} else if (msg instanceof GetStoresRequest rr) {
 				bus.publish(new GetStoresRequestedEvent(rr, client));

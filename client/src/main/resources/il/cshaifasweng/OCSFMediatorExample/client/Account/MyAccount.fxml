@@ -71,6 +71,7 @@
                   <Cursor fx:constant="HAND" />
                </cursor>
             </ToggleButton>
+            <ToggleButton fx:id="ComplaintsBtn" text="Complaints" toggleGroup="$navGroup"/>
             <Pane prefHeight="560.0" prefWidth="200.0">
                <children>
                   <Button fx:id="LogOutBtn" layoutX="14.0" layoutY="485.0" mnemonicParsing="false" style="-fx-background-radius: 8;" text="LogOut" textFill="#d93434">
