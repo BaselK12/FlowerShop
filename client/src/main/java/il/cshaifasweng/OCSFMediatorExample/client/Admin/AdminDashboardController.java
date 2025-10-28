@@ -31,9 +31,11 @@ public class AdminDashboardController {
     @FXML private TableColumn<FlowerDTO, String> colFlowerName;
     @FXML private TableColumn<FlowerDTO, String> colFlowerPrice;
     @FXML private TableColumn<FlowerDTO, String> colFlowersCategory;
-    @FXML private TableColumn<FlowerDTO, Void> colFlowerActions;
 
 
+
+
+    @FXML private Button btnEditFlower;
     @FXML private Button btnDeleteFlower;
     @FXML private Button LogOutBtn;
     @FXML private Button reportsBtn;
@@ -48,6 +50,10 @@ public class AdminDashboardController {
     @FXML private TableView<PromotionRow> pastPromoTable;
     @FXML private TableColumn<PromotionRow, String> colPromoTitle;
     @FXML private TableColumn<PromotionRow, String> colPromoStatus;
+    @FXML private TableColumn<PromotionRow, String> colPromoDiscount;
+    @FXML private TableColumn<PromotionRow, String> colPromoFlowers;
+    @FXML private TableColumn<PromotionRow, String> colPromoPeriod;
+
 
     // =================== DATA ===================
     private final ObservableList<FlowerDTO> flowers = FXCollections.observableArrayList();
@@ -87,47 +93,25 @@ public class AdminDashboardController {
         colFlowersCategory.setCellValueFactory(c ->
                 new ReadOnlyObjectWrapper<>(joinCategories(c.getValue().getCategories())));
 
-        colFlowerActions.setCellFactory(col -> new TableCell<>() {
-            private final Button editBtn = makeSmallBtn("Edit");
-            private final Button deleteBtn = makeSmallBtn("Delete");
-            private final HBox box = new HBox(6, editBtn, deleteBtn);
-
-            {
-                editBtn.getStyleClass().add("btn-secondary");
-                deleteBtn.getStyleClass().add("btn-outline");
-
-                editBtn.setOnAction(e -> {
-                    FlowerDTO item = getTableView().getItems().get(getIndex());
-                    onEditFlower(item);
-                });
-
-                deleteBtn.setOnAction(e -> {
-                    FlowerDTO item = getTableView().getItems().get(getIndex());
-                    onDeleteFlower(item);
-                });
-            }
-
-            @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                setGraphic(empty ? null : box);
-            }
-        });
     }
 
     private void setupPastPromotionsTable() {
         pastPromoTable.setItems(pastPromotions);
         colPromoTitle.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue().title()));
         colPromoStatus.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue().status()));
+        colPromoDiscount.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue().discount()));
+        colPromoPeriod.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue().period()));
     }
 
     private void wireButtons() {
         btnDeleteFlower.setOnAction(e -> onDeleteSelectedFlower());
+        btnEditFlower.setOnAction(e -> onEditFlower());
     }
 
     // =================== FLOWER ACTIONS ===================
-    private void onEditFlower(FlowerDTO flower) {
-        openFlowerEditor(flower);
+    private void onEditFlower() {
+        FlowerDTO selected = flowersTable.getSelectionModel().getSelectedItem();
+        openFlowerEditor(selected);
     }
 
     @FXML
@@ -174,6 +158,37 @@ public class AdminDashboardController {
                     .toList());
         });
     }
+
+    // =================== RECORD FOR PROMOTIONS ===================
+    public record PromotionRow(
+            String title,
+            String status,
+            String discount,
+            String period
+    ) {
+        static PromotionRow fromServerDto(PromotionDTO dto) {
+            // Title and status
+            String title = dto.getName();
+            String status = dto.isActive() ? "Active" : "Expired";
+
+            // Discount (format nicely)
+            String discount;
+            if ("PERCENT".equalsIgnoreCase(dto.getType())) {
+                discount = dto.getAmount() + "%";
+            } else {
+                discount = String.format("$%.2f", dto.getAmount());
+            }
+
+
+            // Period (start–end)
+            String period = (dto.getValidFrom() != null && dto.getValidTo() != null)
+                    ? dto.getValidFrom() + " → " + dto.getValidTo()
+                    : "—";
+
+            return new PromotionRow(title, status, discount, period);
+        }
+    }
+
 
     @Subscribe
     public void onDeleteFlowerResponse(DeleteFlowerResponse resp) {
@@ -301,10 +316,5 @@ public class AdminDashboardController {
         }
     }
 
-    // =================== RECORD FOR PROMOTIONS ===================
-    public record PromotionRow(String title, String status) {
-        static PromotionRow fromServerDto(Object dto) {
-            return new PromotionRow("Demo Promo", "Active");
-        }
-    }
+
 }

@@ -61,7 +61,6 @@
                                           <TableColumn fx:id="colFlowerName" prefWidth="131.0" text="Name" />
                                           <TableColumn fx:id="colFlowerPrice" prefWidth="95.0" text="Price" />
                                           <TableColumn fx:id="colFlowersCategory" minWidth="146.0" prefWidth="147.0" text="Category" />
-                                          <TableColumn fx:id="colFlowerActions" prefWidth="125.5" text="Actions" />
                                        </columns>
                                        <columnResizePolicy>
                                           <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
@@ -134,7 +133,6 @@
                                     <TableColumn fx:id="colPromoDiscount" prefWidth="120.0" text="Discount" />
                                     <TableColumn fx:id="colPromoPeriod" prefWidth="220.0" text="Period" />
                                     <TableColumn fx:id="colPromoStatus" prefWidth="120.0" text="Status" />
-                                    <TableColumn fx:id="colPromoActions" prefWidth="140.0" text="Actions" />
                                  </columns>
                                  <columnResizePolicy>
                                     <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
