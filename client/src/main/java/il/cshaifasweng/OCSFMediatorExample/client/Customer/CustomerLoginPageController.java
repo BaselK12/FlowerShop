@@ -131,14 +131,14 @@ public class CustomerLoginPageController {
                     }
 
                     // Optional guard to catch missing FXML during development
-                    URL url = getClass().getResource("/il/cshaifasweng/OCSFMediatorExample/client/Complaint/ManageComplaints.fxml");
+                    URL url = getClass().getResource("/il/cshaifasweng/OCSFMediatorExample/client/Account/MyAccount.fxml");
                     if (url == null) {
                         ErrorLabel.setText("FilingComplaint.fxml not found on classpath");
                         return;
                     }
 
                     onClose(); // unregister before navigation
-                    Nav.go(LoginBtn, "/il/cshaifasweng/OCSFMediatorExample/client/Complaint/ManageComplaints.fxml");
+                    Nav.go(LoginBtn, "/il/cshaifasweng/OCSFMediatorExample/client/Account/MyAccount.fxml");
                 } else {
                     ErrorLabel.setText(r.getReason() != null ? r.getReason() : "Login failed");
                 }

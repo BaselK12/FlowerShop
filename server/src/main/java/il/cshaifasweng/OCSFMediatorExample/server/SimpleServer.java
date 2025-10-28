@@ -1,10 +1,9 @@
 package il.cshaifasweng.OCSFMediatorExample.server;
 
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.*;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Admin.AdminLoginRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.GetOrdersRequest;
-import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Account.GetOrdersRequestedEvent;
-import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.GetCouponsRequest;
-import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Account.GetCouponsRequestedEvent;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Account.*;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.DeleteFlowerRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.SaveFlowerRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.GetCatalogRequest;
@@ -28,15 +27,7 @@ import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Flowers.GetFlowersR
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Flowers.SaveFlowerRequestEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ObservableServer;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ConnectionToClient;
-import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.AccountOverviewRequest;
-import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.UpdateCustomerProfileRequest;
 import il.cshaifasweng.OCSFMediatorExample.server.session.SessionRegistry;
-import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.GetPaymentsRequest;
-import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.AddPaymentRequest;
-import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.RemovePaymentRequest;
-import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Account.GetPaymentsRequestedEvent;
-import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Account.AddPaymentRequestedEvent;
-import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Account.RemovePaymentRequestedEvent;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.GetCartRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.AddToCartRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.CartUpdateRequest;
@@ -55,14 +46,6 @@ import il.cshaifasweng.OCSFMediatorExample.entities.messages.Reports.GetStoresRe
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Reports.GetReportRequest;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Reports.GetStoresRequestedEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Reports.GetReportRequestedEvent;
-
-
-
-
-
-
-import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Account.AccountOverviewRequestedEvent;
-import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Account.UpdateCustomerProfileRequestedEvent;
 
 
 // your existing entities/messages
@@ -105,6 +88,8 @@ public class SimpleServer extends ObservableServer {
 					default -> bus.publish(new SendToClientEvent(
 							new ErrorResponse("Unknown command: " + s), client));
 				}
+			} else if (msg instanceof SetStoreRequest rr) {
+			bus.publish(new SetStoreRequestedEvent(rr, client));
 			} else if (msg instanceof GetStoresRequest rr) {
 				bus.publish(new GetStoresRequestedEvent(rr, client));
 			} else if (msg instanceof GetReportRequest rr) {

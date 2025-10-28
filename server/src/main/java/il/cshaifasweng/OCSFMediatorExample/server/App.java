@@ -5,10 +5,7 @@ import il.cshaifasweng.OCSFMediatorExample.server.handlers.*;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.Flower.DeleteFlowerHandler;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.Flower.GetFlowersHandler;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.Flower.SaveFlowerHandler;
-import il.cshaifasweng.OCSFMediatorExample.server.handlers.account.AccountHandler;
-import il.cshaifasweng.OCSFMediatorExample.server.handlers.account.CouponsHandler;
-import il.cshaifasweng.OCSFMediatorExample.server.handlers.account.OrdersHandler;
-import il.cshaifasweng.OCSFMediatorExample.server.handlers.account.PaymentsHandler;
+import il.cshaifasweng.OCSFMediatorExample.server.handlers.account.*;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.catalog.GetCatalogHandler;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.catalog.GetCategoriesHandler;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.catalog.GetPromotionsHandler;
@@ -49,6 +46,8 @@ public class App {
         new UpdateComplaintHandler(bus);
         new GetStoresHandler(bus);
         new GetReportHandler(bus);
+        new SetStoreHandler(bus);
+        new PremiumHandler(bus);
 
 
 
