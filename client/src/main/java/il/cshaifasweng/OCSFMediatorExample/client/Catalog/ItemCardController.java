@@ -39,6 +39,10 @@ public class ItemCardController {
         this.loggedIn = loggedIn;
         this.onDetails = onDetails;
 
+        if (addToCartBtn != null) {
+            addToCartBtn.setId("addToCart");
+        }
+
         // Product name
         nameLabel.setText(item.getName());
 
@@ -57,24 +61,30 @@ public class ItemCardController {
             categoryChip.setText("Uncategorized");
         }
 
-        // Price display (handle promotion price if exists)
         double price = item.getPrice();
         double effectivePrice = item.getEffectivePrice();
-        if (item.getPromotion() != null && item.getPromotion().isActive() && effectivePrice < price) {
+        boolean hasActivePromo = item.getPromotion() != null && Boolean.TRUE.equals(item.getPromotion().isActive());
+
+        if (hasActivePromo && effectivePrice < price) {
             priceLabel.setText(String.format("$%.2f  (Now: $%.2f)", price, effectivePrice));
-            promoRibbon.setText(item.getPromotion().getName());
-            promoRibbon.setVisible(true);
+            if (promoRibbon != null) {
+                promoRibbon.setText(item.getPromotion().getName());
+                promoRibbon.setVisible(true);
+            }
         } else {
             priceLabel.setText(String.format("$%.2f", price));
-            promoRibbon.setVisible(false);
+            if (promoRibbon != null) {
+                promoRibbon.setVisible(false);
+            }
         }
 
         // Image
-        if (item.getImageUrl() != null && !item.getImageUrl().isEmpty()) {
+        if (productImage != null && item.getImageUrl() != null && !item.getImageUrl().isEmpty()) {
             try {
                 productImage.setImage(new Image(item.getImageUrl(), true));
             } catch (Exception e) {
                 System.err.println("Failed to load image: " + item.getImageUrl());
+                productImage.setImage(null);
             }
         }
 
@@ -102,6 +112,13 @@ public class ItemCardController {
             e.printStackTrace();
         }
     }
+
+    /** Optional: allow parent to toggle login state without reloading the card. */
+    public void setLoggedIn(boolean loggedIn) {
+        this.loggedIn = loggedIn;
+        if (addToCartBtn != null) addToCartBtn.setDisable(!loggedIn);
+    }
+
 
     // ============================
     // Open details view

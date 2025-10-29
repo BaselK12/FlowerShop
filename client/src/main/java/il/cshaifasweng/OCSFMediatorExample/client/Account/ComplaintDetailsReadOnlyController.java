@@ -4,6 +4,7 @@ import il.cshaifasweng.OCSFMediatorExample.entities.domain.Complaint;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
+import javafx.scene.text.Text;
 
 import java.time.format.DateTimeFormatter;
 
@@ -14,6 +15,19 @@ public class ComplaintDetailsReadOnlyController {
     @FXML private TextArea descriptionArea, resolutionArea;
 
     private final DateTimeFormatter dt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+    @FXML
+    public void initialize() {
+        // make it obviously read-only and nicer to read
+        if (descriptionArea != null) {
+            descriptionArea.setEditable(false);
+            descriptionArea.setWrapText(true);
+        }
+        if (resolutionArea != null) {
+            resolutionArea.setEditable(false);
+            resolutionArea.setWrapText(true);
+        }
+    }
 
     public void setComplaint(Complaint c) {
         idLbl.setText(String.valueOf(c.getId()));
@@ -28,9 +42,10 @@ public class ComplaintDetailsReadOnlyController {
         resolutionArea.setText(nz(c.getResolution(), ""));
 
         String st = c.getStatus() == null ? "OPEN" : c.getStatus().name();
-        statusChip.setText(st.replace('_',' '));
+        String norm = st.toUpperCase(); // just in case
+        statusChip.setText(norm.replace('_',' '));
         statusChip.getStyleClass().removeAll("open","in-progress","resolved","rejected");
-        switch (st) {
+        switch (norm) {
             case "IN_PROGRESS" -> statusChip.getStyleClass().add("in-progress");
             case "RESOLVED"    -> statusChip.getStyleClass().add("resolved");
             case "REJECTED"    -> statusChip.getStyleClass().add("rejected");

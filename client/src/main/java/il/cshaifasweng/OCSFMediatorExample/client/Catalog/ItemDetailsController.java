@@ -5,6 +5,8 @@ import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.Flower;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.AddToCartRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.FlowerDTO;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.LoginResponse;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.AccountOverviewResponse;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -12,6 +14,9 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.IOException;
 import java.util.List;
@@ -29,6 +34,18 @@ public class ItemDetailsController {
     private FlowerDTO item;
     private boolean loggedIn;
 
+    @FXML
+    private void initialize() {
+        // Listen for login/overview so the Add-to-Cart button can enable while the modal is open
+        if (!EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().register(this);
+        }
+        // Give the button a predictable CSS id for upstream gates (#addToCart)
+        if (modalAddToCartBtn != null) {
+            modalAddToCartBtn.setId("addToCart");
+        }
+    }
+
     /**
      * Populates modal with selected flower data.
      */
@@ -37,57 +54,77 @@ public class ItemDetailsController {
         this.loggedIn = loggedIn;
 
         // Title
-        modalTitle.setText(item.getName());
+        if (modalTitle != null) {
+            modalTitle.setText(item.getName() != null ? item.getName() : "");
+        }
 
         // Description
         String desc = (item.getShortDescription() != null && !item.getShortDescription().isEmpty())
                 ? item.getShortDescription()
                 : "No description available.";
-        modalDescription.setText(desc);
+        if (modalDescription != null) {
+            modalDescription.setText(desc);
+        }
 
         // Categories
         List<String> categories = item.getCategories();
-        if (categories != null && !categories.isEmpty()) {
-            modalCategoryChip.setText(String.join(", ", categories));
-        } else {
-            modalCategoryChip.setText("Uncategorized");
+        if (modalCategoryChip != null) {
+            if (categories != null && !categories.isEmpty()) {
+                modalCategoryChip.setText(String.join(", ", categories));
+            } else {
+                modalCategoryChip.setText("Uncategorized");
+            }
         }
 
-        // Price and promotion
+        // Price and promotion (null-safe)
         double price = item.getPrice();
         double effectivePrice = item.getEffectivePrice();
+        boolean hasActivePromo = item.getPromotion() != null && Boolean.TRUE.equals(item.getPromotion().isActive());
 
-        if (item.getPromotion() != null && item.getPromotion().isActive() && effectivePrice < price) {
-            modalPrice.setText(String.format("Price: $%.2f  (Now: $%.2f)", price, effectivePrice));
-
-        } else {
-            modalPrice.setText(String.format("Price: $%.2f", price));
+        if (modalPrice != null) {
+            if (hasActivePromo && effectivePrice < price) {
+                modalPrice.setText(String.format("Price: $%.2f  (Now: $%.2f)", price, effectivePrice));
+            } else {
+                modalPrice.setText(String.format("Price: $%.2f", price));
+            }
         }
 
-        // Image
-        if (item.getImageUrl() != null && !item.getImageUrl().isEmpty()) {
-            try {
-                modalImage.setImage(new Image(item.getImageUrl(), true));
-            } catch (Exception e) {
-                System.err.println("Failed to load image: " + item.getImageUrl());
+        // Image (defensive)
+        if (modalImage != null) {
+            if (item.getImageUrl() != null && !item.getImageUrl().isEmpty()) {
+                try {
+                    modalImage.setImage(new Image(item.getImageUrl(), true));
+                } catch (Exception e) {
+                    System.err.println("Failed to load image: " + item.getImageUrl());
+                    loadPlaceholder();
+                }
+            } else {
                 loadPlaceholder();
             }
-        } else {
-            loadPlaceholder();
         }
 
         // Disable AddToCart if not logged in
-        modalAddToCartBtn.setDisable(!loggedIn);
-
-        // Wire actions
-        modalAddToCartBtn.setOnAction(e -> sendAddToCart());
-        modalCloseBtn.setOnAction(e -> closeWindow());
+        if (modalAddToCartBtn != null) {
+            modalAddToCartBtn.setDisable(!loggedIn);
+            modalAddToCartBtn.setOnAction(e -> sendAddToCart());
+        }
+        if (modalCloseBtn != null) {
+            modalCloseBtn.setOnAction(e -> closeWindow());
+        }
     }
 
     private void loadPlaceholder() {
+        if (modalImage == null) return;
         try {
-            modalImage.setImage(new Image(getClass().getResource("/images/placeholder.png").toExternalForm()));
-        } catch (Exception ignored) {}
+            var url = getClass().getResource("/images/placeholder.png");
+            if (url != null) {
+                modalImage.setImage(new Image(url.toExternalForm()));
+            } else {
+                modalImage.setImage(null);
+            }
+        } catch (Exception ignored) {
+            modalImage.setImage(null);
+        }
     }
 
     private void sendAddToCart() {
@@ -101,7 +138,33 @@ public class ItemDetailsController {
     }
 
     private void closeWindow() {
-        Stage stage = (Stage) modalCloseBtn.getScene().getWindow();
-        stage.close();
+        // Unregister to avoid leaks if modal is reused
+        if (EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().unregister(this);
+        }
+        try {
+            Stage stage = (Stage) (modalCloseBtn != null ? modalCloseBtn.getScene().getWindow() : null);
+            if (stage != null) stage.close();
+        } catch (Exception ignored) { }
+    }
+
+    /** Optional: allow parent to toggle login state without reloading the modal. */
+    public void setLoggedIn(boolean loggedIn) {
+        this.loggedIn = loggedIn;
+        if (modalAddToCartBtn != null) modalAddToCartBtn.setDisable(!loggedIn);
+    }
+
+    // ---- Session hooks: enable Add-to-Cart if login completes while this modal is open ----
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onLogin(LoginResponse r) {
+        if (r == null || !r.isOk()) return;
+        setLoggedIn(true);
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onOverview(AccountOverviewResponse r) {
+        if (r == null || !r.isOk() || r.getCustomer() == null) return;
+        setLoggedIn(true);
     }
 }

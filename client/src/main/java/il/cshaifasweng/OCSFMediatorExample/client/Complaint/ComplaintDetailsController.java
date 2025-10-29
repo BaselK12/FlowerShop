@@ -15,6 +15,7 @@ import javafx.stage.Stage;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.time.format.DateTimeFormatter;
 
@@ -49,6 +50,9 @@ public class ComplaintDetailsController {
 
     private Stage stage;
     private Complaint complaint;
+
+    // Prevent double-sends; also used to gate buttons while a request is in flight
+    private volatile boolean sending = false;
 
     @FXML
     private void initialize() {
@@ -87,37 +91,41 @@ public class ComplaintDetailsController {
     }
 
     private void refreshUIFromComplaint(Complaint c) {
+        if (c == null) return;
+
         // top header
-        customerNameLabel.setText("Customer #" + c.getCustomerId());
-        statusChip.setText(c.getStatus() != null ? c.getStatus().toString() : "OPEN");
-        statusChip.getStyleClass().setAll("status-chip", statusToStyle(c));
+        if (customerNameLabel != null) customerNameLabel.setText("Customer #" + c.getCustomerId());
+        if (statusChip != null) {
+            statusChip.setText(c.getStatus() != null ? c.getStatus().toString() : "OPEN");
+            statusChip.getStyleClass().setAll("status-chip", statusToStyle(c));
+        }
 
         // metadata left panel
-        complaintIdValue.setText(String.valueOf(c.getId()));
-        emailValue.setText("N/A");   // fill from customers table if/when available
-        phoneValue.setText("N/A");
-        orderIdValue.setText(c.getOrderId() != null ? String.valueOf(c.getOrderId()) : "N/A");
-        storeNameValue.setText(c.getStoreId() != null ? ("Store #" + c.getStoreId()) : "N/A");
+        if (complaintIdValue != null) complaintIdValue.setText(String.valueOf(c.getId()));
+        if (emailValue != null)   emailValue.setText("N/A");   // fill from customers table if/when available
+        if (phoneValue != null)   phoneValue.setText("N/A");
+        if (orderIdValue != null) orderIdValue.setText(c.getOrderId() != null ? String.valueOf(c.getOrderId()) : "N/A");
+        if (storeNameValue != null) storeNameValue.setText(c.getStoreId() != null ? ("Store #" + c.getStoreId()) : "N/A");
 
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-        createdAtValue.setText(c.getCreatedAt() != null ? c.getCreatedAt().format(fmt) : "N/A");
+        if (createdAtValue != null) createdAtValue.setText(c.getCreatedAt() != null ? c.getCreatedAt().format(fmt) : "N/A");
 
         // right panel content
-        pageTitle.setText("Complaint #" + c.getId());
-        subjectLabel.setText(c.getSubject() != null ? c.getSubject() : "");
-        descriptionArea.setText(c.getText() != null ? c.getText() : "");
-        resolutionArea.setText(c.getResolution() != null ? c.getResolution() : "");
+        if (pageTitle != null)    pageTitle.setText("Complaint #" + c.getId());
+        if (subjectLabel != null) subjectLabel.setText(c.getSubject() != null ? c.getSubject() : "");
+        if (descriptionArea != null) descriptionArea.setText(c.getText() != null ? c.getText() : "");
+        if (resolutionArea != null)  resolutionArea.setText(c.getResolution() != null ? c.getResolution() : "");
     }
 
     /** Map enum status to css style class */
     private String statusToStyle(Complaint complaint) {
-        if (complaint.getStatus() == null) return "open";
+        if (complaint == null || complaint.getStatus() == null) return "open";
         switch (complaint.getStatus()) {
-            case OPEN: return "open";
+            case OPEN:        return "open";
             case IN_PROGRESS: return "in-progress";
-            case RESOLVED: return "resolved";
-            case REJECTED: return "rejected";
-            default: return "open";
+            case RESOLVED:    return "resolved";
+            case REJECTED:    return "rejected";
+            default:          return "open";
         }
     }
 
@@ -160,21 +168,27 @@ public class ComplaintDetailsController {
     /* ===== Client-server plumbing ===== */
 
     private void pushUpdate(String notes, Complaint.Status newStatus, boolean closeAfter) {
-        if (complaint == null) return;
+        if (complaint == null || sending) return;
         try {
+            sending = true;
+            updateButtonStates(); // lock buttons while sending
+
             String statusStr = newStatus == null ? null : newStatus.name();
             UpdateComplaintRequest req =
                     new UpdateComplaintRequest(complaint.getId(), notes, statusStr);
             SimpleClient.getClient().sendToServer(req);
-            // optimistic UI tweaks if you want, but safer to wait for response
+            // optimistic UI can be added here; we wait for server ack
         } catch (Exception e) {
             e.printStackTrace();
+            sending = false;
+            updateButtonStates();
             warn("Failed to send update: " + e.getMessage());
         }
     }
 
     /* ===== EventBus subscribers ===== */
 
+    // Wrapper event (your SimpleClient may post this)
     @Subscribe
     public void onServerMessage(ServerMessageEvent ev) {
         Object msg = ev.getPayload();
@@ -185,33 +199,53 @@ public class ComplaintDetailsController {
         }
     }
 
+    // Direct messages (your SimpleClient may also post these directly)
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onUpdateComplaintResponse(UpdateComplaintResponse resp) {
+        handleUpdateResponse(resp);
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onComplaintUpdatedBroadcast(ComplaintUpdatedBroadcast bc) {
+        handleBroadcast(bc);
+    }
 
     private void handleUpdateResponse(UpdateComplaintResponse resp) {
-        if (complaint == null) return;
-
+        if (complaint == null || resp == null) {
+            sending = false;
+            updateButtonStates();
+            return;
+        }
         if (!resp.isOk()) {
+            sending = false;
+            updateButtonStates();
             warn("Update failed: " + resp.getReason());
             return;
         }
-        if (resp.getUpdated() == null) return;
-        if (!resp.getUpdated().getId().equals(complaint.getId())) return;
+        if (resp.getUpdated() == null || !resp.getUpdated().getId().equals(complaint.getId())) {
+            sending = false;
+            updateButtonStates();
+            return;
+        }
 
         Platform.runLater(() -> {
             this.complaint = resp.getUpdated();
             refreshUIFromComplaint(this.complaint);
             applyEditingState();
+            sending = false;
             updateButtonStates();
         });
     }
 
     private void handleBroadcast(ComplaintUpdatedBroadcast bc) {
-        if (complaint == null || bc.getComplaint() == null) return;
+        if (complaint == null || bc == null || bc.getComplaint() == null) return;
         if (!bc.getComplaint().getId().equals(complaint.getId())) return;
 
         Platform.runLater(() -> {
             this.complaint = bc.getComplaint();
             refreshUIFromComplaint(this.complaint);
             applyEditingState();
+            // do not force sending=false here; broadcast may arrive unrelated to our own send
             updateButtonStates();
         });
     }
@@ -224,28 +258,32 @@ public class ComplaintDetailsController {
                 || complaint.getStatus() == Complaint.Status.REJECTED;
 
         // Editability
-        resolutionArea.setEditable(!isFinal);
+        if (resolutionArea != null) resolutionArea.setEditable(!isFinal);
 
-        // Buttons
-        startBtn.setDisable(isFinal || complaint.getStatus() != Complaint.Status.OPEN);
-        resolveBtn.setDisable(isFinal || notesTrimmed().isBlank());
-        rejectBtn.setDisable(isFinal || notesTrimmed().isBlank());
-        saveBtn.setDisable(isFinal);
+        // Buttons (base state; fine-tuned in updateButtonStates)
+        if (startBtn != null)   startBtn.setDisable(isFinal || complaint.getStatus() != Complaint.Status.OPEN);
+        if (saveBtn != null)    saveBtn.setDisable(isFinal);
+        if (resolveBtn != null) resolveBtn.setDisable(isFinal || notesTrimmed().isBlank());
+        if (rejectBtn != null)  rejectBtn.setDisable(isFinal || notesTrimmed().isBlank());
     }
 
     private void updateButtonStates() {
         if (complaint == null) return;
+
         boolean isFinal = complaint.getStatus() == Complaint.Status.RESOLVED
                 || complaint.getStatus() == Complaint.Status.REJECTED;
 
-        if (resolveBtn != null) resolveBtn.setDisable(isFinal || notesTrimmed().isBlank());
-        if (rejectBtn != null)  rejectBtn.setDisable(isFinal || notesTrimmed().isBlank());
-        if (saveBtn != null)    saveBtn.setDisable(isFinal);
-        if (startBtn != null)   startBtn.setDisable(isFinal || complaint.getStatus() != Complaint.Status.OPEN);
+        // During sending, lock all action buttons
+        boolean lock = sending;
+
+        if (resolveBtn != null) resolveBtn.setDisable(lock || isFinal || notesTrimmed().isBlank());
+        if (rejectBtn != null)  rejectBtn.setDisable(lock || isFinal || notesTrimmed().isBlank());
+        if (saveBtn != null)    saveBtn.setDisable(lock || isFinal);
+        if (startBtn != null)   startBtn.setDisable(lock || isFinal || complaint.getStatus() != Complaint.Status.OPEN);
     }
 
     private String notesTrimmed() {
-        String s = resolutionArea.getText();
+        String s = resolutionArea != null ? resolutionArea.getText() : null;
         return s == null ? "" : s.trim();
     }
 

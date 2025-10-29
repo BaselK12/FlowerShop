@@ -6,6 +6,10 @@ import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.AddToCartRespo
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.*;
 import il.cshaifasweng.OCSFMediatorExample.client.common.ClientSession;
 import il.cshaifasweng.OCSFMediatorExample.client.ui.Nav;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.LoginResponse;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.AccountOverviewResponse;
+import org.greenrobot.eventbus.ThreadMode;
+
 
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -75,7 +79,7 @@ public class CatalogViewController {
         }
 
         // Initial login state probe (fallback; primary is the event)
-        loggedIn = detectLoggedInSafely();
+        loggedIn = (ClientSession.getCustomerId() > 0) || detectLoggedInSafely();
         if (LoginBtn != null) {
             LoginBtn.setVisible(!loggedIn);
             LoginBtn.setManaged(!loggedIn);
@@ -155,6 +159,39 @@ public class CatalogViewController {
         });
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onLogin(LoginResponse r) {
+        if (r == null || !r.isOk()) return;
+
+        loggedIn = true;
+        // If you want to show name: loggedInDisplayName = (loggedInDisplayName == null ? "" : loggedInDisplayName);
+        if (LoginBtn != null) {
+            LoginBtn.setVisible(false);
+            LoginBtn.setManaged(false);
+        }
+        // Re-render so cards enable Add-to-Cart without nagging
+        renderItems(allFlowers);
+        // And pull fresh catalog with current filters (user-specific promos/pricing)
+        applyFilters();
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onOverview(AccountOverviewResponse r) {
+        if (r == null || !r.isOk() || r.getCustomer() == null) return;
+
+        loggedIn = true;
+        // Optionally capture display name
+        try { loggedInDisplayName = r.getCustomer().getDisplayName(); } catch (Exception ignored) {}
+
+        if (LoginBtn != null) {
+            LoginBtn.setVisible(false);
+            LoginBtn.setManaged(false);
+        }
+        renderItems(allFlowers);
+        applyFilters();
+    }
+
+
     // ====================== Helpers: Login popup & detection ======================
 
     /** Opens the login window as a modal dialog. */
@@ -185,7 +222,7 @@ public class CatalogViewController {
 
         // Fallback: if for any reason we missed the event, re-detect.
         boolean wasLoggedIn = loggedIn;
-        loggedIn = detectLoggedInSafely() || loggedIn;
+        loggedIn = (ClientSession.getCustomerId() > 0) || detectLoggedInSafely() || loggedIn;
         if (loggedIn && !wasLoggedIn) {
             if (LoginBtn != null) {
                 LoginBtn.setVisible(false);
