@@ -1,6 +1,7 @@
 package il.cshaifasweng.OCSFMediatorExample.client.Catalog;
 
 import il.cshaifasweng.OCSFMediatorExample.client.App;
+import il.cshaifasweng.OCSFMediatorExample.client.bus.events.UserLoggedInEvent;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.AddToCartResponse;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.*;
 import il.cshaifasweng.OCSFMediatorExample.client.common.ClientSession;
@@ -60,26 +61,26 @@ public class CatalogViewController {
     private List<PromotionDTO> allPromotions = new ArrayList<>();
     private final Map<String, Long> categoryNameToId = new HashMap<>();
 
-    // Session state we control here (don’t rely on missing Session.isLoggedIn)
+    // Session-ish state
     private volatile boolean loggedIn = false;
+    private String loggedInUsername = null;
+    private String loggedInDisplayName = null;
 
     // ====================== Life-cycle ======================
 
     @FXML
     public void initialize() {
-        // EventBus registration
         if (!EventBus.getDefault().isRegistered(this)) {
             EventBus.getDefault().register(this);
         }
 
-        // Try to detect current login state safely (no compile-time coupling)
+        // Initial login state probe (fallback; primary is the event)
         loggedIn = detectLoggedInSafely();
         if (LoginBtn != null) {
             LoginBtn.setVisible(!loggedIn);
             LoginBtn.setManaged(!loggedIn);
         }
 
-        // Ensure the scroll panes behave
         if (itemsScroll != null) {
             itemsScroll.setFitToWidth(true);
             itemsScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
@@ -130,9 +131,33 @@ public class CatalogViewController {
         showLoginPopup();
     }
 
+    // ====================== Login event hook ======================
+
+    /** Primary path: react instantly when login succeeds. */
+    @Subscribe
+    public void onUserLoggedIn(UserLoggedInEvent e) {
+        Platform.runLater(() -> {
+            loggedIn = true;
+            loggedInUsername = e.username();
+            loggedInDisplayName = e.displayName();
+
+            if (LoginBtn != null) {
+                LoginBtn.setVisible(false);
+                LoginBtn.setManaged(false);
+            }
+
+            // Light refresh so cards know they can add-to-cart without nagging
+            renderItems(allFlowers);
+
+            // Optional: pull fresh catalog with same filters so server-side
+            // promotion/pricing rules that depend on user kick in.
+            applyFilters();
+        });
+    }
+
     // ====================== Helpers: Login popup & detection ======================
 
-    /** Opens the login window as a modal dialog; then re-detects login state. */
+    /** Opens the login window as a modal dialog. */
     private void showLoginPopup() {
         try {
             FXMLLoader loader = new FXMLLoader(
@@ -158,24 +183,25 @@ public class CatalogViewController {
             ex.printStackTrace();
         }
 
-        // After dialog closes, detect again
-        loggedIn = detectLoggedInSafely();
-        if (LoginBtn != null) {
-            LoginBtn.setVisible(!loggedIn);
-            LoginBtn.setManaged(!loggedIn);
+        // Fallback: if for any reason we missed the event, re-detect.
+        boolean wasLoggedIn = loggedIn;
+        loggedIn = detectLoggedInSafely() || loggedIn;
+        if (loggedIn && !wasLoggedIn) {
+            if (LoginBtn != null) {
+                LoginBtn.setVisible(false);
+                LoginBtn.setManaged(false);
+            }
+            renderItems(allFlowers);
+            applyFilters();
         }
-        // Re-render so cards pick up new loggedIn flag (if needed)
-        renderItems(allFlowers);
     }
 
     /**
-     * Defensive, reflection-based login detection so we don't depend on a specific API.
-     * Tries common patterns on ClientSession.
+     * Defensive, reflection-based login detection to avoid tight coupling.
      */
     private boolean detectLoggedInSafely() {
         try {
             Object session = null;
-            // static getters
             for (String m : List.of("get", "current", "instance")) {
                 try {
                     Method mm = ClientSession.class.getMethod(m);
@@ -185,7 +211,6 @@ public class CatalogViewController {
             }
             if (session == null) return false;
 
-            // boolean flags
             for (String m : List.of("isLoggedIn", "isAuthenticated", "hasUser", "hasAccount")) {
                 try {
                     Method mm = session.getClass().getMethod(m);
@@ -194,7 +219,6 @@ public class CatalogViewController {
                 } catch (NoSuchMethodException ignored) { }
             }
 
-            // object getters
             for (String m : List.of("getAccount", "getCustomer", "getUser", "getPrincipal")) {
                 try {
                     Method mm = session.getClass().getMethod(m);
@@ -206,7 +230,7 @@ public class CatalogViewController {
         return false;
     }
 
-    // ====================== Event-Bus Handlers ======================
+    // ====================== Event-Bus Handlers (server msgs) ======================
 
     @Subscribe
     public void handleCategories(GetCategoriesResponse response) {
@@ -338,7 +362,7 @@ public class CatalogViewController {
                 // Pass current login state to card so it can style/disable appropriately
                 cardController.setData(f, loggedIn, () -> openDetails(f));
 
-                // Add a guard on the card's Add-to-Cart button if present
+                // Guard Add-to-Cart when not logged in
                 wireLoginGateToCard(cardNode);
 
                 itemsGrid.getChildren().add(cardNode);

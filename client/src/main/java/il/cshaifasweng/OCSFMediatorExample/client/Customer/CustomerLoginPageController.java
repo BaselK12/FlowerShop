@@ -1,11 +1,11 @@
 package il.cshaifasweng.OCSFMediatorExample.client.Customer;
 
 import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
-import il.cshaifasweng.OCSFMediatorExample.client.ui.Nav;
+import il.cshaifasweng.OCSFMediatorExample.client.bus.events.UserLoggedInEvent;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.LoginRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.LoginResponse;
-import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.AccountOverviewRequest;
 
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Role;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -15,14 +15,16 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
 import java.io.IOException;
-import java.net.URL;
 
 public class CustomerLoginPageController {
 
@@ -55,42 +57,43 @@ public class CustomerLoginPageController {
         ErrorLabel.setText("");
     }
 
+    /** Make sure we unregister from EventBus when the pop-up is closed. */
     public void onClose() {
         if (EventBus.getDefault().isRegistered(this)) {
             EventBus.getDefault().unregister(this);
         }
     }
 
+    /** 2) Back closes the pop-up. No Nav, no stack acrobatics. */
     @FXML
     public void BackBtnOnAction(ActionEvent e) {
         onClose();
-        Nav.back(BackBtn);
+        Stage stage = (Stage) BackBtn.getScene().getWindow();
+        if (stage != null) stage.close();
     }
 
+    /** 3) Register opens as another pop-up on top of the login pop-up. */
     @FXML
     public void RegisterBtnOnAction(ActionEvent e) {
         try {
-            // Load the FXML
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
                     "/il/cshaifasweng/OCSFMediatorExample/client/Customer/CustomerRegister.fxml"));
             Parent root = loader.load();
 
-            // Create a new Stage (window)
+            Stage owner = (Stage) RegisterBtn.getScene().getWindow();
             Stage stage = new Stage();
             stage.setTitle("Register");
+            stage.initOwner(owner);
+            stage.initModality(Modality.WINDOW_MODAL);
             stage.setScene(new Scene(root));
-            stage.initModality(Modality.APPLICATION_MODAL); // Optional: blocks interaction with other windows
-            stage.show(); // or stage.showAndWait() if you want to wait until it closes
-
-            // Optional: close current window if you want
-            // ((Stage) RegisterBtn.getScene().getWindow()).close();
-
+            stage.showAndWait();
         } catch (IOException ex) {
             ex.printStackTrace();
+            ErrorLabel.setText("Failed to open Register");
         }
     }
 
-
+    /** 1) Login sends credentials; success will only emit a UI event and close. */
     @FXML
     public void LoginBtnOnAction(ActionEvent e) {
         ErrorLabel.setText("");
@@ -114,6 +117,7 @@ public class CustomerLoginPageController {
         }
     }
 
+    /** Handle server login result. On success: notify opener and close this pop-up. */
     @Subscribe
     public void onLoginResponse(LoginResponse r) {
         Platform.runLater(() -> {
@@ -121,24 +125,18 @@ public class CustomerLoginPageController {
                 if (r.isOk()) {
                     ErrorLabel.setText("");
 
-                    // HYDRATE SESSION RIGHT AFTER SUCCESSFUL LOGIN
-                    try {
-                        // 0 tells the server to infer the customer from the logged-in session
-                        SimpleClient.getClient().sendSafely(new AccountOverviewRequest(0));
-                    } catch (Exception ex) {
-                        // Not fatal for navigation; complaint screen can still lazy-hydrate (Step 2)
-                        ex.printStackTrace();
-                    }
+                    // Tell whoever opened us that a user logged in.
+                    final String username = EmailTxt.getText() == null ? "" : EmailTxt.getText().trim();
+                    EventBus.getDefault().post(new UserLoggedInEvent(
+                            username,
+                            r.getDisplayName(),
+                            r.getRole() == null ? Role.CUSTOMER : r.getRole()
+                    ));
 
-                    // Optional guard to catch missing FXML during development
-                    URL url = getClass().getResource("/il/cshaifasweng/OCSFMediatorExample/client/Account/MyAccount.fxml");
-                    if (url == null) {
-                        ErrorLabel.setText("FilingComplaint.fxml not found on classpath");
-                        return;
-                    }
-
-                    onClose(); // unregister before navigation
-                    Nav.go(LoginBtn, "/il/cshaifasweng/OCSFMediatorExample/client/Account/MyAccount.fxml");
+                    // Close the pop-up
+                    onClose();
+                    Stage stage = (Stage) LoginBtn.getScene().getWindow();
+                    if (stage != null) stage.close();
                 } else {
                     ErrorLabel.setText(r.getReason() != null ? r.getReason() : "Login failed");
                 }
