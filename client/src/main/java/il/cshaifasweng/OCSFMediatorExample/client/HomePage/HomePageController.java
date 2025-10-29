@@ -3,7 +3,9 @@ package il.cshaifasweng.OCSFMediatorExample.client.HomePage;
 import il.cshaifasweng.OCSFMediatorExample.client.Catalog.ItemCardController;
 import il.cshaifasweng.OCSFMediatorExample.client.Catalog.ItemDetailsController;
 import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
-import il.cshaifasweng.OCSFMediatorExample.entities.domain.Flower;
+import il.cshaifasweng.OCSFMediatorExample.client.bus.events.UserLoggedInEvent;
+import il.cshaifasweng.OCSFMediatorExample.client.common.ClientSession;
+import il.cshaifasweng.OCSFMediatorExample.client.ui.Nav;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.AddToCartRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.FlowerDTO;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.GetCatalogRequest;
@@ -11,15 +13,15 @@ import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.GetCatalogR
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import il.cshaifasweng.OCSFMediatorExample.client.ui.Nav;
-import il.cshaifasweng.OCSFMediatorExample.client.common.ClientSession;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
@@ -27,14 +29,12 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 
-
-import java.io.IOException;
-import java.util.List;
-
 public class HomePageController {
 
-    @FXML private StackPane centerStack;
+    @FXML private StackPane centerStack;   // container for main content + modal overlays
     @FXML private HBox cardsRow1;
+
+    // Header buttons
     @FXML private Button btnHome;
     @FXML private Button btnCatalog;
     @FXML private Button btnCart;
@@ -42,23 +42,28 @@ public class HomePageController {
     @FXML private Button btnLogin;
     @FXML private Button btnAdmin;
     @FXML private Button btnShopNow;
-; // container for main content + modal overlays
 
+    // Details dialog (preloaded)
     private Pane detailsDialogRoot;
     private ItemDetailsController detailsController;
-    private boolean loggedIn = true; // TODO: replace with actual login/session logic
+
+    // Session-ish
+    private volatile boolean loggedIn = false;
+
+    // Cache last catalog so we can rebuild cards when login flips
+    private List<FlowerDTO> latestFlowers = List.of();
 
     private static void setVisibleManaged(javafx.scene.Node n, boolean on) {
-        n.setVisible(on);
-        n.setManaged(on);
+        if (n != null) {
+            n.setVisible(on);
+            n.setManaged(on);
+        }
     }
 
     @FXML
     public void initialize() {
-        // Session sidecar for login state
         ClientSession.install();
 
-        // EventBus subscription
         if (!EventBus.getDefault().isRegistered(this)) {
             EventBus.getDefault().register(this);
         }
@@ -67,18 +72,22 @@ public class HomePageController {
             throw new IllegalStateException("HomePage.fxml is missing fx:id='centerStack' StackPane.");
         }
 
-        // Ask server for catalog (no bogus "featured" filter)
+        // Initial login state
+        loggedIn = ClientSession.getCustomerId() != 0L;
+        setVisibleManaged(btnAccount, loggedIn);
+        setVisibleManaged(btnLogin, !loggedIn);
+
+        // Ask server for catalog (no special filter)
         try {
             SimpleClient.getClient().sendToServer(new GetCatalogRequest(null, null, null, false));
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        // Preload details popup
+        // Preload details popup into the stack
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
-                    "/il/cshaifasweng/OCSFMediatorExample/client/Catalog/ItemDetails.fxml"
-            ));
+                    "/il/cshaifasweng/OCSFMediatorExample/client/Catalog/ItemDetails.fxml"));
             detailsDialogRoot = loader.load();
             detailsController = loader.getController();
             detailsDialogRoot.setVisible(false);
@@ -88,7 +97,7 @@ public class HomePageController {
             e.printStackTrace();
         }
 
-        // Header buttons: wire navigation
+        // Header navigation
         btnHome.setOnAction(e ->
                 Nav.go(centerStack, "/il/cshaifasweng/OCSFMediatorExample/client/HomePage/HomePage.fxml"));
         btnCatalog.setOnAction(e ->
@@ -97,71 +106,141 @@ public class HomePageController {
                 Nav.go(centerStack, "/il/cshaifasweng/OCSFMediatorExample/client/Cart/CartView.fxml"));
         btnAccount.setOnAction(e ->
                 Nav.go(centerStack, "/il/cshaifasweng/OCSFMediatorExample/client/Account/MyAccount.fxml"));
-        btnLogin.setOnAction(e ->
-                Nav.go(centerStack, "/il/cshaifasweng/OCSFMediatorExample/client/Customer/CustomerLoginPage.fxml"));
+        // Login now opens a modal pop-up (no scene navigation)
+        btnLogin.setOnAction(e -> showLoginPopup());
         btnAdmin.setOnAction(e ->
                 Nav.go(centerStack, "/il/cshaifasweng/OCSFMediatorExample/client/Admin/AdminLoginPage.fxml"));
 
-        // CTA "Shop Now" -> Catalog
+        // CTA
         btnShopNow.setOnAction(e ->
                 Nav.go(centerStack, "/il/cshaifasweng/OCSFMediatorExample/client/Catalog/CatalogView.fxml"));
-
-        // Toggle Login vs My Account
-        boolean loggedIn = ClientSession.getCustomerId() != 0L;
-        setVisibleManaged(btnAccount, loggedIn);
-        setVisibleManaged(btnLogin, !loggedIn);
     }
 
-
-    // ==========================================
-    // Server Event: Catalog Data Arrived
-    // ==========================================
+    // =========================
+    // Listen: UI login event
+    // =========================
     @Subscribe
-    public void onCatalogResponse(GetCatalogResponse msg) {
+    public void onUserLoggedIn(UserLoggedInEvent e) {
         Platform.runLater(() -> {
-            List<FlowerDTO> flowers = msg.getFlowers();
-            cardsRow1.getChildren().clear();
+            loggedIn = true;
+            setVisibleManaged(btnAccount, true);
+            setVisibleManaged(btnLogin, false);
 
-            // Sort: promos first, then by name, cap to 6
-            List<FlowerDTO> featured = flowers.stream()
-                    .sorted(Comparator
-                            .comparing(FlowerDTO::hasActivePromotion).reversed()
-                            .thenComparing(FlowerDTO::getName, String.CASE_INSENSITIVE_ORDER))
-                    .limit(6)
-                    .toList();
-
-            if (featured.isEmpty()) {
-                // graceful empty state
-                Label empty = new Label("No featured flowers yet.");
-                empty.getStyleClass().add("muted");
-                cardsRow1.getChildren().add(empty);
-                return;
-            }
-
-            for (FlowerDTO flower : featured) {
-                try {
-                    FXMLLoader loader = new FXMLLoader(getClass().getResource(
-                            "/il/cshaifasweng/OCSFMediatorExample/client/Catalog/ItemCard.fxml"
-                    ));
-                    Pane cardRoot = loader.load();
-                    ItemCardController cardController = loader.getController();
-
-                    // card handles its own Add to Cart; we supply onDetails callback
-                    cardController.setData(flower, ClientSession.getCustomerId() != 0L, () -> showDetails(flower));
-
-                    cardsRow1.getChildren().add(cardRoot);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+            // Rebuild cards so Add-to-Cart becomes enabled without nagging
+            rebuildFeaturedCards(latestFlowers);
+            // Optional: re-ask server in case user-specific pricing/promos exist
+            try {
+                SimpleClient.getClient().sendToServer(new GetCatalogRequest(null, null, null, false));
+            } catch (IOException ex) {
+                ex.printStackTrace();
             }
         });
     }
 
+    // =========================
+    // Home cards data
+    // =========================
+    @Subscribe
+    public void onCatalogResponse(GetCatalogResponse msg) {
+        Platform.runLater(() -> {
+            latestFlowers = msg.getFlowers();
+            rebuildFeaturedCards(latestFlowers);
+        });
+    }
 
-    // ==========================================
-    // Cart + Details actions
-    // ==========================================
+    private void rebuildFeaturedCards(List<FlowerDTO> flowers) {
+        if (cardsRow1 == null) return;
 
+        cardsRow1.getChildren().clear();
+
+        if (flowers == null || flowers.isEmpty()) {
+            Label empty = new Label("No featured flowers yet.");
+            empty.getStyleClass().add("muted");
+            cardsRow1.getChildren().add(empty);
+            return;
+        }
+
+        List<FlowerDTO> featured = flowers.stream()
+                .sorted(Comparator
+                        .comparing(FlowerDTO::hasActivePromotion).reversed()
+                        .thenComparing(FlowerDTO::getName, String.CASE_INSENSITIVE_ORDER))
+                .limit(6)
+                .toList();
+
+        for (FlowerDTO flower : featured) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                        "/il/cshaifasweng/OCSFMediatorExample/client/Catalog/ItemCard.fxml"));
+                Pane cardRoot = loader.load();
+                ItemCardController cardController = loader.getController();
+
+                // Pass current login state; card wires its own add-to-cart
+                cardController.setData(flower, loggedIn, () -> showDetails(flower));
+
+                cardsRow1.getChildren().add(cardRoot);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    // =========================
+    // Login modal
+    // =========================
+    private void showLoginPopup() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/il/cshaifasweng/OCSFMediatorExample/client/Customer/CustomerLoginPage.fxml"));
+
+            javafx.scene.Parent root = loader.load(); // <-- not var
+
+            Stage dialog = new Stage(StageStyle.DECORATED);
+            dialog.setTitle("Login");
+            dialog.initModality(Modality.APPLICATION_MODAL);
+
+            Stage owner = null;
+            if (centerStack != null && centerStack.getScene() != null) {
+                owner = (Stage) centerStack.getScene().getWindow();
+            }
+            if (owner != null) dialog.initOwner(owner);
+
+            dialog.setScene(new Scene(root)); // now it compiles
+            dialog.setResizable(false);
+            dialog.showAndWait();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+
+        boolean was = loggedIn;
+        loggedIn = ClientSession.getCustomerId() != 0L || loggedIn;
+        if (loggedIn && !was) {
+            setVisibleManaged(btnAccount, true);
+            setVisibleManaged(btnLogin, false);
+            rebuildFeaturedCards(latestFlowers);
+        }
+    }
+
+
+    // =========================
+    // Details dialog
+    // =========================
+    private void showDetails(FlowerDTO flower) {
+        if (detailsController == null || detailsDialogRoot == null) return;
+        detailsController.setItem(flower, loggedIn);
+        detailsDialogRoot.setVisible(true);
+        detailsDialogRoot.setManaged(true);
+    }
+
+    public void closeDetails() {
+        if (detailsDialogRoot == null) return;
+        detailsDialogRoot.setVisible(false);
+        detailsDialogRoot.setManaged(false);
+    }
+
+    // =========================
+    // Cart (not used here)
+    // =========================
+    @SuppressWarnings("unused")
     private void sendAddToCart(FlowerDTO flower) {
         try {
             SimpleClient.getClient().sendToServer(new AddToCartRequest(flower.getSku(), 1));
@@ -171,30 +250,12 @@ public class HomePageController {
         }
     }
 
-    private void showDetails(FlowerDTO flower) {
-        detailsController.setItem(flower, loggedIn);
-        detailsDialogRoot.setVisible(true);
-        detailsDialogRoot.setManaged(true);
-    }
-
-    public void closeDetails() {
-        detailsDialogRoot.setVisible(false);
-        detailsDialogRoot.setManaged(false);
-    }
-
-    // ==========================================
-    // Navigation
-    // ==========================================
-
-    private void openCatalogPage() {
-        // TODO: implement navigation to catalog scene if applicable
-        System.out.println("Navigate to catalog...");
-    }
-
-    // ==========================================
+    // =========================
     // Cleanup
-    // ==========================================
+    // =========================
     public void onClose() {
-        EventBus.getDefault().unregister(this);
+        if (EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().unregister(this);
+        }
     }
 }
