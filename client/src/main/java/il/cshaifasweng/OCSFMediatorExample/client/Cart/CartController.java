@@ -1,10 +1,14 @@
 package il.cshaifasweng.OCSFMediatorExample.client.Cart;
 
 import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
+import il.cshaifasweng.OCSFMediatorExample.client.common.ClientSession;
 import il.cshaifasweng.OCSFMediatorExample.client.ui.Nav;
+import il.cshaifasweng.OCSFMediatorExample.client.ui.ViewTracker;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.*;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.CartItem;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.CartState;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.AccountOverviewResponse;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.LoginResponse;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -15,6 +19,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import javafx.event.ActionEvent;
 import java.io.IOException;
@@ -37,12 +42,19 @@ public class CartController {
 
     @FXML
     private void initialize() {
-        // Listen for server events
         if (!EventBus.getDefault().isRegistered(this)) {
             EventBus.getDefault().register(this);
         }
 
-        // Ask server for the persisted cart instead of faking items
+        // Initial UI state based on session
+        applySessionToUI();
+
+        // Ask server for the persisted cart
+        requestCart();
+    }
+
+    /** Ask server for current cart. */
+    private void requestCart() {
         try {
             SimpleClient.getClient().sendToServer(new GetCartRequest());
         } catch (IOException e) {
@@ -77,11 +89,23 @@ public class CartController {
             }
         }
         updateTotal();
+        // Enable checkout only if logged-in and cart not empty
+        if (CheckoutBtn != null) {
+            boolean loggedIn = ClientSession.getCustomerId() > 0;
+            CheckoutBtn.setDisable(!loggedIn || cartItems.isEmpty());
+        }
     }
 
     private void updateTotal() {
         double total = cartItems.stream().mapToDouble(CartItem::getSubtotal).sum();
         TotalLabel.setText("Total: " + currency.format(total));
+    }
+
+    private void applySessionToUI() {
+        boolean loggedIn = ClientSession.getCustomerId() > 0;
+        if (CheckoutBtn != null) {
+            CheckoutBtn.setDisable(!loggedIn || cartItems.isEmpty());
+        }
     }
 
     // -------------------- UI actions --------------------
@@ -97,6 +121,12 @@ public class CartController {
 
     @FXML
     private void onCheckout(ActionEvent event) {
+        // Gate by login
+        if (ClientSession.getCustomerId() <= 0) {
+            // redirect to login page if unauthenticated
+            Nav.go(CheckoutBtn, "/il/cshaifasweng/OCSFMediatorExample/client/Customer/CustomerLoginPage.fxml");
+            return;
+        }
         try {
             // Your DTO currently expects items; if you later switch to an empty request, this stays harmless.
             SimpleClient.getClient().sendToServer(new CheckoutRequest(new ArrayList<>(cartItems)));
@@ -152,6 +182,35 @@ public class CartController {
         });
     }
 
+    // -------------------- Session + ViewTracker hooks --------------------
+
+    // When login succeeds, enable checkout and pull cart again (server might attach user cart)
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onLogin(LoginResponse r) {
+        if (r == null || !r.isOk()) return;
+        applySessionToUI();
+        requestCart();
+    }
+
+    // When overview hydrates, also refresh UI/cart
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onOverview(AccountOverviewResponse r) {
+        if (r == null || !r.isOk() || r.getCustomer() == null) return;
+        applySessionToUI();
+        requestCart();
+    }
+
+    // When Cart view becomes active and we have no items yet, ask for cart
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onActive(ViewTracker.ActiveControllerChanged e) {
+        if (e == null) return;
+        String id = e.controllerId != null ? e.controllerId : e.getControllerId();
+        if (( "Cart".equals(id) || "CartView".equals(id) ) && cartItems.isEmpty()) {
+            requestCart();
+        }
+        // Always re-apply session-driven UI when returning to this view
+        applySessionToUI();
+    }
 
     public void dispose() {
         if (EventBus.getDefault().isRegistered(this)) {

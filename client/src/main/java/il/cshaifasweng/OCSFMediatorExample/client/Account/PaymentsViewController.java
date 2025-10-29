@@ -1,7 +1,9 @@
 package il.cshaifasweng.OCSFMediatorExample.client.Account;
 
 import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
+import il.cshaifasweng.OCSFMediatorExample.client.common.ClientSession;
 import il.cshaifasweng.OCSFMediatorExample.client.common.RequiresSession;
+import il.cshaifasweng.OCSFMediatorExample.client.ui.ViewTracker;
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.Payment;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.AddPaymentRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.AddPaymentResponse;
@@ -10,6 +12,8 @@ import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.GetPayments
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.PaymentDTO;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.RemovePaymentRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.RemovePaymentResponse;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.AccountOverviewResponse;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.LoginResponse;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -21,8 +25,8 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 import javafx.scene.layout.GridPane;
-
 
 import java.util.List;
 
@@ -68,23 +72,19 @@ public class PaymentsViewController implements RequiresSession {
                         data.getValue().getMethod() != null ? data.getValue().getMethod().name() : ""
                 )
         );
-
         colCardNumber.setCellValueFactory(data ->
                 new SimpleStringProperty(
                         data.getValue().getMaskedCardNumber() != null ? data.getValue().getMaskedCardNumber() : ""
                 )
         );
-
         colExpiryDate.setCellValueFactory(data ->
                 new SimpleStringProperty(
                         data.getValue().getExpirationDate() != null ? data.getValue().getExpirationDate() : ""
                 )
         );
-
         colAmount.setCellValueFactory(data ->
                 new SimpleStringProperty(String.format("₪ %.2f", data.getValue().getAmount()))
         );
-
         colStatus.setCellValueFactory(data ->
                 new SimpleStringProperty(
                         data.getValue().getStatus() != null ? data.getValue().getStatus().name() : ""
@@ -92,6 +92,14 @@ public class PaymentsViewController implements RequiresSession {
         );
 
         paymentsTable.setItems(payments);
+        paymentsTable.setPlaceholder(new Label("No payment methods yet."));
+
+        // Enable/disable Remove by selection
+        if (btnRemovePayment != null) {
+            btnRemovePayment.setDisable(true);
+            paymentsTable.getSelectionModel().selectedItemProperty().addListener((obs, o, n) ->
+                    btnRemovePayment.setDisable(n == null));
+        }
 
         // --- Button Setup ---
         btnRefreshPayments.setOnAction(e -> requestPayments());
@@ -99,12 +107,20 @@ public class PaymentsViewController implements RequiresSession {
         btnEmptyAddPayment.setOnAction(e -> addPayment());
         btnRemovePayment.setOnAction(e -> removeSelectedPayment());
 
-        updateUIState();
+        // Boot if already logged in; otherwise lock down actions
+        long id = ClientSession.getCustomerId();
+        if (id > 0) {
+            setCustomerId(id);
+        } else {
+            lockWhenLoggedOut(true);
+            updateUIState();
+        }
     }
 
     @Override
     public void setCustomerId(long customerId) {
         this.customerId = customerId;
+        lockWhenLoggedOut(customerId <= 0);
         requestPayments();
     }
 
@@ -113,6 +129,7 @@ public class PaymentsViewController implements RequiresSession {
         try {
             payments.clear();
             updateUIState();
+            if (customerId <= 0) return; // don't spam the server without a user
             SimpleClient.getClient().sendToServer(new GetPaymentsRequest(String.valueOf(customerId)));
         } catch (Exception ex) {
             showError("Failed to request payments: " + ex.getMessage());
@@ -138,13 +155,50 @@ public class PaymentsViewController implements RequiresSession {
         Platform.runLater(this::requestPayments);
     }
 
+    // React when login completes so this tab can load itself
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onLogin(LoginResponse r) {
+        if (r == null || !r.isOk()) return;
+        long id = ClientSession.getCustomerId();
+        if (id > 0) setCustomerId(id);
+    }
+
+    // React when overview hydrates the customer
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onOverview(AccountOverviewResponse r) {
+        if (r == null || !r.isOk() || r.getCustomer() == null) return;
+        long id = ClientSession.getCustomerId();
+        if (id > 0) setCustomerId(id);
+    }
+
+    // Optional: when this view becomes active and we have nothing yet, fetch
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onActive(ViewTracker.ActiveControllerChanged e) {
+        if (e == null) return;
+        String id = e.controllerId != null ? e.controllerId : e.getControllerId();
+        if ("PaymentsView".equals(id) && payments.isEmpty() && ClientSession.getCustomerId() > 0) {
+            requestPayments();
+        }
+    }
+
     // --- Update Header + Visibility ---
     private void updateUIState() {
         paymentsCountLabel.setText("(" + payments.size() + ")");
         boolean empty = payments.isEmpty();
         paymentsEmptyBox.setVisible(empty);
         paymentsTable.setVisible(!empty);
-        paymentsActions.setDisable(empty);
+        paymentsActions.setDisable(empty || ClientSession.getCustomerId() <= 0);
+        btnAddPayment.setDisable(ClientSession.getCustomerId() <= 0);
+        btnEmptyAddPayment.setDisable(ClientSession.getCustomerId() <= 0);
+    }
+
+    private void lockWhenLoggedOut(boolean loggedOut) {
+        if (loggedOut) {
+            if (paymentsTable != null) paymentsTable.setPlaceholder(new Label("Log in to manage payment methods."));
+            if (btnAddPayment != null) btnAddPayment.setDisable(true);
+            if (btnEmptyAddPayment != null) btnEmptyAddPayment.setDisable(true);
+            if (btnRemovePayment != null) btnRemovePayment.setDisable(true);
+        }
     }
 
     // --- Add New Payment (simple inline dialog) ---

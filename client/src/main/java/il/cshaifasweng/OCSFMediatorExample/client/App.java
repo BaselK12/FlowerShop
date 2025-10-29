@@ -7,6 +7,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.TextInputDialog;
 import javafx.stage.Stage;
 import org.greenrobot.eventbus.EventBus;
+import il.cshaifasweng.OCSFMediatorExample.client.session.ClientSession;
 
 import java.io.IOException;
 import java.net.URL;
@@ -19,6 +20,7 @@ public class App extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
+        ClientSession.install();
 
         // ## DO NOT TOUCH OR CHANGE ## //
         TextInputDialog dialog = new TextInputDialog("localhost");

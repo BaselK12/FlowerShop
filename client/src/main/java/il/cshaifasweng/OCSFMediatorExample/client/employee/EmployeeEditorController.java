@@ -6,10 +6,8 @@ import il.cshaifasweng.OCSFMediatorExample.entities.domain.EmployeeRole;
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.Gender;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.CreateEmployeeRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.EmployeesDTO;
-
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.UpdateEmployeeRequest;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.text.Text;
@@ -17,11 +15,7 @@ import javafx.stage.Stage;
 import javafx.util.StringConverter;
 import org.greenrobot.eventbus.EventBus;
 
-import java.util.function.Consumer;
 import java.util.regex.Pattern;
-
-//import static com.sun.org.apache.xerces.internal.util.XMLChar.trim;
-
 
 public class EmployeeEditorController {
 
@@ -50,7 +44,9 @@ public class EmployeeEditorController {
 
     private static final Pattern EMAIL_RE = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
     private static final Pattern PHONE_RE = Pattern.compile("^(0\\d{1,2}-?\\d{3}-?\\d{4}|0\\d{8,9}|\\+?\\d[\\d\\- ]+)$");
-    private static final Pattern MONEY_RE = Pattern.compile("^\\d+(?:[\\.,]\\d{1,2})?$");
+    private static final Pattern INT_MONEY_RE = Pattern.compile("^\\d{0,9}$"); // integer shekels
+
+    private volatile boolean saving = false;
 
     public void initialize() {
 
@@ -90,17 +86,26 @@ public class EmployeeEditorController {
             }
         });
 
-        // Salary validation
+        // Salary: integers only (₪)
         SalaryTxt.setTextFormatter(new TextFormatter<>(change -> {
-            if (change.getControlNewText().isEmpty()) return change;
-            return MONEY_RE.matcher(change.getControlNewText().replace(',', '.')).matches() ? change : null;
+            String next = change.getControlNewText();
+            return INT_MONEY_RE.matcher(next).matches() ? change : null;
         }));
+
+        // Cancel button closes cleanly
+        if (CancelBtn != null) {
+            CancelBtn.setOnAction(e -> onClose());
+        }
     }
 
     private void setError(String msg) {
         if (ErrorLabel != null) ErrorLabel.setText(msg == null ? "" : msg);
     }
 
+    private void lockUI(boolean on) {
+        if (SaveBtn != null)   SaveBtn.setDisable(on);
+        if (CancelBtn != null) CancelBtn.setDisable(on);
+    }
 
     private void closeWindow() {
         if (stage != null) stage.close();
@@ -118,9 +123,9 @@ public class EmployeeEditorController {
         this.employee = employee;
         if (employee != null) {
             // Fill fields for edit
-            NameTxt.setText(employee.getName());
-            EmailTxt.setText(employee.getEmail());
-            PhoneTxt.setText(employee.getPhone());
+            NameTxt.setText(safe(employee.getName()));
+            EmailTxt.setText(safe(employee.getEmail()));
+            PhoneTxt.setText(safe(employee.getPhone()));
             SalaryTxt.setText(String.valueOf(employee.getSalary()));
             RoleBox.setValue(employee.getRole());
             GenderBox.setValue(employee.getGender());
@@ -139,76 +144,58 @@ public class EmployeeEditorController {
 
     @FXML
     private void onSave() {
-        String name     = NameTxt.getText() != null ? NameTxt.getText().trim() : "";
-        String email    = EmailTxt.getText() != null ? EmailTxt.getText().trim() : "";
-        String phone    = PhoneTxt.getText() != null ? PhoneTxt.getText().trim() : "";
-        String salaryStr= SalaryTxt.getText() != null ? SalaryTxt.getText().trim() : "";
-        EmployeeRole role   = RoleBox.getValue();
-        Gender gender       = GenderBox.getValue();
-        boolean active  = ActiveBox.isSelected();
+        if (saving) return;
+        setError("");
+
+        String name      = trim(NameTxt.getText());
+        String email     = trim(EmailTxt.getText());
+        String phone     = trim(PhoneTxt.getText());
+        String salaryStr = trim(SalaryTxt.getText());
+        EmployeeRole role = RoleBox.getValue();
+        Gender gender     = GenderBox.getValue();
+        boolean active    = ActiveBox.isSelected();
 
         // === Required fields check ===
-        if (name.isEmpty()) {
-            ErrorLabel.setText("Name is required.");
-            return;
-        }
-        if (email.isEmpty()) {
-            ErrorLabel.setText("Email is required.");
-            return;
-        }
-        if (!email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
-            ErrorLabel.setText("Invalid email format.");
-            return;
-        }
-        if (phone.isEmpty()) {
-            ErrorLabel.setText("Phone is required.");
-            return;
-        }
-        if (!phone.matches("^(0\\d{1,2}-?\\d{3}-?\\d{4}|0\\d{8,9}|\\+?\\d[\\d\\- ]+)$")) {
-            ErrorLabel.setText("Invalid phone number.");
-            return;
-        }
-        if (role == null) {
-            ErrorLabel.setText("Role is required.");
-            return;
-        }
-        if (gender == null) {
-            ErrorLabel.setText("Gender is required.");
-            return;
-        }
-        if (salaryStr.isEmpty()) {
-            ErrorLabel.setText("Salary is required.");
-            return;
-        }
+        if (name.isEmpty()) { setError("Name is required."); return; }
+        if (email.isEmpty()) { setError("Email is required."); return; }
+        if (!EMAIL_RE.matcher(email).matches()) { setError("Invalid email format."); return; }
+        if (phone.isEmpty()) { setError("Phone is required."); return; }
+        if (!PHONE_RE.matcher(phone).matches()) { setError("Invalid phone number."); return; }
+        if (role == null) { setError("Role is required."); return; }
+        if (gender == null) { setError("Gender is required."); return; }
+        if (salaryStr.isEmpty()) { setError("Salary is required."); return; }
+        if (!INT_MONEY_RE.matcher(salaryStr).matches()) { setError("Salary must be a whole number."); return; }
 
-        // === Salary check ===
         long salary;
         try {
             salary = Long.parseLong(salaryStr);
-            if (salary < 0) {
-                ErrorLabel.setText("Salary cannot be negative.");
-                return;
-            }
+            if (salary < 0) { setError("Salary cannot be negative."); return; }
         } catch (NumberFormatException e) {
-            ErrorLabel.setText("Salary must be a number.");
+            setError("Salary must be a number.");
             return;
         }
 
-        // === Build request ===
+        // network guard
+        var client = App.getClient();
+        if (client == null || !client.isConnected()) {
+            setError("Client not connected.");
+            return;
+        }
+
+        lockUI(true);
+        saving = true;
+
         try {
             if (employee == null) {
                 // 1. Generate raw password
                 String rawPassword = generateRandomPassword(10);
-
                 // 2. Hash it
                 String hashed = hashPassword(rawPassword);
-
                 // 3. Create DTO with hashed password
                 EmployeesDTO.Create dto = new EmployeesDTO.Create(
                         name, gender, email, phone, role, active, salary, hashed
                 );
-
-                App.getClient().sendToServer(new CreateEmployeeRequest(dto));
+                client.sendToServer(new CreateEmployeeRequest(dto));
 
                 // 4. Show raw password once to manager
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -222,12 +209,14 @@ public class EmployeeEditorController {
                 EmployeesDTO.Update dto = new EmployeesDTO.Update(
                         employee.getId(), name, gender, email, phone, role, active, salary
                 );
-                App.getClient().sendToServer(new UpdateEmployeeRequest(dto));
+                client.sendToServer(new UpdateEmployeeRequest(dto));
             }
-            stage.close();
+            closeWindow();
         } catch (Exception e) {
-            ErrorLabel.setText("Network error: " + e.getMessage());
+            setError("Network error: " + e.getMessage());
             e.printStackTrace();
+            lockUI(false);
+            saving = false;
         }
     }
 
@@ -246,16 +235,12 @@ public class EmployeeEditorController {
             java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
             byte[] digest = md.digest(raw.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             StringBuilder sb = new StringBuilder();
-            for (byte b : digest) {
-                sb.append(String.format("%02x", b));
-            }
+            for (byte b : digest) sb.append(String.format("%02x", b));
             return sb.toString();
         } catch (Exception e) {
             throw new RuntimeException("Error hashing password", e);
         }
     }
-
-
 
     @FXML
     public void onCancelAction() {
@@ -264,22 +249,15 @@ public class EmployeeEditorController {
 
     private void onClose() {
         try {
-            // unregister from EventBus if still registered
             if (EventBus.getDefault().isRegistered(this)) {
                 EventBus.getDefault().unregister(this);
             }
         } catch (Exception ignore) {}
-
-        // close the Stage
-        if (stage != null) {
-            stage.close();
-        } else if (SaveBtn != null && SaveBtn.getScene() != null) {
-            var w = SaveBtn.getScene().getWindow();
-            if (w instanceof Stage s) {
-                s.close();
-            }
-        }
+        closeWindow();
     }
+
+    private static String safe(String s) { return s == null ? "" : s; }
+    private static String trim(String s) { return s == null ? "" : s.trim(); }
 
     private String prettifyRole(EmployeeRole role) {
         if (role == null) return "";
@@ -299,6 +277,4 @@ public class EmployeeEditorController {
             case Other  -> "Other";
         };
     }
-
 }
-

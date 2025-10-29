@@ -1,10 +1,14 @@
 package il.cshaifasweng.OCSFMediatorExample.client.Account;
 
 import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
+import il.cshaifasweng.OCSFMediatorExample.client.common.ClientSession;
 import il.cshaifasweng.OCSFMediatorExample.client.common.RequiresSession;
+import il.cshaifasweng.OCSFMediatorExample.client.ui.ViewTracker;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.CouponDTO;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.GetCouponsRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.GetCouponsResponse;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.AccountOverviewResponse;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.LoginResponse;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -13,6 +17,7 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -48,20 +53,30 @@ public class CouponsViewController implements RequiresSession {
             // Make FlowPane wrap to the viewport width so cards flow and vertical scroll appears
             couponsScroll.viewportBoundsProperty().addListener((obs, oldV, newV) -> {
                 // subtract a little padding so cards don’t clip the scrollbar
-                couponsFlow.setPrefWrapLength(Math.max(0, newV.getWidth() - 16));
+                if (couponsFlow != null) {
+                    couponsFlow.setPrefWrapLength(Math.max(0, newV.getWidth() - 16));
+                }
             });
         }
 
-        couponsFlow.setHgap(12);
-        couponsFlow.setVgap(12);
-        couponsFlow.setPadding(new Insets(8));
-        // sensible initial wrap length before first layout pass
-        couponsFlow.setPrefWrapLength(520);
+        if (couponsFlow != null) {
+            couponsFlow.setHgap(12);
+            couponsFlow.setVgap(12);
+            couponsFlow.setPadding(new Insets(8));
+            // sensible initial wrap length before first layout pass
+            couponsFlow.setPrefWrapLength(520);
+        }
 
         btnLoadMore.setOnAction(e -> loadNextPage());
         btnLoadMore.setVisible(false);
         couponsLoading.setVisible(false);
         couponsCountLabel.setText("(0)");
+
+        // NEW: if we landed here already logged in, start loading immediately
+        long id = ClientSession.getCustomerId();
+        if (id > 0) {
+            setCustomerId(id); // reuse your existing flow
+        }
     }
 
     @Override
@@ -74,7 +89,7 @@ public class CouponsViewController implements RequiresSession {
         page = 0;
         totalCount = 0;
         all.clear();
-        couponsFlow.getChildren().clear();
+        if (couponsFlow != null) couponsFlow.getChildren().clear();
         requestPage(0);
     }
 
@@ -87,6 +102,7 @@ public class CouponsViewController implements RequiresSession {
     private void requestPage(int p) {
         couponsLoading.setVisible(true);
         try {
+            // server infers customer from connection; no need to ship customerId
             SimpleClient.getClient().sendToServer(new GetCouponsRequest(p, size));
         } catch (Exception e) {
             e.printStackTrace();
@@ -102,7 +118,7 @@ public class CouponsViewController implements RequiresSession {
                 if (resp == null) return;
 
                 if (resp.getPage() == 0) {
-                    couponsFlow.getChildren().clear();
+                    if (couponsFlow != null) couponsFlow.getChildren().clear();
                     all.clear();
                 }
 
@@ -124,8 +140,33 @@ public class CouponsViewController implements RequiresSession {
         });
     }
 
+    // NEW: if login completes while we're open, kick off loading
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onLogin(LoginResponse r) {
+        if (r == null || !r.isOk()) return;
+        long id = ClientSession.getCustomerId();
+        if (id > 0) setCustomerId(id);
+    }
+
+    // NEW: when overview arrives (hydrated customer), refresh
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onOverview(AccountOverviewResponse r) {
+        if (r == null || !r.isOk() || r.getCustomer() == null) return;
+        long id = ClientSession.getCustomerId();
+        if (id > 0) setCustomerId(id);
+    }
+
+    // NEW: optional, when this view becomes active and nothing loaded yet, fetch page 0
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onActive(ViewTracker.ActiveControllerChanged e) {
+        if (e == null) return;
+        if ("CouponsView".equals(e.controllerId) && customerId > 0 && all.isEmpty()) {
+            resetAndLoad();
+        }
+    }
+
     private void render(List<CouponDTO> items) {
-        if (items == null || items.isEmpty()) return;
+        if (items == null || items.isEmpty() || couponsFlow == null) return;
 
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
@@ -162,5 +203,12 @@ public class CouponsViewController implements RequiresSession {
 
     private static void showError(String msg) {
         new Alert(Alert.AlertType.ERROR, msg, ButtonType.OK).showAndWait();
+    }
+
+    // Optional cleanup if you close/destroy this controller explicitly
+    public void onClose() {
+        if (EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().unregister(this);
+        }
     }
 }

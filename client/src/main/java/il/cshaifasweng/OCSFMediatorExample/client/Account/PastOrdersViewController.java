@@ -2,11 +2,15 @@ package il.cshaifasweng.OCSFMediatorExample.client.Account;
 
 import il.cshaifasweng.OCSFMediatorExample.client.ui.Nav;
 import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
+import il.cshaifasweng.OCSFMediatorExample.client.common.ClientSession;
 import il.cshaifasweng.OCSFMediatorExample.client.common.RequiresSession;
+import il.cshaifasweng.OCSFMediatorExample.client.ui.ViewTracker;
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.Order;
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.Status;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.GetOrdersRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.GetOrdersResponse;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.AccountOverviewResponse;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.LoginResponse;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -19,6 +23,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -93,8 +98,9 @@ public class PastOrdersViewController implements RequiresSession {
 
         filtered = new FilteredList<>(orders, o -> true);
         ordersTable.setItems(filtered);
+        ordersTable.setPlaceholder(new Label("No orders yet."));
 
-        // Status filter options
+        // Status filter options (keep your enum spelling)
         statusFilter.setItems(FXCollections.observableArrayList(
                 "All", Status.PENDING.name(), Status.PAID.name(), Status.PREPARING.name(),
                 Status.SHIPPED.name(), Status.DELIVERED.name(), Status.CANCELED.name()
@@ -107,7 +113,14 @@ public class PastOrdersViewController implements RequiresSession {
         btnOrderDetails.setOnAction(e -> showOrderDetails());
         btnEmptyShopNow.setOnAction(e -> handleShopNow());
 
-        updateUIState();
+        // Boot immediately if we already have a session
+        long id = ClientSession.getCustomerId();
+        if (id > 0) {
+            setCustomerId(id);
+        } else {
+            ordersEmptyLabel.setText("Log in to view your orders.");
+            updateUIState();
+        }
     }
 
     @Override
@@ -120,6 +133,8 @@ public class PastOrdersViewController implements RequiresSession {
         try {
             orders.clear();
             updateUIState();
+            if (customerId <= 0) return;
+            // your server expects String customerId, fine
             SimpleClient.getClient().sendSafely(new GetOrdersRequest(String.valueOf(customerId)));
         } catch (Exception e) {
             showError("Failed to request orders: " + e.getMessage());
@@ -137,6 +152,32 @@ public class PastOrdersViewController implements RequiresSession {
             applyFilters(); // reapply current filters to fresh data
             updateUIState();
         });
+    }
+
+    // Kick off loading when login completes
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onLogin(LoginResponse r) {
+        if (r == null || !r.isOk()) return;
+        long id = ClientSession.getCustomerId();
+        if (id > 0) setCustomerId(id);
+    }
+
+    // Refresh when hydrated overview arrives
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onOverview(AccountOverviewResponse r) {
+        if (r == null || !r.isOk() || r.getCustomer() == null) return;
+        long id = ClientSession.getCustomerId();
+        if (id > 0) setCustomerId(id);
+    }
+
+    // Optional: reload if user navigates here and data is empty
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onActive(ViewTracker.ActiveControllerChanged e) {
+        if (e == null) return;
+        String id = e.controllerId != null ? e.controllerId : e.getControllerId();
+        if ("PastOrdersView".equals(id) && orders.isEmpty() && ClientSession.getCustomerId() > 0) {
+            requestOrders();
+        }
     }
 
     private void applyFilters() {

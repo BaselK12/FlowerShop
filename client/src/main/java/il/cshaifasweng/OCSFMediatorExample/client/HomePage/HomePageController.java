@@ -10,6 +10,8 @@ import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.AddToCartReque
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.FlowerDTO;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.GetCatalogRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.GetCatalogResponse;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.LoginResponse;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.AccountOverviewResponse;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -24,6 +26,7 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.IOException;
 import java.util.Comparator;
@@ -72,10 +75,8 @@ public class HomePageController {
             throw new IllegalStateException("HomePage.fxml is missing fx:id='centerStack' StackPane.");
         }
 
-        // Initial login state
-        loggedIn = ClientSession.getCustomerId() != 0L;
-        setVisibleManaged(btnAccount, loggedIn);
-        setVisibleManaged(btnLogin, !loggedIn);
+        // Initial login state from session
+        applySessionFromClient();
 
         // Ask server for catalog (no special filter)
         try {
@@ -116,16 +117,21 @@ public class HomePageController {
                 Nav.go(centerStack, "/il/cshaifasweng/OCSFMediatorExample/client/Catalog/CatalogView.fxml"));
     }
 
+    private void applySessionFromClient() {
+        loggedIn = ClientSession.getCustomerId() != 0L;
+        setVisibleManaged(btnAccount, loggedIn);
+        setVisibleManaged(btnLogin, !loggedIn);
+        // optional: if you have a role getter in ClientSession, you can toggle admin here.
+        // Example (guarded): setVisibleManaged(btnAdmin, ClientSession.getLoginRole() == Role.ADMIN);
+    }
+
     // =========================
-    // Listen: UI login event
+    // Listen: UI login event (kept for compatibility with your existing flow)
     // =========================
     @Subscribe
     public void onUserLoggedIn(UserLoggedInEvent e) {
         Platform.runLater(() -> {
-            loggedIn = true;
-            setVisibleManaged(btnAccount, true);
-            setVisibleManaged(btnLogin, false);
-
+            applySessionFromClient();
             // Rebuild cards so Add-to-Cart becomes enabled without nagging
             rebuildFeaturedCards(latestFlowers);
             // Optional: re-ask server in case user-specific pricing/promos exist
@@ -135,6 +141,22 @@ public class HomePageController {
                 ex.printStackTrace();
             }
         });
+    }
+
+    // NEW: react to actual login message so header flips even if no custom event fired
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onLoginResponse(LoginResponse r) {
+        if (r == null || !r.isOk()) return;
+        applySessionFromClient();
+        rebuildFeaturedCards(latestFlowers);
+    }
+
+    // NEW: react to overview so display updates after server hydrates the customer
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onOverview(AccountOverviewResponse r) {
+        if (r == null || !r.isOk() || r.getCustomer() == null) return;
+        applySessionFromClient();
+        rebuildFeaturedCards(latestFlowers);
     }
 
     // =========================
@@ -192,7 +214,7 @@ public class HomePageController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
                     "/il/cshaifasweng/OCSFMediatorExample/client/Customer/CustomerLoginPage.fxml"));
 
-            javafx.scene.Parent root = loader.load(); // <-- not var
+            javafx.scene.Parent root = loader.load();
 
             Stage dialog = new Stage(StageStyle.DECORATED);
             dialog.setTitle("Login");
@@ -204,7 +226,7 @@ public class HomePageController {
             }
             if (owner != null) dialog.initOwner(owner);
 
-            dialog.setScene(new Scene(root)); // now it compiles
+            dialog.setScene(new Scene(root));
             dialog.setResizable(false);
             dialog.showAndWait();
         } catch (IOException ex) {
@@ -219,7 +241,6 @@ public class HomePageController {
             rebuildFeaturedCards(latestFlowers);
         }
     }
-
 
     // =========================
     // Details dialog

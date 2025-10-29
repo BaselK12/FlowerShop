@@ -15,6 +15,10 @@ import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.SetPremiumR
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.SetStoreRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.PaymentDTO;
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.Payment;
+import il.cshaifasweng.OCSFMediatorExample.client.common.ClientSession;
+import il.cshaifasweng.OCSFMediatorExample.client.common.RequiresSession;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.LoginResponse;
+import org.greenrobot.eventbus.ThreadMode;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -35,7 +39,7 @@ import java.util.Objects;
 
 import static com.google.common.base.Strings.nullToEmpty;
 
-public class ProfileViewController {
+public class ProfileViewController implements RequiresSession {
 
     // Containers
     @FXML private AnchorPane ProfilePane;
@@ -85,6 +89,10 @@ public class ProfileViewController {
     private void initialize() {
         if (!EventBus.getDefault().isRegistered(this)) {
             EventBus.getDefault().register(this);
+        }
+        if (currentId == 0L) {
+            long id = ClientSession.getCustomerId();
+            if (id > 0) currentId = id;
         }
 
         // Buttons follow state via bindings; never call setDisable on them directly
@@ -362,6 +370,16 @@ public class ProfileViewController {
                 }
             }
         });
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onLogin(LoginResponse r) {
+        if (r == null || !r.isOk()) return;
+        long id = ClientSession.getCustomerId();
+        if (id > 0) {
+            currentId = id;       // keep local in sync
+            requestOverview();     // refresh labels/form with hydrated data
+        }
     }
 
     @Subscribe
