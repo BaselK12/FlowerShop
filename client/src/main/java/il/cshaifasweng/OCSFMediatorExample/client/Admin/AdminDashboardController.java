@@ -2,6 +2,8 @@ package il.cshaifasweng.OCSFMediatorExample.client.Admin;
 
 import il.cshaifasweng.OCSFMediatorExample.client.App;
 import il.cshaifasweng.OCSFMediatorExample.client.ui.Nav;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.AddPromotionsRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.AddPromotionsResponse;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.DeleteFlowerRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.DeleteFlowerResponse;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.*;
@@ -24,6 +26,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.*;
 
 public class AdminDashboardController {
@@ -50,8 +53,17 @@ public class AdminDashboardController {
     @FXML private Button employeesBtn;
     @FXML private Button ComplaintsBtn;
 
+
     @FXML private ScrollPane CenterStack;
 
+    // promotions
+    @FXML private Button btnSendPromotion;
+
+    @FXML private DatePicker dpPromoEnd;
+    @FXML private DatePicker dpPromoStart;
+    @FXML private TextField txtPromoDiscount;
+    @FXML private TextField txtPromoDiscription;
+    @FXML private TextField txtPromoTitle;
 
 
     @FXML private VBox flowerSelectBox;
@@ -154,6 +166,84 @@ public class AdminDashboardController {
         onDeleteFlower(selected);
     }
 
+    @FXML
+    private void onSendPromotion() {
+        try {
+            // === 1. Validate inputs ===
+            String name = txtPromoTitle.getText();
+            String description = txtPromoDiscription.getText();
+            String discountStr = txtPromoDiscount.getText();
+            LocalDate validFrom = dpPromoStart.getValue();
+            LocalDate validTo = dpPromoEnd.getValue();
+
+            if (name == null || name.isBlank()) {
+                showError("Missing title", "Please enter a promotion title.");
+                return;
+            }
+
+            if (discountStr == null || discountStr.isBlank()) {
+                showError("Missing discount", "Please enter a discount value.");
+                return;
+            }
+
+            double amount;
+            try {
+                amount = Double.parseDouble(discountStr);
+            } catch (NumberFormatException e) {
+                showError("Invalid discount", "Discount must be a valid number.");
+                return;
+            }
+
+            if (amount <= 0) {
+                showError("Invalid discount", "Discount must be greater than 0.");
+                return;
+            }
+
+            // === 2. Collect selected flowers ===
+            List<FlowerDTO> selected = new ArrayList<>();
+            for (FlowerDTO flower : flowers) {
+                CheckBox cb = checkboxBySku.get(flower.getSku());
+                if (cb != null && cb.isSelected()) {
+                    selected.add(flower);
+                }
+            }
+
+            if (selected.isEmpty()) {
+                showError("No flowers selected", "Please select at least one flower for this promotion.");
+                return;
+            }
+
+            // === 3. Build request ===
+            AddPromotionsRequest req = new AddPromotionsRequest(
+                    name,
+                    description,
+                    amount,
+                    validFrom,
+                    validTo,
+                    selected
+            );
+
+            // === 4. Send to server ===
+            App.getClient().sendToServer(req);
+
+            // === 5. Feedback to admin ===
+            showInfo("Promotion Sent", "Promotion '" + name + "' was sent successfully.");
+
+            // Optional: clear input fields
+            txtPromoTitle.clear();
+            txtPromoDiscription.clear();
+            txtPromoDiscount.clear();
+            dpPromoStart.setValue(null);
+            dpPromoEnd.setValue(null);
+            checkboxBySku.values().forEach(cb -> cb.setSelected(false));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            showError("Error", "Failed to send promotion: " + e.getMessage());
+        }
+    }
+
+
 
 
     // =================== EVENTBUS RESPONSES ===================
@@ -173,6 +263,34 @@ public class AdminDashboardController {
                     .toList());
         });
     }
+
+    @Subscribe
+    public void onAddPromotionsResponse(AddPromotionsResponse res) {
+        Platform.runLater(() -> {
+            if (!res.isSuccess()) {
+                showError("Promotion Failed", res.getMessage());
+                return;
+            }
+
+            // 1. Success feedback
+            showInfo("Promotion Added", res.getMessage());
+
+            // 2. Refresh flowers (some now have active promotions)
+            requestFlowers();
+
+            // 3. Refresh promotions table
+            requestPromotions();
+
+            // 4. Reset input fields and checkboxes
+            txtPromoTitle.clear();
+            txtPromoDiscription.clear();
+            txtPromoDiscount.clear();
+            dpPromoStart.setValue(null);
+            dpPromoEnd.setValue(null);
+            checkboxBySku.values().forEach(cb -> cb.setSelected(false));
+        });
+    }
+
 
     // =================== RECORD FOR PROMOTIONS ===================
     public record PromotionRow(

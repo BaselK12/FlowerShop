@@ -2,6 +2,7 @@ package il.cshaifasweng.OCSFMediatorExample.server;
 
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.*;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Admin.AdminLoginRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.AddPromotionsRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.*;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Complaint.GetCustomerComplaintsRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.GetOrdersRequest;
@@ -159,6 +160,8 @@ public class SimpleServer extends ObservableServer {
 				bus.publish(new SaveFlowerRequestEvent(rr, client));
 			}else if (msg instanceof AdminLoginRequest rr) {
 				bus.publish(new AdminLoginRequestEvent(rr, client));
+			}else if (msg instanceof AddPromotionsRequest rr) {
+				bus.publish(new AddPromotionsRequestEvent(rr, client));
 			}
 			else if (msg instanceof GetComplaintsRequest rr) {
 				bus.publish(new ComplaintsFetchRequestedEvent(

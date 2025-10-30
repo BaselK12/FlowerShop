@@ -113,7 +113,7 @@
                                           <TextField fx:id="txtPromoDiscount" promptText="Discount %" GridPane.columnSpan="2" GridPane.rowIndex="2" />
                                           <DatePicker fx:id="dpPromoStart" maxWidth="1.7976931348623157E308" prefHeight="47.0" promptText="Start Date" GridPane.rowIndex="3" />
                                           <DatePicker fx:id="dpPromoEnd" maxWidth="1.7976931348623157E308" prefHeight="47.0" promptText="End Date" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                                          <Button fx:id="btnSendPromotion" maxWidth="1.7976931348623157E308" mnemonicParsing="false" prefHeight="35.0" styleClass="btn-primary" text="Send Promorion" GridPane.columnSpan="2" GridPane.rowIndex="4" />
+                                          <Button fx:id="btnSendPromotion" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onSendPromotion" prefHeight="35.0" styleClass="btn-primary" text="Send Promorion" GridPane.columnSpan="2" GridPane.rowIndex="4" />
                                        </children>
                                     </GridPane>
                                  </children>
