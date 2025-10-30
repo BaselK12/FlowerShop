@@ -51,6 +51,8 @@ public class AdminLoginPageController {
     @FXML // fx:id="PassTxt"
     private PasswordField PassTxt; // Value injected by FXMLLoader
 
+    @FXML // fx:id="RegisterBtn"
+    private Button RegisterBtn; // Value injected by FXMLLoader
 
     private boolean isValidEmail(String s) {
         if (s == null) return false;
@@ -77,6 +79,7 @@ public class AdminLoginPageController {
             Nav.go(BackBtn, returnToFxml);
         });
     }
+
 
 
     @FXML

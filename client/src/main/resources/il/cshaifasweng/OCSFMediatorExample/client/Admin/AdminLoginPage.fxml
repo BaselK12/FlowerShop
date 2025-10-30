@@ -41,7 +41,7 @@
          </HBox>
          <HBox alignment="CENTER" prefHeight="3.0" prefWidth="357.0" spacing="32.0">
             <children>
-                <Button fx:id="BackBtn" cancelButton="true" mnemonicParsing="false" onAction="#BackBtnOnAction" prefHeight="29.0" prefWidth="70.0" text="Back" wrapText="true" />
+                <Button fx:id="BackBtn" cancelButton="true" mnemonicParsing="false" prefHeight="29.0" prefWidth="70.0" text="Back" wrapText="true" />
                 <Button fx:id="LoginBtn" defaultButton="true" mnemonicParsing="false" onAction="#LoginBtnOnAction" text="Login" wrapText="true" />
             </children>
             <padding>
