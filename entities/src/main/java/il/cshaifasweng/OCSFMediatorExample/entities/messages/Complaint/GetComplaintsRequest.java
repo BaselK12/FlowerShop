@@ -5,17 +5,19 @@ import java.io.Serializable;
 public class GetComplaintsRequest implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private final String storeName;  // null = whole company
+    private final Long storeID;  // null = whole company
     private final String type;       // null = all types
     private final String status;     // null = all statuses
 
-    public GetComplaintsRequest(String storeName, String type, String status) {
-        this.storeName = emptyToNull(storeName);
+    public GetComplaintsRequest(Long storeID, String type, String status) {
+        this.storeID = storeID;
         this.type = emptyToNull(type);
         this.status = emptyToNull(status);
     }
 
-    public String getStoreName() { return storeName; }
+    public Long getStoreId() {
+        return storeID;
+    }
     public String getType() { return type; }
     public String getStatus() { return status; }
 
@@ -24,6 +26,6 @@ public class GetComplaintsRequest implements Serializable {
     }
 
     @Override public String toString() {
-        return "GetComplaintsRequest{store=" + storeName + ", type=" + type + ", status=" + status + "}";
+        return "GetComplaintsRequest{store=" + storeID + ", type=" + type + ", status=" + status + "}";
     }
 }

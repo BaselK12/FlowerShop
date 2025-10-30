@@ -27,9 +27,7 @@ import javafx.event.ActionEvent;
 
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 public class ManageComplaintsController {
 
@@ -65,6 +63,8 @@ public class ManageComplaintsController {
     // Constants
     private static final String SCOPE_WHOLE = "Whole Company";
     private static final String SCOPE_STORE = "Specific Store";
+    private final Map<String, Long> storeNameToId = new HashMap<>();
+
 
     @FXML
     private void initialize() {
@@ -165,12 +165,14 @@ public class ManageComplaintsController {
         }
 
         String scope = ScopeCombo.getValue();
-        String store = scopeEqualsStore(scope) ? StoreCombo.getValue() : null;
         String type = TypeCombo.getValue();
         String status = StatusCombo.getValue();
 
+        String storeName = scopeEqualsStore(scope) ? StoreCombo.getValue() : null;
+        Long storeId = (storeName != null) ? storeNameToId.get(storeName) : null;
+
         GetComplaintsRequest req = new GetComplaintsRequest(
-                scopeEqualsStore(scope) ? Optional.ofNullable(store).orElse(null) : null,
+                scopeEqualsStore(scope) ? storeId : null,
                 normalizeAll(type),
                 normalizeAll(status)
         );
@@ -189,10 +191,9 @@ public class ManageComplaintsController {
             return;
         }
         try {
-            client.sendToServer(new GetStoresRequest());
+            SimpleClient.getClient().sendToServer(new GetStoresRequest());
         } catch (Exception e) {
             e.printStackTrace();
-            showError("Failed to load stores list. Please try again later.");
         }
     }
 
@@ -214,17 +215,30 @@ public class ManageComplaintsController {
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onStoresResponse(GetStoresResponse resp) {
         if (resp == null || resp.stores == null) return;
+
+        storeNameToId.clear(); // reset old data
+
         ObservableList<String> storeNames = FXCollections.observableArrayList();
         for (StoreOption option : resp.stores) {
             if (option != null && option.name != null && !option.name.isBlank()) {
                 storeNames.add(option.name);
+                try {
+                    // convert String → Long safely when inserting
+                    Long idLong = Long.parseLong(option.id);
+                    storeNameToId.put(option.name, idLong);
+                } catch (NumberFormatException e) {
+                    System.err.println("[WARN] invalid store ID format: " + option.id);
+                }
             }
         }
+
         StoreCombo.getSelectionModel().clearSelection();
         StoreCombo.setItems(storeNames);
+
         boolean specific = scopeEqualsStore(ScopeCombo.getValue());
         StoreCombo.setDisable(!specific || storeNames.isEmpty());
     }
+
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onStoresError(GetStoresError err) {
