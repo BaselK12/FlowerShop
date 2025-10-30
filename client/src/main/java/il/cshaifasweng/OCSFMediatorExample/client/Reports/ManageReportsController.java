@@ -10,10 +10,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.chart.BarChart;
-import javafx.scene.chart.LineChart;
-import javafx.scene.chart.PieChart;
-import javafx.scene.chart.XYChart;
+import javafx.scene.chart.*;
 import javafx.scene.control.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
@@ -46,6 +43,8 @@ public class ManageReportsController {
 
     @FXML private TabPane ChartsTabs;
     @FXML private BarChart<String, Number> BarChart;
+    @FXML private PieChart PieChart;
+    @FXML private LineChart<String, Number> LineChart;
     @FXML private ProgressIndicator Loading;
     @FXML private CheckBox OnlyCompletedOrdersBox;
     @FXML private Button QTRBtn, RunBtn, D30Btn, D7Btn, ExportPDFBtn;
@@ -57,6 +56,9 @@ public class ManageReportsController {
     @FXML private ComboBox<String> GroupByBox;
     @FXML private DatePicker ToDate, FromDate;
     @FXML private TableView<Map<String,Object>> Table;
+    @FXML private CategoryAxis xAxis;
+    @FXML private NumberAxis yAxis;
+
 
     @FXML private Button BackBtn;
 
@@ -114,6 +116,18 @@ public class ManageReportsController {
             setLoading(false);
             e.printStackTrace();
         }
+
+        if (BarChart != null && xAxis != null && yAxis != null) {
+            BarChart.setTitle("Orders by Date");
+            BarChart.setAnimated(false);
+            BarChart.setCategoryGap(15);
+            BarChart.setBarGap(3);
+            BarChart.setLegendVisible(true);
+            xAxis.setLabel("Date");
+            yAxis.setLabel("Orders");
+        }
+
+
     }
 
     /* ===================== EventBus: support BOTH paths ===================== */
@@ -156,6 +170,11 @@ public class ManageReportsController {
             setLoading(false);
             lastSchema = payload.schema;
             lastRows   = payload.rows == null ? new ArrayList<>() : new ArrayList<>(payload.rows);
+            System.out.println("[DEBUG] Rows received from server: " +
+                    (payload.rows == null ? 0 : payload.rows.size()));
+            if (payload.rows != null && !payload.rows.isEmpty()) {
+                System.out.println("Sample row: " + payload.rows.get(0));
+            }
             buildTable(payload.schema, payload.rows);
             buildCharts(payload.schema, payload.rows, payload.chartSuggestion);
             if (RowCountLabel != null) RowCountLabel.setText(Integer.toString(lastRows.size()));
@@ -251,10 +270,20 @@ public class ManageReportsController {
 
     private void buildCharts(ReportSchema schema, List<Map<String,Object>> data, ChartSuggestion suggestion) {
         if (BarChart != null) BarChart.getData().clear();
+        if (LineChart != null) LineChart.getData().clear();
+        if (PieChart != null) PieChart.getData().clear();
 
         if (data == null || data.isEmpty() || schema == null || schema.columns == null || schema.columns.isEmpty()) {
             return;
         }
+
+        System.out.println("=== DEBUG SCHEMA COLUMNS ===");
+        if (schema.columns != null) {
+            for (ColumnDef c : schema.columns) {
+                System.out.printf(" - key=%s, type=%s%n", c.key, c.type);
+            }
+        }
+        System.out.println("=============================");
 
         ChartKind kind = suggestion != null && suggestion.kind != null ? suggestion.kind : ChartKind.BAR;
         String categoryKey = suggestion != null ? suggestion.categoryKey : null;
@@ -280,13 +309,24 @@ public class ManageReportsController {
             }
         }
 
+        kind = ChartKind.BAR;
+
         if (valueKey == null || categoryKey == null) return;
 
+        System.out.println("got here" + kind);
+
         switch (kind) {
+            case LINE -> { if (LineChart != null) buildSeriesChart(LineChart, data, categoryKey, valueKey, seriesKey); }
+            case PIE  -> { if (PieChart != null) buildPieChart(data, categoryKey, valueKey); }
             case BAR  -> { if (BarChart != null) buildSeriesChart(BarChart, data, categoryKey, valueKey, seriesKey); }
         }
 
         selectChartTab(kind);
+
+        Platform.runLater(() -> {
+            ChartsTabs.requestLayout();
+            ChartsTabs.getSelectionModel().select(0); // make sure "Bar" tab is visible
+        });
     }
 
     private void buildSeriesChart(XYChart<String, Number> chart,
@@ -294,29 +334,134 @@ public class ManageReportsController {
                                   String categoryKey,
                                   String valueKey,
                                   String seriesKey) {
-        if (chart == null) return;
+        if (chart == null || data == null || data.isEmpty()) {
+            System.out.println("[Chart] No chart or no data");
+            return;
+        }
+
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        // Normalize categories to yyyy-MM-dd strings
+        List<Map<String, Object>> normalized = new ArrayList<>();
+        for (Map<String, Object> row : data) {
+            Map<String, Object> copy = new HashMap<>(row);
+            Object raw = row.get(categoryKey);
+
+            if (raw instanceof LocalDate d) {
+                copy.put(categoryKey, d.format(fmt));
+            } else if (raw instanceof java.sql.Date d) {
+                copy.put(categoryKey, d.toLocalDate().format(fmt));
+            } else if (raw instanceof java.util.Date d) {
+                copy.put(categoryKey, new java.text.SimpleDateFormat("yyyy-MM-dd").format(d));
+            } else if (raw instanceof String s) {
+                // Already string — normalize to yyyy-MM-dd
+                if (s.matches("\\d{4}-\\d{2}-\\d{2}.*")) {
+                    copy.put(categoryKey, s.substring(0, 10));
+                } else {
+                    copy.put(categoryKey, s);
+                }
+            } else {
+                copy.put(categoryKey, "(blank)");
+            }
+
+            normalized.add(copy);
+        }
+
+        // Sort by actual LocalDate order, not lexicographically
+        normalized.sort(Comparator.comparing(m -> {
+            String val = Objects.toString(m.get(categoryKey), "");
+            try {
+                return LocalDate.parse(val, fmt);
+            } catch (Exception e) {
+                return LocalDate.MIN;
+            }
+        }));
 
         Map<String, XYChart.Series<String, Number>> seriesMap = new LinkedHashMap<>();
+
+        for (Map<String, Object> row : normalized) {
+            String category = Objects.toString(row.get(categoryKey), "(blank)");
+
+            Object rawVal = row.get(valueKey);
+            System.out.println("[DEBUG] Row category=" + row.get(categoryKey)
+                    + "  raw value=" + rawVal + " (" + (rawVal == null ? "null" : rawVal.getClass().getName()) + ")");
+            Double value = toDouble(rawVal);
+            if (value == null) {
+                System.out.println("[DEBUG] → toDouble returned null for valueKey=" + valueKey);
+                continue;
+            }
+
+//            Double value = toDouble(row.get(valueKey));
+//            if (value == null) continue;
+
+            String seriesName = (seriesKey != null && hasValue(row, seriesKey))
+                    ? Objects.toString(row.get(seriesKey), "(blank)")
+                    : valueKey;
+
+            XYChart.Series<String, Number> series = seriesMap.computeIfAbsent(seriesName, k -> {
+                XYChart.Series<String, Number> s = new XYChart.Series<>();
+                s.setName(k);
+                return s;
+            });
+
+            series.getData().add(new XYChart.Data<>(category, value));
+        }
+
+        if (seriesMap.isEmpty()) {
+            System.out.println("[Chart] No valid data points to display");
+            return;
+        }
+
+        Platform.runLater(() -> {
+            System.out.println("[Chart] Rendering chart → " + seriesMap.size() + " series");
+            chart.getData().clear();
+
+            if (chart.getXAxis() instanceof CategoryAxis x) {
+                x.getCategories().clear(); // important refresh for day-by-day
+                x.setAutoRanging(true);
+                x.setAnimated(false);
+            }
+            if (chart.getYAxis() instanceof NumberAxis y) {
+                y.setAutoRanging(true);
+                y.setAnimated(false);
+            }
+
+            chart.setAnimated(false);
+            chart.getData().setAll(seriesMap.values());
+            chart.applyCss();
+            chart.layout();
+            chart.requestLayout();
+
+            for (var s : chart.getData()) {
+                System.out.println("   Series: " + s.getName() + " → " + s.getData().size() + " points");
+            }
+        });
+    }
+
+
+
+
+
+
+    private void buildPieChart(List<Map<String, Object>> data,
+                               String categoryKey,
+                               String valueKey) {
+        if (PieChart == null) return;
+
+        Map<String, Double> slices = new LinkedHashMap<>();
 
         for (Map<String, Object> row : data) {
             String category = Objects.toString(row.get(categoryKey), "(blank)");
             Double value = toDouble(row.get(valueKey));
             if (value == null) continue;
-
-            String seriesName = valueKey;
-            if (seriesKey != null && hasValue(row, seriesKey)) {
-                seriesName = Objects.toString(row.get(seriesKey), "(blank)");
-            }
-
-            XYChart.Series<String, Number> series = seriesMap.computeIfAbsent(seriesName, key -> {
-                XYChart.Series<String, Number> s = new XYChart.Series<>();
-                s.setName(key);
-                return s;
-            });
-            series.getData().add(new XYChart.Data<>(category, value));
+            slices.merge(category, value, Double::sum);
         }
 
-        chart.getData().setAll(new ArrayList<>(seriesMap.values()));
+        List<PieChart.Data> pieData = new ArrayList<>();
+        for (Map.Entry<String, Double> entry : slices.entrySet()) {
+            pieData.add(new PieChart.Data(entry.getKey(), entry.getValue()));
+        }
+        PieChart.getData().setAll(pieData);
     }
 
 

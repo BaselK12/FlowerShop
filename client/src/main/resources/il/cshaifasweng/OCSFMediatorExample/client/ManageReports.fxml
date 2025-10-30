@@ -160,10 +160,10 @@
                                             <children>
                                                 <BarChart fx:id="BarChart" layoutX="15.0" layoutY="23.0" prefHeight="250.0" prefWidth="390.0">
                                                     <xAxis>
-                                                        <CategoryAxis />
+                                                        <CategoryAxis fx:id="xAxis" label="Date" />
                                                     </xAxis>
                                                     <yAxis>
-                                                        <NumberAxis side="LEFT" />
+                                                        <NumberAxis fx:id="yAxis" label="Orders" />
                                                     </yAxis>
                                                 </BarChart>
                                             </children>
