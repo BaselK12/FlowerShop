@@ -56,7 +56,6 @@
 				<version>0.0.8</version>
 				<configuration>
 					<mainClass>il.cshaifasweng.OCSFMediatorExample.client.Main</mainClass>
-					<javafx.version>21.0.1</javafx.version>
 				</configuration>
 			</plugin>
 			<plugin>
