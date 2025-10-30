@@ -51,8 +51,6 @@ public class AdminLoginPageController {
     @FXML // fx:id="PassTxt"
     private PasswordField PassTxt; // Value injected by FXMLLoader
 
-    @FXML // fx:id="RegisterBtn"
-    private Button RegisterBtn; // Value injected by FXMLLoader
 
     private boolean isValidEmail(String s) {
         if (s == null) return false;
@@ -80,16 +78,6 @@ public class AdminLoginPageController {
         });
     }
 
-    @FXML
-    public void BackBtnOnAction(ActionEvent event) {
-        try {
-            // send a msg that an admin pressed back from login page
-            SimpleClient.getClient().sendToServer("AdminLoginPage Back");
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 
     @FXML
     void LoginBtnOnAction(ActionEvent event) {
