@@ -7,7 +7,6 @@
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
@@ -22,7 +21,35 @@
          </children>
       </HBox>
    </top>
-   <left>
+   <right>
+      <VBox fx:id="sekectedBox" prefHeight="488.0" prefWidth="549.0" spacing="10.0" styleClass="section-pane" BorderPane.alignment="CENTER">
+         <children>
+            <Label styleClass="section-title" text="Selected Flowers:" />
+            <TableView fx:id="selectedFlowerTable" prefHeight="400.0" prefWidth="435.0">
+              <columns>
+                <TableColumn fx:id="colSellName" prefWidth="75.0" text="Flower" />
+                <TableColumn fx:id="colSelQty" prefWidth="75.0" text="Quantity" />
+                  <TableColumn fx:id="ColSelSubtotal" prefWidth="75.0" text="Subtotal" />
+                  <TableColumn fx:id="colSelRemove" prefWidth="75.0" />
+              </columns>
+               <columnResizePolicy>
+                  <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+               </columnResizePolicy>
+            </TableView>
+         </children>
+      </VBox>
+   </right>
+   <bottom>
+      <HBox fx:id="footerBar" alignment="CENTER_RIGHT" prefHeight="50.0" prefWidth="200.0" spacing="10.0" styleClass="footer-bar" BorderPane.alignment="CENTER">
+         <children>
+            <Button fx:id="BackBtn" mnemonicParsing="false" styleClass="btn-secondary" text="Back" />
+            <Button fx:id="btnClear" mnemonicParsing="false" prefHeight="36.0" prefWidth="120.0" styleClass="btn-secondary" text="Clear" />
+            <Button fx:id="btnSave" mnemonicParsing="false" prefHeight="36.0" prefWidth="140.0" styleClass="btn-primary" text="Save Bouquet" />
+            <Button fx:id="btnCheckout" mnemonicParsing="false" prefHeight="36.0" prefWidth="130.0" styleClass="btn-primary" text="Checkout" />
+         </children>
+      </HBox>
+   </bottom>
+   <center>
       <ScrollPane fx:id="availableScroll" fitToWidth="true" prefHeight="200.0" prefWidth="380.0" BorderPane.alignment="CENTER">
         <content>
           <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="576.0" prefWidth="365.0">
@@ -46,43 +73,5 @@
             </AnchorPane>
         </content>
       </ScrollPane>
-   </left>
-   <center>
-      <ScrollPane fx:id="PreviewScroll" fitToWidth="true" prefHeight="200.0" prefWidth="440.0" BorderPane.alignment="CENTER">
-        <content>
-          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="574.0" prefWidth="398.0">
-               <children>
-                  <FlowPane fx:id="bouquetPreviewPane" hgap="10.0" layoutX="122.0" layoutY="14.0" prefHeight="569.0" prefWidth="398.0" styleClass="section-pane" vgap="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-               </children>
-            </AnchorPane>
-        </content>
-      </ScrollPane>
    </center>
-   <right>
-      <VBox fx:id="sekectedBox" prefHeight="200.0" prefWidth="420.0" spacing="10.0" styleClass="section-pane" BorderPane.alignment="CENTER">
-         <children>
-            <Label styleClass="section-title" text="Selected Flowers:" />
-            <TableView fx:id="selectedFlowerTable" prefHeight="400.0" prefWidth="200.0">
-              <columns>
-                <TableColumn fx:id="colSellName" prefWidth="75.0" text="Flower" />
-                <TableColumn fx:id="colSelQty" prefWidth="75.0" text="Quantity" />
-                  <TableColumn fx:id="ColSelSubtotal" prefWidth="75.0" text="Subtotal" />
-                  <TableColumn fx:id="colSelRemove" prefWidth="75.0" />
-              </columns>
-               <columnResizePolicy>
-                  <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-               </columnResizePolicy>
-            </TableView>
-         </children>
-      </VBox>
-   </right>
-   <bottom>
-      <HBox fx:id="footerBar" alignment="CENTER_RIGHT" prefHeight="50.0" prefWidth="200.0" spacing="10.0" styleClass="footer-bar" BorderPane.alignment="CENTER">
-         <children>
-            <Button fx:id="btnClear" mnemonicParsing="false" prefHeight="36.0" prefWidth="120.0" styleClass="btn-secondary" text="Clear" />
-            <Button fx:id="btnSave" mnemonicParsing="false" prefHeight="36.0" prefWidth="140.0" styleClass="btn-primary" text="Save Bouquet" />
-            <Button fx:id="btnCheckout" mnemonicParsing="false" prefHeight="36.0" prefWidth="130.0" styleClass="btn-primary" text="Checkout" />
-         </children>
-      </HBox>
-   </bottom>
 </BorderPane>
