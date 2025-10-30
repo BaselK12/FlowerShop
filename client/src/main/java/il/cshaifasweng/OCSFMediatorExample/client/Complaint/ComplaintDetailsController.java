@@ -105,7 +105,7 @@ public class ComplaintDetailsController {
         if (emailValue != null)   emailValue.setText("N/A");   // fill from customers table if/when available
         if (phoneValue != null)   phoneValue.setText("N/A");
         if (orderIdValue != null) orderIdValue.setText(c.getOrderId() != null ? String.valueOf(c.getOrderId()) : "N/A");
-        if (storeNameValue != null) storeNameValue.setText(c.getStoreId() != null ? ("Store #" + c.getStoreId()) : "N/A");
+        if (storeNameValue != null) storeNameValue.setText(c.getStoreId() != null ? (c.getStoreName()) : "N/A");
 
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
         if (createdAtValue != null) createdAtValue.setText(c.getCreatedAt() != null ? c.getCreatedAt().format(fmt) : "N/A");
