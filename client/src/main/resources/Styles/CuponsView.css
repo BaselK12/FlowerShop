@@ -1,0 +1,122 @@
+/* =========================================================
+   Coupons View — Elegant & Romantic Unified Theme
+   IntelliJ-safe | SceneBuilder-safe | Consistent style
+   ========================================================= */
+
+/* 1) Root + palette */
+.root {
+    -blush:       #E8A7B3;   /* primary accent */
+    -mauve:       #D8A7B1;   /* secondary accent */
+    -ivory:       #FFF9F9;   /* base background */
+    -beige:       #F5E2D3;   /* warm tone */
+    -rosewood:    #5A4E4E;   /* dark accent */
+    -headerText:  #FFF9F9;   /* bright text */
+    -ink:         #3A2D2D;   /* normal text */
+
+    -fx-background-color: linear-gradient(#FFF9F9, #F5E2D3);
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-text-fill: -ink;
+}
+
+/* 2) Title area */
+.hbox {
+    -fx-padding: 10 16;
+    -fx-alignment: CENTER_LEFT;
+    -fx-spacing: 10;
+    -fx-border-color: transparent transparent -mauve transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-background-color: transparent;
+}
+
+#couponsTitleLabel {
+    -fx-text-fill: -ink;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+#couponsCountLabel {
+    -fx-text-fill: #7A6767;
+    -fx-font-size: 16px;
+    -fx-padding: 0 0 0 6;
+}
+
+/* 3) Scroll area and flow container */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 8;
+}
+
+.flow-pane {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 12;
+    -fx-hgap: 12;
+    -fx-vgap: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 6, 0, 0, 2);
+}
+
+/* 4) Coupon card (for dynamic coupon nodes) */
+.coupon-card {
+    -fx-background-color: -ivory;
+    -fx-border-color: -mauve;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 10 12;
+    -fx-pref-width: 250;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.04), 4, 0, 0, 2);
+    -fx-transition: all 0.2s ease-in-out;
+}
+
+.coupon-card:hover {
+    -fx-background-color: rgba(232,167,179,0.15); /* soft blush tint */
+    -fx-cursor: hand;
+}
+
+/* Optional text inside coupon cards */
+.coupon-card .label {
+    -fx-text-fill: -ink;
+    -fx-font-size: 13px;
+}
+
+/* 5) Load More button */
+.button {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-cursor: hand;
+    -fx-padding: 6 18;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 4, 0, 0, 1);
+}
+
+/* Primary blush button */
+#btnLoadMore {
+    -fx-background-color: -blush;
+    -fx-text-fill: -headerText;
+}
+#btnLoadMore:hover {
+    -fx-background-color: -mauve;
+}
+
+/* 6) Progress indicator */
+.progress-indicator {
+    -fx-progress-color: -mauve;
+}
+
+/* 7) VBox layout base */
+.vbox {
+    -fx-spacing: 10;
+    -fx-padding: 20;
+}
+
+/* 8) Soft label tone */
+.label-soft {
+    -fx-text-fill: #6A5A5A;
+    -fx-font-size: 12px;
+    -fx-font-style: italic;
+}
