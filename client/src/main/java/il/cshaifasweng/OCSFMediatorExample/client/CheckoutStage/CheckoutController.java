@@ -57,6 +57,8 @@ public class CheckoutController {
     // Stores
     private static final long DEFAULT_DELIVERY_STORE_ID = 1L;
     private java.util.List<StoreOption> storeOptions = new java.util.ArrayList<>();
+    private boolean storesLoaded = false;
+    private Long resolvedDefaultStoreId = null;
 
     // Customer info
     @FXML private TextField FullNameText;
@@ -360,8 +362,17 @@ public class CheckoutController {
             if (pickupBranch != null && pickupBranch.getValue() != null) {
                 StoreOption so = pickupBranch.getValue();
                 pk.setBranchName(so.name);
-                try { dto.setStoreId(Long.parseLong(so.id)); } catch (Exception ignored) {}
+                try {
+                    dto.setStoreId(Long.parseLong(so.id));   // must be a real DB id
+                } catch (Exception ex) {
+                    error("Pickup", "Selected branch is invalid. Please reselect.");
+                    return; // abort confirm
+                }
+            } else {
+                error("Pickup", "Please select a pickup branch.");
+                return;
             }
+
             if (pickupDate != null)   pk.setPickupDate(pickupDate.getValue());
             if (pickupTime != null)   pk.setPickupTime(pickupTime.getText());
             if (pickupPhone != null)  pk.setPhone(pickupPhone.getText());
@@ -371,10 +382,28 @@ public class CheckoutController {
             d.setCity(CityBox != null ? CityBox.getText() : null);
             d.setStreet(StreetText != null ? StreetText.getText() : null);
             d.setHouse(HouseText != null ? HouseText.getText() : null);
+            // Add these three lines:
+            if (DeliveryDatePicker != null && DeliveryDatePicker.getValue() != null) {
+                d.setDeliveryDate(DeliveryDatePicker.getValue());
+            }
+            if (DeliveryTimeText != null) {
+                d.setDeliveryTime(DeliveryTimeText.getText());
+            }
+
+            if (PhoneText != null) {
+                d.setPhone(PhoneText.getText());
+            }
+
             dto.setDelivery(d);
 
             // Default store for delivery
-            dto.setStoreId(DEFAULT_DELIVERY_STORE_ID);
+            if (resolvedDefaultStoreId != null) {
+                dto.setStoreId(resolvedDefaultStoreId);
+            } else {
+                error("Delivery", "Store list not ready yet. Please wait a moment and try again.");
+                return;
+            }
+
 
             if (giftCheck != null && giftCheck.isSelected()) {
                 GreetingCardDTO g = new GreetingCardDTO();
@@ -426,6 +455,7 @@ public class CheckoutController {
 
     @Subscribe
     public void onCouponValidated(ValidateCouponResponse r) {
+
         Platform.runLater(() -> {
             if (r == null) return;
             if (!r.isValid()) {
@@ -468,16 +498,25 @@ public class CheckoutController {
     public void onStores(GetStoresResponse r) {
         Platform.runLater(() -> {
             if (r == null || r.stores == null) return;
+
+            storesLoaded = true;                  // <-- mark as ready
             storeOptions.clear();
             storeOptions.addAll(r.stores);
+
             if (pickupBranch != null) {
                 pickupBranch.getItems().setAll(storeOptions);
                 if (pickupBranch.getValue() == null && !pickupBranch.getItems().isEmpty()) {
                     pickupBranch.getSelectionModel().selectFirst();
                 }
             }
+
+            // choose a safe default for delivery
+            if (resolvedDefaultStoreId == null && !storeOptions.isEmpty()) {
+                try { resolvedDefaultStoreId = Long.parseLong(storeOptions.get(0).id); } catch (Exception ignored) {}
+            }
         });
     }
+
 
     // ---------- Step navigation handlers (match FXML onAction) ----------
     @FXML private void handleBack1() { setStep(1); }
@@ -501,6 +540,12 @@ public class CheckoutController {
     // ---------- Validation ----------
 
     private boolean validateMethodStep() {
+        // Prevent placeholder IDs (101/102/...) from being used
+        if (!storesLoaded) {
+            error("Stores", "Store list is still loading. Please wait a second and try again.");
+            return false;
+        }
+
         // Minimal identity sanity
         if (isBlank(FullNameText)) { error("Missing name", "Please enter your name."); return false; }
         if (isBlank(EmailText))    { error("Missing email", "Please enter your email."); return false; }

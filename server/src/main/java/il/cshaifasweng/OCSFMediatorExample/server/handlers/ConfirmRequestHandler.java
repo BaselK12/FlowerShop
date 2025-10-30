@@ -102,6 +102,29 @@ public class ConfirmRequestHandler {
                 dto.setCustomerId(cid);
 
                 Order entity = OrderMapper.fromDTO(dto);
+                if (dto.getStoreId() == null) {
+                    throw new IllegalArgumentException("Missing storeId on order DTO");
+                }
+                entity.setStoreId(dto.getStoreId());
+                if (dto.getPickup() != null) {
+                    // if mapper didn’t wire it, wire it now
+                    if (entity.getPickup() == null) {
+                        // use your existing mapper if you have one
+                        PickupInfo p = il.cshaifasweng.OCSFMediatorExample.server.mapping.PickupInfoMapper.fromDTO(dto.getPickup());
+                        entity.setPickup(p);
+                    }
+                }
+
+                if (dto.getDelivery() != null) {
+                    if (entity.getDelivery() == null) {
+                        DeliveryInfo d = il.cshaifasweng.OCSFMediatorExample.server.mapping.DeliveryInfoMapper.fromDTO(dto.getDelivery());
+                        entity.setDelivery(d);
+                    }
+                }
+
+                if (entity.getPickup() != null)   { try { entity.getPickup().setOrder(entity); } catch (Exception ignored) {} }
+                if (entity.getDelivery() != null) { try { entity.getDelivery().setOrder(entity); } catch (Exception ignored) {} }
+
 
 
 
@@ -112,6 +135,10 @@ public class ConfirmRequestHandler {
                         cup.entity.setUsed(true);
                         s.merge(cup.entity);
                     }
+
+
+
+
                     // You probably persist to DB elsewhere; OrdersRepository keeps an in-memory list as well
                     s.persist(entity);
                     CartRepository.clear(cid);

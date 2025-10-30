@@ -2,6 +2,7 @@ package il.cshaifasweng.OCSFMediatorExample.entities.domain;
 
 import jakarta.persistence.*;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -19,7 +20,6 @@ public class Order implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    // Matches the ENUM('INITIATED','COMPLETED','CANCELLED','REFUNDED') in SQL
     public enum Status {
         INITIATED, COMPLETED, CANCELLED, REFUNDED
     }
@@ -32,10 +32,10 @@ public class Order implements Serializable {
     @Column(name = "store_id", nullable = false)
     private Long storeId;
 
-    @Column(name = "customer_id", nullable = true) // NULL allowed in SQL
+    @Column(name = "customer_id")
     private Long customerId;
 
-    @Column(name = "employee_id", nullable = true)
+    @Column(name = "employee_id")
     private Long employeeId;
 
     @Column(name = "created_at", nullable = false)
@@ -46,16 +46,19 @@ public class Order implements Serializable {
     private Status status;
 
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
-    private java.math.BigDecimal total = java.math.BigDecimal.ZERO;
+    private BigDecimal total = BigDecimal.ZERO;
 
-    // Linked optional entities
-    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    // ---------- 1:1 links OWNED BY Order (FK columns live in orders: delivery_id, pickup_id, greeting_card_id) ----------
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "delivery_id", referencedColumnName = "id")
     private DeliveryInfo delivery;
 
-    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "pickup_id", referencedColumnName = "id")
     private PickupInfo pickup;
 
-    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "greeting_card_id", referencedColumnName = "id")
     private GreetingCard greetingCard;
 
     // ---------- non-persistent (computed / runtime only) ----------
@@ -93,18 +96,9 @@ public class Order implements Serializable {
     public Status getStatus() { return status; }
     public void setStatus(Status status) { this.status = status; }
 
-    // Return double for convenience
-    public double getTotal() {
-        return total != null ? total.doubleValue() : 0.0;
-    }
-
-    public void setTotal(double total) {
-        this.total = java.math.BigDecimal.valueOf(total);
-    }
-
-    public void setTotal(java.math.BigDecimal total) {
-        this.total = total;
-    }
+    public double getTotal() { return total != null ? total.doubleValue() : 0.0; }
+    public void setTotal(double total) { this.total = BigDecimal.valueOf(total); }
+    public void setTotal(BigDecimal total) { this.total = total; }
 
     public DeliveryInfo getDelivery() { return delivery; }
     public void setDelivery(DeliveryInfo delivery) { this.delivery = delivery; }
