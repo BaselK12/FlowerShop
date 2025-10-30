@@ -1,7 +1,11 @@
 package il.cshaifasweng.OCSFMediatorExample.client;
 
+import il.cshaifasweng.OCSFMediatorExample.client.session.ClientSession;
 import il.cshaifasweng.OCSFMediatorExample.client.ui.Nav;
+import il.cshaifasweng.OCSFMediatorExample.entities.domain.CartItemRow;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.AddToCartRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.FlowerDTO;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.CreateBouquet.AddCustomBouquetRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.CreateBouquet.GetFlowersRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.CreateBouquet.GetFlowersResponse;
 import javafx.application.Platform;
@@ -20,6 +24,7 @@ import org.greenrobot.eventbus.Subscribe;
 import java.net.URL;
 import java.util.*;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 
 
 public class CreateBouquetController {
@@ -51,8 +56,7 @@ public class CreateBouquetController {
 
     // ====== Footer Buttons ======
     @FXML private Button btnClear;
-    @FXML private Button btnSave;
-    @FXML private Button btnCheckout;
+    @FXML private Button CartBtn;
     @FXML private Button BackBtn;
 
     // ====== Data ======
@@ -250,22 +254,8 @@ public class CreateBouquetController {
     // =======================================================
     private void setupButtonActions() {
         btnClear.setOnAction(e -> clearBouquet());
+        CartBtn.setOnAction(e -> addCustomBouquetToCart());
 
-        btnSave.setOnAction(e -> {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Bouquet Saved");
-            alert.setHeaderText(null);
-            alert.setContentText("Bouquet saved successfully!");
-            alert.showAndWait();
-        });
-
-        btnCheckout.setOnAction(e -> {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Checkout");
-            alert.setHeaderText(null);
-            alert.setContentText("Proceeding to checkout...");
-            alert.showAndWait();
-        });
     }
 
     // =======================================================
@@ -287,6 +277,45 @@ public class CreateBouquetController {
         public void setQuantity(int quantity) { this.quantity = quantity; }
         public double getSubtotal() { return price * quantity; }
     }
+
+    private void addCustomBouquetToCart() {
+        if (selectedMap.isEmpty()) {
+            showError("Your bouquet is empty. Add some flowers first!");
+            return;
+        }
+
+        // Calculate total price
+        double totalPrice = selectedMap.values().stream()
+                .mapToDouble(SelectedItem::getSubtotal)
+                .sum();
+
+        // Build a flower composition map (flower name → quantity)
+        Map<String, Integer> composition = selectedMap.values().stream()
+                .collect(Collectors.toMap(SelectedItem::getName, SelectedItem::getQuantity));
+
+        // Ensure the user is logged in
+        Long customerId = ClientSession.getCustomerId();
+        if (customerId == 0) {
+            showError("You must be logged in to add items to your cart.");
+            return;
+        }
+
+        // Send the request to the server
+        try {
+            App.getClient().sendToServer(new AddCustomBouquetRequest(totalPrice, composition));
+
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Added to Cart");
+            alert.setHeaderText(null);
+            alert.setContentText("Your custom bouquet was added to the cart!");
+            alert.showAndWait();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            showError("Failed to add bouquet to cart.");
+        }
+    }
+
+
 
     // =======================================================
     // Events handler
