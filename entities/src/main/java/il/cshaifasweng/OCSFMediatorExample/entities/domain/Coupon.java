@@ -15,7 +15,7 @@ public class Coupon implements Serializable {
     @JoinColumn(name = "customer_id")
     private Customer customer;
 
-    @Column(nullable = false, length = 64)
+    @Column(nullable = false, length = 64, unique = true)
     private String code;
 
     @Column(nullable = false, length = 128)
@@ -34,6 +34,21 @@ public class Coupon implements Serializable {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     public Coupon() {}
+
+    public Coupon(Customer customer, String code, String title,
+                  String description, LocalDate expiration, boolean used) {
+        this.customer = customer;
+        this.code = code;
+        this.title = title;
+        this.description = description;
+        this.expiration = expiration;
+        this.used = used;
+    }
+
+    @Transient
+    public long daysRemaining() {
+        return expiration != null ? LocalDate.now().until(expiration).getDays() : 0;
+    }
 
     // getters/setters
     public Long getId() { return id; }

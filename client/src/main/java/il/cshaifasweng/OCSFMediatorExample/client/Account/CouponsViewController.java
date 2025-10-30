@@ -172,34 +172,50 @@ public class CouponsViewController implements RequiresSession {
 
         for (CouponDTO c : items) {
             VBox card = new VBox(6);
-            card.setPrefWidth(300);
-            card.setPrefHeight(110);
+            card.setPrefWidth(320);
+            card.setPrefHeight(160);
+            card.setPadding(new Insets(12));
             card.setStyle(
                     "-fx-background-color: white; " +
                             "-fx-background-radius: 12; " +
-                            "-fx-padding: 12; " +
-                            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 6, 0, 0, 0);"
+                            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 6, 0, 0, 0);"
             );
 
+            // Title
             Label title = new Label(c.getTitle());
-            title.setStyle("-fx-font-size: 16px; -fx-text-fill: #2c3e50;");
+            title.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
 
+            // Coupon code
+            Label code = new Label("Code: " + (c.getCode() != null ? c.getCode() : "—"));
+            code.setStyle("-fx-text-fill: #34495e; -fx-font-size: 13px;");
+
+            // Description
+            Label desc = new Label(c.getDescription() != null ? c.getDescription() : "No description");
+            desc.setWrapText(true);
+            desc.setStyle("-fx-text-fill: #6b7a90; -fx-font-size: 13px;");
+
+            // Expiration date
             var exp = c.getExpiration() != null ? c.getExpiration().format(fmt) : "—";
-            Label expiry = new Label("Valid until " + exp);
-            expiry.setStyle("-fx-text-fill: #6b7a90;");
+            Label expiry = new Label("Valid until: " + exp);
+            expiry.setStyle("-fx-text-fill: #6b7a90; -fx-font-size: 13px;");
 
+            // Status badge
             Label status = new Label(c.isActive() ? "Active" : "Expired");
             status.setStyle(c.isActive()
-                    ? "-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-padding: 2 8 2 8; -fx-background-radius: 8; -fx-font-size: 12px;"
-                    : "-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 2 8 2 8; -fx-background-radius: 8; -fx-font-size: 12px;"
+                    ? "-fx-background-color: #27ae60; -fx-text-fill: white; -fx-padding: 3 10 3 10; -fx-background-radius: 8; -fx-font-size: 12px;"
+                    : "-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 3 10 3 10; -fx-background-radius: 8; -fx-font-size: 12px;"
             );
 
-            if (!c.isActive()) card.setOpacity(0.6);
+            // Add all components
+            card.getChildren().addAll(title, code, desc, expiry, status);
 
-            card.getChildren().addAll(title, expiry, status);
+            // Dim expired cards
+            if (!c.isActive()) card.setOpacity(0.7);
+
             couponsFlow.getChildren().add(card);
         }
     }
+
 
     private static void showError(String msg) {
         new Alert(Alert.AlertType.ERROR, msg, ButtonType.OK).showAndWait();

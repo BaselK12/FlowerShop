@@ -7,6 +7,8 @@ import il.cshaifasweng.OCSFMediatorExample.client.common.RequiresSession;
 import il.cshaifasweng.OCSFMediatorExample.client.ui.ViewTracker;
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.Order;
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.Status;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.CancelOrderRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.CancelOrderResponse;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.GetOrdersRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.GetOrdersResponse;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.AccountOverviewResponse;
@@ -110,7 +112,7 @@ public class PastOrdersViewController implements RequiresSession {
         // Buttons
         btnRefreshOrders.setOnAction(e -> requestOrders());
         btnApplyFilters.setOnAction(e -> applyFilters());
-        btnOrderDetails.setOnAction(e -> showOrderDetails());
+        btnOrderDetails.setOnAction(e -> cancelSelectedOrder());
         btnEmptyShopNow.setOnAction(e -> handleShopNow());
 
         // Boot immediately if we already have a session
@@ -180,6 +182,52 @@ public class PastOrdersViewController implements RequiresSession {
         }
     }
 
+    @Subscribe
+    public void onCancelOrderResponse(CancelOrderResponse resp) {
+        Platform.runLater(() -> {
+            if (resp == null) return;
+
+            if (resp.isSuccess()) {
+                StringBuilder msg = new StringBuilder(resp.getMessage());
+
+                // Show refund details if available
+                if (resp.getRefundAmount() > 0) {
+                    msg.append(String.format("\nRefunded: ₪%.2f", resp.getRefundAmount()));
+                }
+
+                new Alert(Alert.AlertType.INFORMATION, msg.toString(), ButtonType.OK).showAndWait();
+
+                // Refresh the table to reflect cancelled status
+                requestOrders();
+
+            } else {
+                new Alert(Alert.AlertType.ERROR, resp.getMessage(), ButtonType.OK).showAndWait();
+            }
+        });
+    }
+
+    private void cancelSelectedOrder() {
+        Order selected = ordersTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            new Alert(Alert.AlertType.WARNING, "Please select an order first.").showAndWait();
+            return;
+        }
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
+                "Are you sure you want to cancel order #" + selected.getId() + "?",
+                ButtonType.YES, ButtonType.NO);
+        confirm.setHeaderText("Cancel Order");
+        confirm.showAndWait();
+
+        if (confirm.getResult() != ButtonType.YES) return;
+
+        try {
+            SimpleClient.getClient().sendSafely(new CancelOrderRequest(selected.getId()));
+        } catch (Exception e) {
+            new Alert(Alert.AlertType.ERROR, "Failed to send cancel request: " + e.getMessage()).showAndWait();
+        }
+    }
+
     private void applyFilters() {
         String q = orderSearchField.getText() == null ? "" : orderSearchField.getText().trim().toLowerCase();
         LocalDate from = fromDatePicker.getValue();
@@ -216,21 +264,6 @@ public class PastOrdersViewController implements RequiresSession {
         boolean empty = count == 0;
         ordersEmptyBox.setVisible(empty);
         ordersTable.setVisible(!empty);
-    }
-
-    private void showOrderDetails() {
-        Order selected = ordersTable.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            new Alert(Alert.AlertType.WARNING, "Please select an order first.").showAndWait();
-            return;
-        }
-        String details = "Order ID: " + selected.getId() +
-                "\nDate: " + (selected.getCreatedAt() != null
-                ? selected.getCreatedAt().toLocalDate().format(dateFormatter)
-                : "") +
-                "\nTotal: $" + String.format("%.2f", selected.getTotal()) +
-                "\nStatus: " + (selected.getStatus() != null ? selected.getStatus().name() : "");
-        new Alert(Alert.AlertType.INFORMATION, details).showAndWait();
     }
 
     @FXML

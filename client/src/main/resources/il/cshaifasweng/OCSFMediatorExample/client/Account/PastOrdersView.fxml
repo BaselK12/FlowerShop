@@ -82,7 +82,7 @@
       </StackPane>
       <HBox fx:id="ordersActions" alignment="CENTER_RIGHT" prefHeight="100.0" prefWidth="200.0" spacing="10.0">
          <children>
-            <Button fx:id="btnOrderDetails" minHeight="32.0" mnemonicParsing="false" prefHeight="36.0" text="View Details" textFill="WHITE" />
+            <Button fx:id="btnOrderDetails" minHeight="32.0" mnemonicParsing="false" prefHeight="36.0" text="Cancel Order" textFill="WHITE" />
          </children>
       </HBox>
    </children>

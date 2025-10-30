@@ -13,18 +13,10 @@ public class PickupInfoMapper {
         if (dto == null) return null;
 
         PickupInfo info = new PickupInfo();
-        info.setShopId(dto.getBranchName()); // treat branchName as shop identifier for now
+        info.setBranchName(dto.getBranchName());
+        info.setPickupDate(dto.getPickupDate());
+        info.setPickupTime(dto.getPickupTime());
         info.setPhone(dto.getPhone());
-
-        // Combine date + time into LocalDateTime
-        LocalDate date = dto.getPickupDate();
-        String timeStr = dto.getPickupTime();
-        if (date != null && timeStr != null) {
-            try {
-                LocalTime time = LocalTime.parse(timeStr);
-                info.setScheduledAt(LocalDateTime.of(date, time));
-            } catch (Exception ignored) {}
-        }
 
         return info;
     }
@@ -33,13 +25,10 @@ public class PickupInfoMapper {
         if (entity == null) return null;
 
         PickupInfoDTO dto = new PickupInfoDTO();
-        dto.setBranchName(entity.getShopId());
+        dto.setBranchName(entity.getBranchName());
+        dto.setPickupDate(entity.getPickupDate());
+        dto.setPickupTime(entity.getPickupTime());
         dto.setPhone(entity.getPhone());
-
-        if (entity.getScheduledAt() != null) {
-            dto.setPickupDate(entity.getScheduledAt().toLocalDate());
-            dto.setPickupTime(entity.getScheduledAt().toLocalTime().toString());
-        }
 
         return dto;
     }
