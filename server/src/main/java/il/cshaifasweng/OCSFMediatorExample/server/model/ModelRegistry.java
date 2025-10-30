@@ -16,7 +16,11 @@ public final class ModelRegistry {
                 Coupon.class,
                 Payment.class,
                 CartItemRow.class,
-                Order.class
+                Order.class,
+                PickupInfo.class,
+                DeliveryInfo.class,
+                GreetingCard.class
+
                 // Department.class, Order.class, Product.class, Customer.class, ...
         };
     }

@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 public class DeliveryInfoMapper {
+
     public static DeliveryInfo fromDTO(DeliveryInfoDTO dto) {
         if (dto == null) return null;
 
@@ -19,14 +20,21 @@ public class DeliveryInfoMapper {
         delivery.setDeliveryDate(dto.getDeliveryDate());
         delivery.setDeliveryTime(dto.getDeliveryTime());
 
-        // Optionally combine for easier scheduling logic
-        if (dto.getDeliveryDate() != null && dto.getDeliveryTime() != null) {
-            try {
-                LocalTime time = LocalTime.parse(dto.getDeliveryTime());
-                delivery.setScheduledAt(LocalDateTime.of(dto.getDeliveryDate(), time));
-            } catch (Exception ignored) {}
-        }
-
         return delivery;
+    }
+
+    public static DeliveryInfoDTO toDTO(DeliveryInfo entity) {
+        if (entity == null) return null;
+
+        DeliveryInfoDTO dto = new DeliveryInfoDTO();
+        dto.setCity(entity.getCity());
+        dto.setStreet(entity.getStreet());
+        dto.setHouse(entity.getHouse());
+        dto.setZipCode(entity.getZipCode());
+        dto.setPhone(entity.getPhone());
+        dto.setDeliveryDate(entity.getDeliveryDate());
+        dto.setDeliveryTime(entity.getDeliveryTime());
+
+        return dto;
     }
 }

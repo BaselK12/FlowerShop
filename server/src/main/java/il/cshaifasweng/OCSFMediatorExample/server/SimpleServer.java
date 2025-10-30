@@ -165,8 +165,10 @@ public class SimpleServer extends ObservableServer {
 				bus.publish(new AdminLoginRequestEvent(rr, client));
 			}else if (msg instanceof AddPromotionsRequest rr) {
 				bus.publish(new AddPromotionsRequestEvent(rr, client));
-			} else if (msg instanceof AddCustomBouquetRequest rr) {
+			}else if (msg instanceof AddCustomBouquetRequest rr) {
 				bus.publish(new AddCustomBouquetRequestEvent(rr, client));
+			} else if (msg instanceof CancelOrderRequest rr) {
+				bus.publish(new CancelOrderRequestEvent(rr, client));
 			} else if (msg instanceof GetComplaintsRequest rr) {
 				bus.publish(new ComplaintsFetchRequestedEvent(
 						rr.getStatus(),

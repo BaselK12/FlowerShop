@@ -54,6 +54,7 @@ public class App {
         new AdminLoginRequestHandler(bus);
         new AddPromotionsRequestHandler(bus);
         new AddCustomBouquetRequestHandler(bus);
+        new CancelOrderHandler(bus);
 
 
 
