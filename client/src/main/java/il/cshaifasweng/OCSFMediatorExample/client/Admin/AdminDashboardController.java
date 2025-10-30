@@ -6,7 +6,9 @@ import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.Dele
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.DeleteFlowerResponse;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.*;
 import javafx.application.Platform;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -25,6 +27,12 @@ import java.io.IOException;
 import java.util.*;
 
 public class AdminDashboardController {
+
+    private static volatile String returnToFxml =
+            "/il/cshaifasweng/OCSFMediatorExample/client/HomePage/HomePage.fxml";
+    public static void setReturnTo(String fxml) { returnToFxml = fxml; }
+    private final BooleanProperty loggingIn = new SimpleBooleanProperty(false);
+
 
     // =================== FXML FIELDS ===================
     @FXML private TableView<FlowerDTO> flowersTable;
@@ -72,6 +80,13 @@ public class AdminDashboardController {
 
         requestFlowers();
         requestPromotions();
+
+
+        LogOutBtn.setOnAction(e -> {
+            System.out.println("[RegisterUI] Back clicked -> " + returnToFxml);
+            cleanup();
+            Nav.go(LogOutBtn, returnToFxml);
+        });
 
         // Header buttons: wire navigation
         reportsBtn.setOnAction(e ->
@@ -313,6 +328,13 @@ public class AdminDashboardController {
         } catch (IOException e) {
             e.printStackTrace();
             showError("Error", "Failed to open flower editor: " + e.getMessage());
+        }
+    }
+
+    private void cleanup() {
+        if (EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().unregister(this);
+            System.out.println("[RegisterUI] EventBus unregistered");
         }
     }
 
