@@ -50,6 +50,10 @@ public class CatalogViewController {
     @FXML private ComboBox<String> categoryCombo;
     @FXML private ComboBox<String> promoModeCombo;
 
+    @FXML private Button BouquetBtn;
+    @FXML private Button cartBtn;
+
+
     // Content
     @FXML private TilePane itemsGrid;
     @FXML private HBox promotionsStrip;
@@ -114,6 +118,11 @@ public class CatalogViewController {
         if (promoModeCombo != null) {
             promoModeCombo.setOnAction(e -> applyFilters());
         }
+
+        cartBtn.setOnAction(e ->
+                Nav.go(cartBtn, "/il/cshaifasweng/OCSFMediatorExample/client/Cart/CartView.fxml"));
+        BouquetBtn.setOnAction(e ->
+                Nav.go(BouquetBtn, "/il/cshaifasweng/OCSFMediatorExample/client/CreateBouquet.fxml"));
     }
 
     /** Call this when navigating away to avoid EventBus leaks. */

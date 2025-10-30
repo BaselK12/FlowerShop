@@ -1,9 +1,12 @@
 package il.cshaifasweng.OCSFMediatorExample.client;
 
+import il.cshaifasweng.OCSFMediatorExample.client.ui.Nav;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.FlowerDTO;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.CreateBouquet.GetFlowersRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.CreateBouquet.GetFlowersResponse;
 import javafx.application.Platform;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
@@ -20,6 +23,12 @@ import java.util.ResourceBundle;
 
 
 public class CreateBouquetController {
+
+    private static volatile String returnToFxml =
+            "/il/cshaifasweng/OCSFMediatorExample/client/Catalog/CatalogView.fxml";
+    public static void setReturnTo(String fxml) { returnToFxml = fxml; }
+    private final BooleanProperty loggingIn = new SimpleBooleanProperty(false);
+
 
     // ====== Header ======
     @FXML private Label totalPriceLable;
@@ -44,6 +53,7 @@ public class CreateBouquetController {
     @FXML private Button btnClear;
     @FXML private Button btnSave;
     @FXML private Button btnCheckout;
+    @FXML private Button BackBtn;
 
     // ====== Data ======
     private final List<FlowerDTO> availableFlowers = new ArrayList<>();
@@ -70,6 +80,12 @@ public class CreateBouquetController {
             e.printStackTrace();
             showError("Could not load flowers from server.");
         }
+
+        BackBtn.setOnAction(e -> {
+            System.out.println("[RegisterUI] Back clicked -> " + returnToFxml);
+            cleanup();
+            Nav.go(BackBtn, returnToFxml);
+        });
 
         updateTotalPrice();
     }
@@ -294,5 +310,12 @@ public class CreateBouquetController {
         alert.setHeaderText(null);
         alert.setContentText(msg);
         alert.showAndWait();
+    }
+
+    private void cleanup() {
+        if (EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().unregister(this);
+            System.out.println("[RegisterUI] EventBus unregistered");
+        }
     }
 }
