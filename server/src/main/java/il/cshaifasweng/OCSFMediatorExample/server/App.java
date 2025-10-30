@@ -2,6 +2,7 @@ package il.cshaifasweng.OCSFMediatorExample.server;
 
 import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.*;
+import il.cshaifasweng.OCSFMediatorExample.server.handlers.Admin.AdminLoginRequestHandler;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.Flower.DeleteFlowerHandler;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.Flower.GetFlowersHandler;
 import il.cshaifasweng.OCSFMediatorExample.server.handlers.Flower.SaveFlowerHandler;
@@ -48,6 +49,8 @@ public class App {
         new GetReportHandler(bus);
         new SetStoreHandler(bus);
         new PremiumHandler(bus);
+        new AdminLoginRequestHandler(bus);
+
 
 
 
