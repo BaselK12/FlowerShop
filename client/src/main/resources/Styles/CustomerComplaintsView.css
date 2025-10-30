@@ -82,4 +82,41 @@
 }
 
 .table-view .label {
-    -fx-text-f
+    -fx-text-fill: -ink;
+}
+
+/* Table placeholder */
+.table-view .placeholder .label {
+    -fx-text-fill: #6A5A5A;
+    -fx-font-style: italic;
+}
+
+/* 5) Bottom bar */
+.border-pane > .bottom {
+    -fx-background-color: transparent;
+    -fx-border-color: -mauve transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+    -fx-padding: 8 12;
+}
+
+/* Count label */
+#countLabel {
+    -fx-text-fill: -rosewood;
+    -fx-font-size: 13px;
+    -fx-font-style: italic;
+}
+
+/* 6) General layout adjustments */
+.vbox {
+    -fx-spacing: 12;
+}
+
+.hbox {
+    -fx-spacing: 12;
+}
+
+.label-soft {
+    -fx-text-fill: #6A5A5A;
+    -fx-font-size: 12px;
+    -fx-font-style: italic;
+}
