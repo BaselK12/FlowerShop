@@ -103,6 +103,7 @@ public class AdminLoginPageController {
                 return;
             }
             // send a msg that an Admin pressed login from login page
+            System.out.println("[LoginUI] LoginBtnOnAction");
             App.getClient().sendToServer(new AdminLoginRequest(email, pass));
         }
         catch (Exception e) {

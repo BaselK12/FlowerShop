@@ -18,7 +18,6 @@ import java.util.Locale;
 import java.util.Optional;
 
 public class AdminLoginRequestHandler {
-
     private final ServerBus bus;
 
     public AdminLoginRequestHandler(ServerBus bus) {
@@ -48,14 +47,13 @@ public class AdminLoginRequestHandler {
                     return;
                 }
 
-                // 3) Query admin from DB
+                // 3) Query employee by email only
                 Employee admin = TX.call(s -> {
                     Query<Employee> q = s.createQuery(
-                            "from Employee e where e.email = :email and e.role = :role",
+                            "from Employee e where e.email = :email",
                             Employee.class
                     );
                     q.setParameter("email", email);
-                    q.setParameter("role", "Florist"); // DB role string
                     return q.uniqueResultOptional().orElse(null);
                 });
 
@@ -64,22 +62,24 @@ public class AdminLoginRequestHandler {
                     return;
                 }
 
+                // 4) Check password
                 if (!matchesPlainOrLegacyHash(password, safeStrip(admin.getPasswordHash()))) {
                     send(client, false, "Wrong email or password", "Florist");
                     return;
                 }
 
-                // 4) Register session
+                // 5) Register session (role is a string literal)
+                String role = "Florist";
                 String display = admin.getName() != null ? admin.getName() : admin.getEmail();
                 SessionManager.get().registerLogin(
                         admin.getEmail().toLowerCase(Locale.ROOT),
-                        "Florist",
+                        role,
                         display,
                         client
                 );
 
-                send(client, true, "Admin login successful", "Florist");
-                System.out.printf("[LOGIN] ADMIN ok email=%s role=%s%n", admin.getEmail(), admin.getRole());
+                send(client, true, "Admin login successful", role);
+                System.out.printf("[LOGIN] ADMIN ok email=%s role=%s%n", admin.getEmail(), role);
 
             } catch (Exception ex) {
                 ex.printStackTrace();
