@@ -171,8 +171,7 @@ public class SimpleServer extends ObservableServer {
 				bus.publish(new ComplaintsFetchRequestedEvent(
 						rr.getStatus(),
 						rr.getType(),
-						// You currently pass storeName (string). Later you might resolve this to storeId (Long).
-						null,               // storeId (if you only have name, set null for now or add lookup)
+						rr.getStoreId(),               // storeId (if you only have name, set null for now or add lookup)
 						null,               // customerId
 						null,               // orderId
 						null,               // from
