@@ -5,6 +5,7 @@ import il.cshaifasweng.OCSFMediatorExample.entities.messages.Admin.AdminLoginReq
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.AddPromotionsRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.*;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Complaint.GetCustomerComplaintsRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.CreateBouquet.AddCustomBouquetRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.GetOrdersRequest;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Account.*;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.DeleteFlowerRequest;
@@ -164,8 +165,9 @@ public class SimpleServer extends ObservableServer {
 				bus.publish(new AdminLoginRequestEvent(rr, client));
 			}else if (msg instanceof AddPromotionsRequest rr) {
 				bus.publish(new AddPromotionsRequestEvent(rr, client));
-			}
-			else if (msg instanceof GetComplaintsRequest rr) {
+			} else if (msg instanceof AddCustomBouquetRequest rr) {
+				bus.publish(new AddCustomBouquetRequestEvent(rr, client));
+			} else if (msg instanceof GetComplaintsRequest rr) {
 				bus.publish(new ComplaintsFetchRequestedEvent(
 						rr.getStatus(),
 						rr.getType(),

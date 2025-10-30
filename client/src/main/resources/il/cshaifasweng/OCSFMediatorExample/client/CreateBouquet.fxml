@@ -44,8 +44,7 @@
          <children>
             <Button fx:id="BackBtn" mnemonicParsing="false" styleClass="btn-secondary" text="Back" />
             <Button fx:id="btnClear" mnemonicParsing="false" prefHeight="36.0" prefWidth="120.0" styleClass="btn-secondary" text="Clear" />
-            <Button fx:id="btnSave" mnemonicParsing="false" prefHeight="36.0" prefWidth="140.0" styleClass="btn-primary" text="Save Bouquet" />
-            <Button fx:id="btnCheckout" mnemonicParsing="false" prefHeight="36.0" prefWidth="130.0" styleClass="btn-primary" text="Checkout" />
+            <Button fx:id="CartBtn" mnemonicParsing="false" prefHeight="36.0" prefWidth="140.0" styleClass="btn-primary" text="Add To Cart" />
          </children>
       </HBox>
    </bottom>
