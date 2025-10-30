@@ -2,6 +2,7 @@ package il.cshaifasweng.OCSFMediatorExample.client.Cart;
 
 import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.CartUpdateRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.RemoveFromCartRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.CartItem;
 import javafx.animation.PauseTransition;
 import javafx.event.ActionEvent;
@@ -19,123 +20,91 @@ import java.text.NumberFormat;
 import java.util.Locale;
 
 public class CartItemCardController {
-
-    @FXML private ImageView ProductImage;
+    @FXML private Label NameLabel;
+    @FXML private Label UnitPriceLabel;
+    @FXML private Label SubTotalLabel;
     @FXML private Spinner<Integer> QtySpinner;
     @FXML private Button RemoveBtn;
-    @FXML private Label SubTotalLabel;
-    @FXML private Label UnitPriceLabel;
-    @FXML private Label NameLabel;
+    @FXML private ImageView ProductImage;
 
     private CartItem item;
-    private Runnable onDelete;   // parent callback to remove this card from UI
-    private Runnable onUpdate;   // parent callback to refresh totals
+    private Runnable onDelete;   // parent callback to refresh list after delete
+    private Runnable onUpdate;   // parent callback to refresh totals after qty change
 
-    // helpers
-    private final NumberFormat currency = NumberFormat.getCurrencyInstance(new Locale("he", "IL"));
+    private final NumberFormat currency = NumberFormat.getCurrencyInstance(Locale.US);
     private final PauseTransition debounce = new PauseTransition(Duration.millis(200));
     private volatile boolean removing = false;
 
     @FXML
     private void initialize() {
-        // Spinner is programmatically controlled; prevent free text that can cause exceptions
+        // Spinner programmatic setup; min=0 enables "remove on zero"
         if (QtySpinner != null) {
-            QtySpinner.setEditable(false);
-        }
-    }
-
-    public void setData(CartItem item, Runnable onDelete, Runnable onUpdate) {
-        this.item = item;
-        this.onDelete = onDelete;
-        this.onUpdate = onUpdate;
-
-        if (NameLabel != null) {
-            NameLabel.setText(item.getName() != null ? item.getName() : "");
-        }
-        if (UnitPriceLabel != null) {
-            UnitPriceLabel.setText(currency.format(item.getUnitPrice()));
-        }
-
-        // load image defensively
-        if (ProductImage != null) {
-            try {
-                String url = item.getPictureUrl();
-                if (url != null && !url.isBlank()) {
-                    Image img = new Image(url, true);
-                    // If it fails, we just leave the ImageView as-is
-                    ProductImage.setImage(img);
-                } else {
-                    ProductImage.setImage(null);
-                }
-            } catch (Exception ignored) { /* no-op */ }
-        }
-
-        int qty = Math.max(1, item.getQuantity());
-        if (QtySpinner != null) {
-            QtySpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 99, qty));
-        }
-        updateSubtotal();
-
-        // debounce quantity changes so we don't spam the server
-        if (QtySpinner != null) {
-            QtySpinner.valueProperty().addListener((obs, oldVal, newVal) -> {
-                if (newVal == null || removing) return;
-                item.setQuantity(newVal);
-                updateSubtotal();
-                if (onUpdate != null) onUpdate.run();
-
-                // restart debounce timer
+            QtySpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 99, 1));
+            QtySpinner.valueProperty().addListener((obs, oldV, newV) -> {
+                if (item == null || removing) return;
                 debounce.stop();
-                debounce.setOnFinished(e -> sendQtyUpdate());
+                debounce.setOnFinished(ev -> {
+                    if (newV == null) return;
+                    if (newV <= 0) {
+                        // zero means remove
+                        onRemove(null);
+                    } else {
+                        // update qty
+                        item.setQuantity(newV); // client DTO clamps >=1, but we only get here for >=1
+                        sendUpdate(item);
+                        if (onUpdate != null) onUpdate.run();
+                        updateSubtotal();
+                    }
+                });
                 debounce.playFromStart();
             });
         }
     }
 
-    private void sendQtyUpdate() {
-        try {
-            SimpleClient.getClient().sendToServer(new CartUpdateRequest(item));
-        } catch (IOException ex) {
-            // If sending fails, the next CartState from server will reconcile us anyway.
-            ex.printStackTrace();
+    void setData(CartItem item, Runnable onDelete, Runnable onUpdate) {
+        this.item = item;
+        this.onDelete = onDelete;
+        this.onUpdate = onUpdate;
+
+        if (NameLabel != null) NameLabel.setText(item.getName() != null ? item.getName() : item.getSku());
+        if (UnitPriceLabel != null) UnitPriceLabel.setText(currency.format(item.getUnitPrice()));
+        if (QtySpinner != null) QtySpinner.getValueFactory().setValue(Math.max(0, item.getQuantity()));
+        updateSubtotal();
+
+        if (ProductImage != null && item.getPictureUrl() != null && !item.getPictureUrl().isBlank()) {
+            try {
+                ProductImage.setImage(new Image(item.getPictureUrl(), true));
+            } catch (Exception ignored) {}
         }
     }
 
     private void updateSubtotal() {
         if (SubTotalLabel != null) {
-            SubTotalLabel.setText(currency.format(item.getSubtotal()));
+            double subtotal = item.getUnitPrice() * Math.max(0, QtySpinner.getValue());
+            SubTotalLabel.setText(currency.format(subtotal));
+        }
+    }
+
+    private void sendUpdate(CartItem it) {
+        try {
+            SimpleClient.getClient().sendToServer(new CartUpdateRequest(it));
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
     @FXML
     private void onRemove(ActionEvent e) {
-        if (removing) return;
+        if (item == null) return;
         removing = true;
-
-        // make sure debounce doesn't send an outdated qty
-        debounce.stop();
-
-        // Temporarily lock UI on this card to avoid double actions
-        setControlsDisabled(true);
-
-        // optimistic UI: remove immediately
-        if (onDelete != null) onDelete.run();
-
-        // tell server this SKU is gone by setting quantity to zero on the SAME item
         try {
-            item.setQuantity(0);
-            SimpleClient.getClient().sendToServer(new CartUpdateRequest(item));
+            SimpleClient.getClient().sendToServer(new RemoveFromCartRequest(item.getSku()));
         } catch (IOException ex) {
             ex.printStackTrace();
-            // If you want to roll back UI on failure, you can re-enable:
-            // setControlsDisabled(false);
         } finally {
+            // Optimistic UI: let the parent refresh after server ack
+            if (onDelete != null) onDelete.run();
             removing = false;
         }
-    }
-
-    private void setControlsDisabled(boolean disabled) {
-        if (RemoveBtn != null) RemoveBtn.setDisable(disabled);
-        if (QtySpinner != null) QtySpinner.setDisable(disabled);
     }
 }

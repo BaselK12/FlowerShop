@@ -2,6 +2,7 @@ package il.cshaifasweng.OCSFMediatorExample.server;
 
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.*;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Admin.AdminLoginRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.*;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Complaint.GetCustomerComplaintsRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.GetOrdersRequest;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Account.*;
@@ -20,6 +21,7 @@ import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.UpdateEmpl
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.RegisterRequest;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.*;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Cart.*;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Catalog.GetCatalogRequestEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Catalog.GetCategoriesRequestEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Catalog.GetPromotionsRequestEvent;
@@ -29,16 +31,6 @@ import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Flowers.SaveFlowerR
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ObservableServer;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ConnectionToClient;
 import il.cshaifasweng.OCSFMediatorExample.server.session.SessionRegistry;
-import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.GetCartRequest;
-import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.AddToCartRequest;
-import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.CartUpdateRequest;
-import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.ContinueShoppingRequest;
-import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.CheckoutRequest;
-import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Cart.GetCartRequestedEvent;
-import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Cart.AddToCartRequestedEvent;
-import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Cart.CartUpdateRequestedEvent;
-import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Cart.ContinueShoppingRequestedEvent;
-import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Cart.CheckoutRequestedEvent;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Complaint.SubmitComplaintRequest;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.SubmitComplaintRequestEvent;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Complaint.UpdateComplaintRequest;
@@ -103,8 +95,10 @@ public class SimpleServer extends ObservableServer {
 						0, 100,              // page, pageSize
 						client
 				));
-			}else if (msg instanceof SetStoreRequest rr) {
-			bus.publish(new SetStoreRequestedEvent(rr, client));
+			} else if (msg instanceof RemoveFromCartRequest req) {
+				bus.publish(new RemoveFromCartRequestedEvent(req, client));
+			} else if (msg instanceof SetStoreRequest rr) {
+				bus.publish(new SetStoreRequestedEvent(rr, client));
 			} else if (msg instanceof GetStoresRequest rr) {
 				bus.publish(new GetStoresRequestedEvent(rr, client));
 			} else if (msg instanceof GetReportRequest rr) {

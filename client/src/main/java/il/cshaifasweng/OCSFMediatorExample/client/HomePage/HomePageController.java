@@ -119,10 +119,15 @@ public class HomePageController {
 
     private void applySessionFromClient() {
         loggedIn = ClientSession.getCustomerId() != 0L;
+
+        // Toggle header pieces
         setVisibleManaged(btnAccount, loggedIn);
         setVisibleManaged(btnLogin, !loggedIn);
-        // optional: if you have a role getter in ClientSession, you can toggle admin here.
-        // Example (guarded): setVisibleManaged(btnAdmin, ClientSession.getLoginRole() == Role.ADMIN);
+
+        // The actual ask: disable Cart when not logged in
+        if (btnCart != null) {
+            btnCart.setDisable(!loggedIn);
+        }
     }
 
     // =========================
@@ -233,14 +238,19 @@ public class HomePageController {
             ex.printStackTrace();
         }
 
+        // Re-evaluate session after the modal closes
         boolean was = loggedIn;
         loggedIn = ClientSession.getCustomerId() != 0L || loggedIn;
+
+        // Centralized header state (this now also disables/enables Cart)
+        applySessionFromClient();
+
+        // If we just logged in, refresh featured cards
         if (loggedIn && !was) {
-            setVisibleManaged(btnAccount, true);
-            setVisibleManaged(btnLogin, false);
             rebuildFeaturedCards(latestFlowers);
         }
     }
+
 
     // =========================
     // Details dialog
