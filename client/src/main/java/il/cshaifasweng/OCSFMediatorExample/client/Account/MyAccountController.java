@@ -25,6 +25,10 @@ import java.util.Map;
 
 public class MyAccountController {
 
+    private static volatile String returnToFxml =
+            "/il/cshaifasweng/OCSFMediatorExample/client/HomePage/HomePage.fxml";
+    public static void setReturnTo(String fxml) { returnToFxml = fxml; }
+
     @FXML private ToggleGroup navGroup;
     @FXML private ToggleButton ProfileBtn;
     @FXML private ToggleButton CouponsBtn;
@@ -77,7 +81,11 @@ public class MyAccountController {
 
         // Buttons
         LogOutBtn.setOnAction(e -> handleLogout());
-        CloseBtn.setOnAction(e -> handleClose());
+        CloseBtn.setOnAction(e -> {
+            System.out.println("[RegisterUI] Back clicked -> " + returnToFxml);
+            onClose();
+            Nav.go(CloseBtn, returnToFxml);
+        });
     }
 
     private void loadView(String fxmlPath) {

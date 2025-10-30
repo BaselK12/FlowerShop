@@ -202,7 +202,7 @@ public class HomePageController {
                 ItemCardController cardController = loader.getController();
 
                 // Pass current login state; card wires its own add-to-cart
-                cardController.setData(flower, loggedIn, () -> showDetails(flower));
+                cardController.setData(flower, loggedIn, () -> openDetails(flower));
 
                 cardsRow1.getChildren().add(cardRoot);
             } catch (IOException e) {
@@ -255,17 +255,35 @@ public class HomePageController {
     // =========================
     // Details dialog
     // =========================
-    private void showDetails(FlowerDTO flower) {
-        if (detailsController == null || detailsDialogRoot == null) return;
-        detailsController.setItem(flower, loggedIn);
-        detailsDialogRoot.setVisible(true);
-        detailsDialogRoot.setManaged(true);
-    }
+//    private void showDetails(FlowerDTO flower) {
+//        if (detailsController == null || detailsDialogRoot == null) return;
+//        detailsController.setItem(flower, loggedIn);
+//        detailsDialogRoot.setVisible(true);
+//        detailsDialogRoot.setManaged(true);
+//    }
+//
+//    public void closeDetails() {
+//        if (detailsDialogRoot == null) return;
+//        detailsDialogRoot.setVisible(false);
+//        detailsDialogRoot.setManaged(false);
+//    }
 
-    public void closeDetails() {
-        if (detailsDialogRoot == null) return;
-        detailsDialogRoot.setVisible(false);
-        detailsDialogRoot.setManaged(false);
+    private void openDetails(FlowerDTO flower) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/il/cshaifasweng/OCSFMediatorExample/client/Catalog/ItemDetails.fxml"));
+            Scene scene = new Scene(loader.load());
+
+            ItemDetailsController detailsController = loader.getController();
+            detailsController.setItem(flower, loggedIn);
+
+            Stage stage = new Stage();
+            stage.setTitle("Flower Details");
+            stage.setScene(scene);
+            stage.showAndWait();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     // =========================
