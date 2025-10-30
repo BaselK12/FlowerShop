@@ -103,6 +103,9 @@ public class ConfirmRequestHandler {
 
                 Order entity = OrderMapper.fromDTO(dto);
 
+
+
+
                 // Persist, mark coupon used, clear cart
                 TX.run((Session s) -> {
                     if (cup.ok && cup.entity != null) {

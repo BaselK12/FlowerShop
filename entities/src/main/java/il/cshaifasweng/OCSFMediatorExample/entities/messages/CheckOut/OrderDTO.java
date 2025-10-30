@@ -12,6 +12,7 @@ public class OrderDTO implements Serializable {
 
     private Long id;
     private Long customerId;
+    private Long storeId; // <-- NEW
     private LocalDateTime createdAt;
     private Status status;
 
@@ -34,6 +35,9 @@ public class OrderDTO implements Serializable {
 
     public Long getCustomerId() { return customerId; }
     public void setCustomerId(Long customerId) { this.customerId = customerId; }
+
+    public Long getStoreId() { return storeId; }
+    public void setStoreId(Long storeId) { this.storeId = storeId; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
