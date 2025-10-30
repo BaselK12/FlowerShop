@@ -10,55 +10,43 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox xmlns="http://javafx.com/javafx/21.0.1"
-      xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="il.cshaifasweng.OCSFMediatorExample.client.Account.CouponsViewController"
-      prefHeight="400.0" prefWidth="600.0" spacing="10.0">
+<VBox prefHeight="400.0" prefWidth="600.0" spacing="10.0" stylesheets="@../../../../../Styles/CuponsView.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.Account.CouponsViewController">
 
    <padding>
-      <Insets top="20.0" right="20.0" bottom="20.0" left="20.0"/>
+      <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
    </padding>
    <HBox alignment="CENTER_LEFT">
       <padding>
-         <Insets left="8.0"/>
+         <Insets left="8.0" />
       </padding>
       <Label fx:id="couponsTitleLabel" text="Coupons" textFill="#2c3e50">
          <font>
-            <Font size="18.0"/>
+            <Font size="18.0" />
          </font>
       </Label>
       <Label fx:id="couponsCountLabel" text="(0)" textFill="#6b7a90">
          <font>
-            <Font size="18.0"/>
+            <Font size="18.0" />
          </font>
          <HBox.margin>
-            <Insets/>
+            <Insets />
          </HBox.margin>
          <padding>
-            <Insets left="8.0"/>
+            <Insets left="8.0" />
          </padding>
       </Label>
    </HBox>
 
    <!-- Scrollable area -->
-   <ScrollPane fx:id="couponsScroll"
-               fitToWidth="true"
-               hbarPolicy="NEVER"
-               prefWidth="560.0"
-               prefHeight="320.0"
-               VBox.vgrow="ALWAYS">
+   <ScrollPane fx:id="couponsScroll" fitToWidth="true" hbarPolicy="NEVER" prefHeight="320.0" prefWidth="560.0" VBox.vgrow="ALWAYS">
       <!-- Direct FlowPane as content; no AnchorPane wrapper -->
-      <FlowPane fx:id="couponsFlow"
-                hgap="12.0" vgap="12.0"
-                prefWrapLength="520.0">
+      <FlowPane fx:id="couponsFlow" hgap="12.0" prefWrapLength="520.0" vgap="12.0">
          <padding>
-            <Insets top="8.0" right="8.0" bottom="8.0" left="8.0"/>
+            <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
          </padding>
       </FlowPane>
    </ScrollPane>
 
-   <ProgressIndicator fx:id="couponsLoading" progress="0.0" visible="false"/>
-   <Button fx:id="btnLoadMore" alignment="CENTER" mnemonicParsing="false"
-           style="-fx-background-color: #3498db; -fx-background-radius: 8;"
-           text="Load More" textFill="WHITE" visible="false"/>
+   <ProgressIndicator fx:id="couponsLoading" progress="0.0" visible="false" />
+   <Button fx:id="btnLoadMore" alignment="CENTER" mnemonicParsing="false" style="-fx-background-color: #3498db; -fx-background-radius: 8;" text="Load More" textFill="WHITE" visible="false" />
 </VBox>
