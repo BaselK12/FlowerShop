@@ -7,7 +7,8 @@
 <?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
@@ -71,10 +72,11 @@
                   <Cursor fx:constant="HAND" />
                </cursor>
             </ToggleButton>
-            <ToggleButton fx:id="ComplaintsBtn" text="Complaints" toggleGroup="$navGroup"/>
-            <Pane prefHeight="560.0" prefWidth="200.0">
+            <ToggleButton fx:id="ComplaintsBtn" text="Complaints" toggleGroup="$navGroup" />
+            <Region prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS" />
+            <HBox prefHeight="38.0" prefWidth="200.0">
                <children>
-                  <Button fx:id="LogOutBtn" layoutX="14.0" layoutY="485.0" mnemonicParsing="false" style="-fx-background-radius: 8;" text="LogOut" textFill="#d93434">
+                  <Button fx:id="CloseBtn" mnemonicParsing="false" style="-fx-background-radius: 8;" text="Back">
                      <font>
                         <Font size="14.0" />
                      </font>
@@ -82,7 +84,8 @@
                         <Cursor fx:constant="HAND" />
                      </cursor>
                   </Button>
-                  <Button fx:id="CloseBtn" layoutX="134.0" layoutY="485.0" mnemonicParsing="false" style="-fx-background-radius: 8;" text="Close">
+                  <Region prefHeight="38.0" prefWidth="2.0" HBox.hgrow="ALWAYS" />
+                  <Button fx:id="LogOutBtn" mnemonicParsing="false" prefHeight="29.0" prefWidth="104.0" style="-fx-background-radius: 8;" text="LogOut" textFill="#d93434">
                      <font>
                         <Font size="14.0" />
                      </font>
@@ -91,7 +94,7 @@
                      </cursor>
                   </Button>
                </children>
-            </Pane>
+            </HBox>
          </children>
          <cursor>
             <Cursor fx:constant="DEFAULT" />
