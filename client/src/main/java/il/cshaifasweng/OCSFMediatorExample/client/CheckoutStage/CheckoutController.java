@@ -10,6 +10,9 @@ import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.GetCartRequest
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.CartItem;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.CartState;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.CheckOut.*;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Reports.StoreOption;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Reports.GetStoresRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Reports.GetStoresResponse;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -21,6 +24,7 @@ import org.greenrobot.eventbus.Subscribe;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.Year;
 import java.util.ArrayList;
 import java.util.Locale;
 
@@ -38,7 +42,7 @@ public class CheckoutController {
     @FXML private ToggleButton btnPickup;
     @FXML private ToggleButton btnDelivery;
 
-    // Old optional VBoxes (not present in your FXML, so they’ll be null)
+    // Optional VBoxes (if your FXML has them)
     @FXML private VBox pickupVBox;
     @FXML private VBox deliveryVBox;
 
@@ -50,19 +54,22 @@ public class CheckoutController {
     private Node pickupPaneRef;
     private Node deliveryPaneRef;
 
-
+    // Stores
+    private static final long DEFAULT_DELIVERY_STORE_ID = 1L;
+    private java.util.List<StoreOption> storeOptions = new java.util.ArrayList<>();
 
     // Customer info
     @FXML private TextField FullNameText;
     @FXML private TextField PhoneText;
     @FXML private TextField EmailText;
 
-    // Delivery fields
+    // Delivery fields (CityBox is a TextField now)
     @FXML private TextField CityBox;
     @FXML private TextField StreetText;
     @FXML private TextField HouseText;
 
-    @FXML private ComboBox<String> pickupBranch;
+    // Pickup fields
+    @FXML private ComboBox<StoreOption> pickupBranch;
     @FXML private DatePicker pickupDate;
     @FXML private TextField pickupTime;
     @FXML private TextField pickupPhone;
@@ -123,8 +130,8 @@ public class CheckoutController {
         }
 
         // Resolve the panes we will toggle (prefer VBoxes if they exist, else GridPanes)
-        pickupPaneRef   = (pickupVBox != null)    ? pickupVBox    : pickupFields;
-        deliveryPaneRef = (deliveryVBox != null)  ? deliveryVBox  : deliveryFields;
+        pickupPaneRef   = (pickupVBox != null)   ? pickupVBox   : pickupFields;
+        deliveryPaneRef = (deliveryVBox != null) ? deliveryVBox : deliveryFields;
 
         // Default view
         if (btnPickup != null) btnPickup.setSelected(true);
@@ -157,19 +164,28 @@ public class CheckoutController {
             });
         }
 
-        // Seed pickup branches
-        if (pickupBranch != null) {
+        // Request real stores from server
+        try {
+            SimpleClient.getClient().sendToServer(new GetStoresRequest());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Fallback seed (will be replaced when GetStoresResponse arrives)
+        if (pickupBranch != null && pickupBranch.getItems().isEmpty()) {
             pickupBranch.getItems().setAll(
-                    "Tel-Aviv Branch",
-                    "Haifa Branch",
-                    "Jerusalem Branch",
-                    "Beersheba Branch"
+                    new StoreOption("101", "Tel-Aviv Branch"),
+                    new StoreOption("102", "Haifa Branch"),
+                    new StoreOption("103", "Jerusalem Branch"),
+                    new StoreOption("104", "Beersheba Branch")
             );
             if (pickupBranch.getValue() == null && !pickupBranch.getItems().isEmpty()) {
                 pickupBranch.getSelectionModel().selectFirst();
             }
         }
 
+        // Seed expiration dropdowns
+        fillExpiryBoxes();
 
         // Coupon actions
         if (ApplyCouponBtn != null)    ApplyCouponBtn.setOnAction(e -> doValidateCoupon());
@@ -177,6 +193,20 @@ public class CheckoutController {
 
         requestAccount();
         requestCart();
+    }
+
+    private void fillExpiryBoxes() {
+        if (MMBOX != null && MMBOX.getItems().isEmpty()) {
+            for (int m = 1; m <= 12; m++) {
+                MMBOX.getItems().add(String.format("%02d", m));
+            }
+        }
+        if (YYBOX != null && YYBOX.getItems().isEmpty()) {
+            int y = Year.now().getValue() % 100;
+            for (int i = 0; i < 15; i++) {
+                YYBOX.getItems().add(String.format("%02d", (y + i) % 100));
+            }
+        }
     }
 
     private void requestAccount() {
@@ -201,47 +231,77 @@ public class CheckoutController {
         setMoney(couponDiscountLabel, -applied);
         setMoney(grandTotalLabel, grandTotal);
 
+        // Build review text when review is visible
         if (reviewBox != null && reviewBox.isVisible()) {
-            var sb = new StringBuilder();
-            sb.append("Name: ").append(nullToDash(FullNameText)).append("\n");
-            sb.append("Phone: ").append(nullToDash(PhoneText)).append("\n");
-            sb.append("Email: ").append(nullToDash(EmailText)).append("\n\n");
-
-            if (btnPickup != null && btnPickup.isSelected()) {
-                sb.append("Pickup\n");
-            } else {
-                sb.append("Delivery to ").append(text(CityBox)).append(", ").append(text(StreetText))
-                        .append(" ").append(text(HouseText)).append("\n");
-                if (giftCheck != null && giftCheck.isSelected()) {
-                    sb.append("Gift for ").append(text(RecepientNameText))
-                            .append(" (").append(text(RecipientPhoneText)).append(")\n");
-                    if (!text(GiftNoteText).isBlank()) sb.append("Note: ").append(text(GiftNoteText)).append("\n");
-                }
-                if ((DeliveryDatePicker != null && DeliveryDatePicker.getValue() != null) || !text(DeliveryTimeText).isBlank()) {
-                    sb.append("When: ");
-                    if (DeliveryDatePicker != null && DeliveryDatePicker.getValue() != null) sb.append(DeliveryDatePicker.getValue()).append(" ");
-                    sb.append(text(DeliveryTimeText)).append("\n");
-                }
-            }
-
-            if (appliedCouponCode != null) {
-                sb.append("\nCoupon: ").append(appliedCouponCode);
-                if (appliedCouponDesc != null) sb.append(" (").append(appliedCouponDesc).append(")");
-                sb.append("\n");
-            }
-
-            sb.append("\nSubtotal: ").append(fmt(subtotal));
-            if (premiumDiscount > 0) sb.append("\nPremium discount: -").append(fmt(premiumDiscount));
-            if (couponDiscount > 0)  sb.append("\nCoupon discount:  -").append(fmt(couponDiscount));
-            sb.append("\nTotal: ").append(fmt(grandTotal)).append(" USD");
-            reviewBox.setText(sb.toString());
+            reviewBox.setText(buildReviewText());
         }
+    }
+
+    private String buildReviewText() {
+        StringBuilder sb = new StringBuilder();
+
+        // Customer info first
+        sb.append("Name: ").append(nullToDash(FullNameText)).append("\n");
+        sb.append("Phone: ").append(nullToDash(PhoneText)).append("\n");
+        sb.append("Email: ").append(nullToDash(EmailText)).append("\n\n");
+
+        // Method details
+        if (btnPickup != null && btnPickup.isSelected()) {
+            sb.append("Pickup\n");
+            sb.append("  Branch: ").append(value(pickupBranch)).append("\n");
+            if (pickupDate != null && pickupDate.getValue() != null) {
+                sb.append("  Date: ").append(pickupDate.getValue()).append("\n");
+            }
+            sb.append("  Time: ").append(text(pickupTime)).append("\n");
+            sb.append("  Phone: ").append(text(pickupPhone)).append("\n");
+        } else {
+            sb.append("Delivery\n");
+            sb.append("  Address: ").append(text(CityBox)).append(", ")
+                    .append(text(StreetText)).append(" ").append(text(HouseText)).append("\n");
+            if ((DeliveryDatePicker != null && DeliveryDatePicker.getValue() != null) || !text(DeliveryTimeText).isBlank()) {
+                sb.append("  When: ");
+                if (DeliveryDatePicker != null && DeliveryDatePicker.getValue() != null) sb.append(DeliveryDatePicker.getValue()).append(" ");
+                sb.append(text(DeliveryTimeText)).append("\n");
+            }
+            if (giftCheck != null && giftCheck.isSelected()) {
+                sb.append("  Gift for: ").append(text(RecepientNameText))
+                        .append(" (").append(text(RecipientPhoneText)).append(")\n");
+                if (!text(GiftNoteText).isBlank()) sb.append("  Note: ").append(text(GiftNoteText)).append("\n");
+            }
+        }
+
+        // Items
+        sb.append("\nItems:\n");
+        for (CartItem it : cartItems) {
+            double line = it.getUnitPrice() * it.getQuantity();
+            sb.append("  ").append(it.getName() != null ? it.getName() : it.getSku())
+                    .append(" — ").append(fmt(line)).append("\n");
+        }
+
+        // Discounts & totals
+        if (appliedCouponCode != null) {
+            sb.append("\nCoupon: ").append(appliedCouponCode);
+            if (appliedCouponDesc != null) sb.append(" (").append(appliedCouponDesc).append(")");
+            sb.append("\n");
+        }
+
+        sb.append("\nSubtotal: ").append(fmt(subtotal));
+        if (premiumDiscount > 0) sb.append("\nPremium discount: -").append(fmt(premiumDiscount));
+        if (couponDiscount > 0)  sb.append("\nCoupon discount:  -").append(fmt(couponDiscount));
+        sb.append("\nTotal: ").append(fmt(grandTotal)).append(" USD");
+
+        return sb.toString();
     }
 
     private String fmt(double v) { return String.format(Locale.US, "$%.2f", v); }
     private void setMoney(Label lbl, double v) { if (lbl != null) lbl.setText(String.format(Locale.US, "$%.2f", v)); }
     private String nullToDash(TextField tf) { return tf != null && tf.getText() != null && !tf.getText().isBlank() ? tf.getText().trim() : "-"; }
-    private String value(ComboBox<String> cb) { return cb != null && cb.getValue() != null ? cb.getValue() : "-"; }
+    private String valueStr(ComboBox<String> cb) {
+        return cb != null && cb.getValue() != null ? cb.getValue() : "-";
+    }
+    private String value(ComboBox<StoreOption> cb) {
+        return cb != null && cb.getValue() != null ? cb.getValue().name : "-";
+    }
     private String text(TextField tf) { return tf != null && tf.getText() != null ? tf.getText().trim() : ""; }
     private String text(TextArea ta) { return ta != null && ta.getText() != null ? ta.getText().trim() : ""; }
 
@@ -297,17 +357,24 @@ public class CheckoutController {
 
         if (btnPickup != null && btnPickup.isSelected()) {
             PickupInfoDTO pk = new PickupInfoDTO();
-            if (pickupBranch != null) pk.setBranchName(pickupBranch.getValue());
+            if (pickupBranch != null && pickupBranch.getValue() != null) {
+                StoreOption so = pickupBranch.getValue();
+                pk.setBranchName(so.name);
+                try { dto.setStoreId(Long.parseLong(so.id)); } catch (Exception ignored) {}
+            }
             if (pickupDate != null)   pk.setPickupDate(pickupDate.getValue());
             if (pickupTime != null)   pk.setPickupTime(pickupTime.getText());
             if (pickupPhone != null)  pk.setPhone(pickupPhone.getText());
             dto.setPickup(pk);
         } else {
             DeliveryInfoDTO d = new DeliveryInfoDTO();
-            d.setCity(CityBox != null ? CityBox.getText() : null); // updated to TextField
+            d.setCity(CityBox != null ? CityBox.getText() : null);
             d.setStreet(StreetText != null ? StreetText.getText() : null);
             d.setHouse(HouseText != null ? HouseText.getText() : null);
             dto.setDelivery(d);
+
+            // Default store for delivery
+            dto.setStoreId(DEFAULT_DELIVERY_STORE_ID);
 
             if (giftCheck != null && giftCheck.isSelected()) {
                 GreetingCardDTO g = new GreetingCardDTO();
@@ -333,7 +400,6 @@ public class CheckoutController {
         Platform.runLater(() -> {
             if (r != null && r.ok() && r.customer() != null) {
                 this.isPremium = r.customer().isPremium();
-                // Prefill identity fields if blank
                 var c = r.customer();
                 if (FullNameText != null && (FullNameText.getText() == null || FullNameText.getText().isBlank())) {
                     FullNameText.setText(c.getDisplayName());
@@ -348,7 +414,6 @@ public class CheckoutController {
             }
         });
     }
-
 
     @Subscribe
     public void onCartState(CartState s) {
@@ -388,8 +453,9 @@ public class CheckoutController {
             if (r == null) return;
             if (r.isSuccess()) {
                 Alert ok = new Alert(Alert.AlertType.INFORMATION, r.getMessage());
-                ok.setHeaderText("Order placed");
+                ok.setHeaderText("Order confirmed");
                 ok.showAndWait();
+                // Optionally: navigate to Orders view here, if you have a Nav util.
             } else {
                 Alert er = new Alert(Alert.AlertType.ERROR, r.getMessage());
                 er.setHeaderText("Checkout failed");
@@ -398,13 +464,112 @@ public class CheckoutController {
         });
     }
 
+    @Subscribe
+    public void onStores(GetStoresResponse r) {
+        Platform.runLater(() -> {
+            if (r == null || r.stores == null) return;
+            storeOptions.clear();
+            storeOptions.addAll(r.stores);
+            if (pickupBranch != null) {
+                pickupBranch.getItems().setAll(storeOptions);
+                if (pickupBranch.getValue() == null && !pickupBranch.getItems().isEmpty()) {
+                    pickupBranch.getSelectionModel().selectFirst();
+                }
+            }
+        });
+    }
+
     // ---------- Step navigation handlers (match FXML onAction) ----------
     @FXML private void handleBack1() { setStep(1); }
-    @FXML private void handleNext1() { setStep(2); }
+    @FXML private void handleNext1() {
+        if (validateMethodStep()) {
+            setStep(2);
+        }
+    }
     @FXML private void handleBack2() { setStep(1); }
-    @FXML private void handlePay()   { setStep(3); }
+    @FXML private void handlePay()   {
+        if (validatePaymentStep()) {
+            setStep(3);
+            if (reviewBox != null) {
+                reviewBox.setText(buildReviewText());
+            }
+        }
+    }
     @FXML private void handleBack3() { setStep(2); }
     @FXML private void handleConfirm(){ onConfirm(); }
+
+    // ---------- Validation ----------
+
+    private boolean validateMethodStep() {
+        // Minimal identity sanity
+        if (isBlank(FullNameText)) { error("Missing name", "Please enter your name."); return false; }
+        if (isBlank(EmailText))    { error("Missing email", "Please enter your email."); return false; }
+
+        // Pickup or delivery specific checks
+        if (btnPickup != null && btnPickup.isSelected()) {
+            if (pickupBranch == null || pickupBranch.getValue() == null) {
+                error("Pickup", "Please select a pickup branch."); return false;
+            }
+            if (pickupDate == null || pickupDate.getValue() == null) {
+                error("Pickup", "Please choose a pickup date."); return false;
+            }
+            if (isBlank(pickupTime))  { error("Pickup", "Please enter a pickup time."); return false; }
+            if (isBlank(pickupPhone)) { error("Pickup", "Please enter a phone number for pickup."); return false; }
+        } else {
+            if (isBlank(CityBox))   { error("Delivery", "City is required."); return false; }
+            if (isBlank(StreetText)){ error("Delivery", "Street is required."); return false; }
+            if (isBlank(HouseText)) { error("Delivery", "House number is required."); return false; }
+
+            if (giftCheck != null && giftCheck.isSelected()) {
+                if (isBlank(RecepientNameText))  { error("Gift", "Recipient name is required."); return false; }
+                if (isBlank(RecipientPhoneText)) { error("Gift", "Recipient phone is required."); return false; }
+                // Gift note optional by your spec
+            }
+        }
+        return true;
+    }
+
+    private boolean validatePaymentStep() {
+        // Phone and ID required here
+        if (isBlank(PhoneText))     { error("Payment", "Phone number is required."); return false; }
+        if (isBlank(IdNumberText))  { error("Payment", "ID number is required."); return false; }
+
+        // Card number: 16 digits
+        String card = text(CardNumberText);
+        if (!isDigits(card, 16)) { error("Payment", "Card number must be exactly 16 digits."); return false; }
+
+        // Expiration dropdowns must be selected
+        if (MMBOX == null || MMBOX.getValue() == null || MMBOX.getValue().isBlank()) {
+            error("Payment", "Please select card expiration month."); return false;
+        }
+        if (YYBOX == null || YYBOX.getValue() == null || YYBOX.getValue().isBlank()) {
+            error("Payment", "Please select card expiration year."); return false;
+        }
+
+        // CVV: 3 digits
+        if (!isDigits(text(cvvText), 3)) { error("Payment", "CVV must be exactly 3 digits."); return false; }
+
+        // Cardholder name recommended but not strictly required; enforce if you want:
+        if (isBlank(fullNameText)) { error("Payment", "Cardholder full name is required."); return false; }
+
+        return true;
+    }
+
+    private boolean isBlank(TextField tf) {
+        return tf == null || tf.getText() == null || tf.getText().trim().isEmpty();
+    }
+
+    private boolean isDigits(String s, int exactLen) {
+        if (s == null || s.length() != exactLen) return false;
+        for (int i = 0; i < s.length(); i++) if (!Character.isDigit(s.charAt(i))) return false;
+        return true;
+    }
+
+    private void error(String header, String msg) {
+        Alert a = new Alert(Alert.AlertType.ERROR, msg);
+        a.setHeaderText(header);
+        a.showAndWait();
+    }
 
     // ---------- Step UI helpers ----------
     private void setStep(int n) {
