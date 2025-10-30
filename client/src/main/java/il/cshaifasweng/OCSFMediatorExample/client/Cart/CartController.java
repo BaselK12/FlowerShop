@@ -50,30 +50,23 @@ public class CartController {
 
         applySessionToUI();
 
-        // Hard gate: unauthenticated users don't get to open Cart
         if (ClientSession.getCustomerId() <= 0) {
-            // Defer until scene is attached, then show modal
             Platform.runLater(() -> openLoginModal(ItemsBox != null ? ItemsBox : CheckoutBtn));
             return;
         }
 
-        // Only ask the server for cart data when logged in
         requestCart();
     }
 
-
-
     private void requestCart() {
-        if (ClientSession.getCustomerId() <= 0) {
-            return; // unauthenticated; initialize() already redirected
-        }
+        if (ClientSession.getCustomerId() <= 0) return;
         try {
             SimpleClient.getClient().sendToServer(new GetCartRequest());
         } catch (IOException e) {
             e.printStackTrace();
         }
+        updateTotal();
     }
-
 
     private void render() {
         if (ItemsBox == null) return;
@@ -84,11 +77,20 @@ public class CartController {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/il/cshaifasweng/OCSFMediatorExample/client/Cart/CartItemCard.fxml"));
                 Node card = loader.load();
                 CartItemCardController ctrl = loader.getController();
+
                 ctrl.setData(it,
-                        // onDelete
-                        () -> Platform.runLater(this::requestCart),
-                        // onUpdate
+                        // onDelete: optimistic remove (local list + UI), then re-sync
+                        () -> {
+                            cartItems.removeIf(ci -> ci.getSku().equals(it.getSku()));
+                            if (ItemsBox.getChildren().contains(card)) {
+                                ItemsBox.getChildren().remove(card);
+                            }
+                            updateTotal();
+                            Platform.runLater(this::requestCart);
+                        },
+                        // onUpdate: just recompute totals immediately
                         this::updateTotal);
+
                 ItemsBox.getChildren().add(card);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -98,7 +100,6 @@ public class CartController {
     }
 
     private void openLoginModal(Node owner) {
-        // If it's already open, just focus it
         if (loginStage != null && loginStage.isShowing()) {
             loginStage.requestFocus();
             return;
@@ -108,7 +109,7 @@ public class CartController {
                     "/il/cshaifasweng/OCSFMediatorExample/client/Customer/CustomerLoginPage.fxml"));
             Parent root = loader.load();
 
-            loginStage = new Stage(StageStyle.DECORATED); // or UTILITY if you prefer smaller chrome
+            loginStage = new Stage(StageStyle.DECORATED);
             loginStage.setTitle("Sign in");
             loginStage.initModality(Modality.WINDOW_MODAL);
 
@@ -118,12 +119,11 @@ public class CartController {
 
             loginStage.setScene(new javafx.scene.Scene(root));
             loginStage.centerOnScreen();
-            loginStage.show(); // use show() so EventBus can flow freely; login page can close itself or we close on event
+            loginStage.show();
         } catch (IOException ex) {
             ex.printStackTrace();
         }
     }
-
 
     private void updateTotal() {
         double total = cartItems.stream().mapToDouble(CartItem::getSubtotal).sum();
@@ -139,24 +139,19 @@ public class CartController {
         if (CheckoutBtn != null) CheckoutBtn.setDisable(!loggedIn || cartItems.isEmpty());
     }
 
-    // ------------ Actions ------------
-
     @FXML
     private void onContinue() {
-        // Go to catalog, no weird server roundtrip
         Nav.go(ContinueBtn, "/il/cshaifasweng/OCSFMediatorExample/client/Catalog/CatalogView.fxml");
     }
 
     @FXML
     private void onCheckout() {
-        // If not logged, open login as modal; else go to checkout screen
         if (ClientSession.getCustomerId() <= 0) {
             openLoginModal(CheckoutBtn);
         } else {
             Nav.go(CheckoutBtn, "/il/cshaifasweng/OCSFMediatorExample/client/Checkout.fxml");
         }
     }
-
 
     // ---------- EventBus listeners ----------
 
@@ -171,7 +166,7 @@ public class CartController {
 
     @Subscribe
     public void onCartUpdate(CartUpdateResponse res) {
-        Platform.runLater(this::requestCart); // trust server truth
+        Platform.runLater(this::requestCart);
     }
 
     @Subscribe
@@ -184,7 +179,6 @@ public class CartController {
         Platform.runLater(this::requestCart);
     }
 
-    // Session-related to keep buttons correct
     @Subscribe
     public void onLogin(LoginResponse res) {
         Platform.runLater(() -> {
@@ -197,7 +191,6 @@ public class CartController {
             }
         });
     }
-
 
     @Subscribe
     public void onAccount(AccountOverviewResponse res) { Platform.runLater(this::applySessionToUI); }
@@ -219,8 +212,6 @@ public class CartController {
 
         applySessionToUI();
     }
-
-
 
     public void dispose() {
         if (EventBus.getDefault().isRegistered(this)) {
