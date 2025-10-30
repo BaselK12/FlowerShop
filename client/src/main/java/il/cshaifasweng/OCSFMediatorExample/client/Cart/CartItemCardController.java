@@ -35,25 +35,35 @@ public class CartItemCardController {
     private final PauseTransition debounce = new PauseTransition(Duration.millis(200));
     private volatile boolean removing = false;
 
+    // Prevent the listener from firing while we populate the UI
+    private boolean suppressQtyEvents = false;
+
     @FXML
     private void initialize() {
-        // Spinner programmatic setup; min=0 enables "remove on zero"
+        // Allow zero to mean "remove"
         if (QtySpinner != null) {
-            QtySpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 99, 1));
+            QtySpinner.setValueFactory(
+                    new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 99, 1));
+
             QtySpinner.valueProperty().addListener((obs, oldV, newV) -> {
-                if (item == null || removing) return;
+                if (suppressQtyEvents || item == null || removing) return;
+                if (newV != null && oldV != null && newV.equals(oldV)) return;
+
                 debounce.stop();
                 debounce.setOnFinished(ev -> {
                     if (newV == null) return;
+
                     if (newV <= 0) {
-                        // zero means remove
-                        onRemove(null);
-                    } else {
-                        // update qty
-                        item.setQuantity(newV); // client DTO clamps >=1, but we only get here for >=1
-                        sendUpdate(item);
+                        // Optimistic UI: zero out subtotal and ping parent total before server roundtrip
+                        if (SubTotalLabel != null) SubTotalLabel.setText(currency.format(0));
                         if (onUpdate != null) onUpdate.run();
+                        onRemove(null);  // will also trigger parent onDelete
+                    } else {
+                        // Update local model first so CartController total uses the new qty immediately
+                        item.setQuantity(newV);
                         updateSubtotal();
+                        if (onUpdate != null) onUpdate.run();
+                        sendUpdate(item);
                     }
                 });
                 debounce.playFromStart();
@@ -66,21 +76,30 @@ public class CartItemCardController {
         this.onDelete = onDelete;
         this.onUpdate = onUpdate;
 
-        if (NameLabel != null) NameLabel.setText(item.getName() != null ? item.getName() : item.getSku());
-        if (UnitPriceLabel != null) UnitPriceLabel.setText(currency.format(item.getUnitPrice()));
-        if (QtySpinner != null) QtySpinner.getValueFactory().setValue(Math.max(0, item.getQuantity()));
-        updateSubtotal();
+        suppressQtyEvents = true;
+        try {
+            if (NameLabel != null) NameLabel.setText(item.getName() != null ? item.getName() : item.getSku());
+            if (UnitPriceLabel != null) UnitPriceLabel.setText(currency.format(item.getUnitPrice()));
+            if (QtySpinner != null) {
+                int q = Math.max(0, item.getQuantity());  // allow 0 path
+                QtySpinner.getValueFactory().setValue(q);
+            }
+            updateSubtotal();
 
-        if (ProductImage != null && item.getPictureUrl() != null && !item.getPictureUrl().isBlank()) {
-            try {
-                ProductImage.setImage(new Image(item.getPictureUrl(), true));
-            } catch (Exception ignored) {}
+            if (ProductImage != null && item.getPictureUrl() != null && !item.getPictureUrl().isBlank()) {
+                try {
+                    ProductImage.setImage(new Image(item.getPictureUrl(), true));
+                } catch (Exception ignored) { }
+            }
+        } finally {
+            suppressQtyEvents = false;
         }
     }
 
     private void updateSubtotal() {
-        if (SubTotalLabel != null) {
-            double subtotal = item.getUnitPrice() * Math.max(0, QtySpinner.getValue());
+        if (SubTotalLabel != null && QtySpinner != null && item != null) {
+            int qty = QtySpinner.getValue() == null ? Math.max(0, item.getQuantity()) : QtySpinner.getValue();
+            double subtotal = item.getUnitPrice() * Math.max(0, qty);
             SubTotalLabel.setText(currency.format(subtotal));
         }
     }
@@ -102,7 +121,7 @@ public class CartItemCardController {
         } catch (IOException ex) {
             ex.printStackTrace();
         } finally {
-            // Optimistic UI: let the parent refresh after server ack
+            // Tell parent immediately; it will adjust list/total and also re-sync from server
             if (onDelete != null) onDelete.run();
             removing = false;
         }

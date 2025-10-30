@@ -106,10 +106,13 @@ public class CustomerRegisterController {
 
         // Premium UI
         PremiumNoteLabel.setText("Premium accounts get 10% discount on all orders above 50 shekels");
-        PremiumContainer.setVisible(false);
+
+
+        PremiumContainer.visibleProperty().bind(PremiumOptInCheck.selectedProperty());
+        PremiumContainer.managedProperty().bind(PremiumContainer.visibleProperty());
+
 
         PremiumOptInCheck.selectedProperty().addListener((obs, was, isNow) -> {
-            PremiumContainer.setVisible(isNow);
             if (!isNow) {
                 PremiumAgreementCheck.setSelected(false);
             }
@@ -137,7 +140,7 @@ public class CustomerRegisterController {
                                 PremiumOptInCheck.selectedProperty(), PremiumAgreementCheck.selectedProperty()
                         ));
 
-        RegisterBtn.disableProperty().bind(invalidForm);
+        RegisterBtn.disableProperty().bind(invalidForm.or(busy));
         Runnable logValidity = () -> System.out.println("[RegisterUI] form valid = " + !invalidForm.get());
 
         RegisterBtn.setOnAction(e -> {

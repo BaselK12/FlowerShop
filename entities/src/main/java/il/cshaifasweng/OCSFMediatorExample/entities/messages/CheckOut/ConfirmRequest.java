@@ -8,22 +8,29 @@ public class ConfirmRequest implements Serializable {
 
     private OrderDTO order;
 
+    // NEW: optional coupon code selected during checkout
+    private String couponCode;
+
     public ConfirmRequest() {}
 
     public ConfirmRequest(OrderDTO order) {
         this.order = order;
     }
 
-    public OrderDTO getOrder() {
-        return order;
+    public ConfirmRequest(OrderDTO order, String couponCode) {
+        this.order = order;
+        this.couponCode = couponCode;
     }
 
-    public void setOrder(OrderDTO order) {
-        this.order = order;
-    }
+    public OrderDTO getOrder() { return order; }
+    public void setOrder(OrderDTO order) { this.order = order; }
+
+    public String getCouponCode() { return couponCode; }
+    public void setCouponCode(String couponCode) { this.couponCode = couponCode; }
 
     @Override
     public String toString() {
-        return "ConfirmRequest{orderId=" + (order != null ? order.getId() : "null") + "}";
+        return "ConfirmRequest{orderId=" + (order != null ? order.getId() : "null") +
+                ", couponCode=" + couponCode + "}";
     }
 }
