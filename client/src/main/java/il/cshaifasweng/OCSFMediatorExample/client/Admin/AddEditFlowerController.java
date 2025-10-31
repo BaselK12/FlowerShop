@@ -1,7 +1,7 @@
 package il.cshaifasweng.OCSFMediatorExample.client.Admin;
 
 import il.cshaifasweng.OCSFMediatorExample.client.App;
-import il.cshaifasweng.OCSFMediatorExample.client.bus.events.FlowerUpdatedEvent;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.FlowerUpdatedEvent;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.SaveFlowerRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.SaveFlowerResponse;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.CategoryDTO;
@@ -24,7 +24,6 @@ import org.greenrobot.eventbus.Subscribe;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -197,7 +196,6 @@ public class AddEditFlowerController {
 
                 // === Notify other parts of the app ===
                 System.out.println("Flower saved successfully! changing the price in catalog");
-                EventBus.getDefault().post(new FlowerUpdatedEvent(res.getUpdatedFlower()));
 
                 // === Close this window ===
                 if (fromBox != null && fromBox.getScene() != null) {

@@ -1,4 +1,4 @@
-package il.cshaifasweng.OCSFMediatorExample.client.bus.events;
+package il.cshaifasweng.OCSFMediatorExample.entities.messages;
 
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.FlowerDTO;
 

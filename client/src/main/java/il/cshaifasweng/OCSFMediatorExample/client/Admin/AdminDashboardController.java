@@ -1,7 +1,7 @@
 package il.cshaifasweng.OCSFMediatorExample.client.Admin;
 
 import il.cshaifasweng.OCSFMediatorExample.client.App;
-import il.cshaifasweng.OCSFMediatorExample.client.bus.events.FlowerUpdatedEvent;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.FlowerUpdatedEvent;
 import il.cshaifasweng.OCSFMediatorExample.client.ui.Nav;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.AddPromotionsRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.AddPromotionsResponse;
@@ -19,7 +19,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;

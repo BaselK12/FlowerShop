@@ -1,12 +1,12 @@
 package il.cshaifasweng.OCSFMediatorExample.server;
 
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.*;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Account.*;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Admin.AdminLoginRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.AddPromotionsRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.*;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Complaint.GetCustomerComplaintsRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.CreateBouquet.AddCustomBouquetRequest;
-import il.cshaifasweng.OCSFMediatorExample.entities.messages.GetOrdersRequest;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Account.*;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.DeleteFlowerRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.SaveFlowerRequest;
@@ -20,7 +20,6 @@ import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.CreateEmpl
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.DeleteEmployeeRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.GetEmployeesRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Employee.UpdateEmployeeRequest;
-import il.cshaifasweng.OCSFMediatorExample.entities.messages.RegisterRequest;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.*;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Cart.*;
@@ -44,8 +43,7 @@ import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Reports.GetReportRe
 
 
 // your existing entities/messages
-import il.cshaifasweng.OCSFMediatorExample.entities.messages.LoginRequest;
-import il.cshaifasweng.OCSFMediatorExample.entities.messages.ErrorResponse;
+
 
 public class SimpleServer extends ObservableServer {
 	private final ServerBus bus;
@@ -56,19 +54,27 @@ public class SimpleServer extends ObservableServer {
 	}
 
 	@Override
+	protected void clientConnected(ConnectionToClient client) {
+		super.clientConnected(client);
+		bus.publish(new ClientConnectedEvent(client)); // notify bus
+	}
+
+
+	@Override
 	protected synchronized void clientDisconnected(ConnectionToClient client) {
 		try {
-			// remove the numeric id mapping if any
 			SessionRegistry.clear(client);
 		} catch (Exception ignored) {}
 
 		try {
-			// THIS is the missing piece: drop the username<->session mapping
 			il.cshaifasweng.OCSFMediatorExample.server.session.SessionManager.get().logout(client);
 		} catch (Exception ignored) {}
 
+		bus.publish(new ClientDisconnectedEvent(client)); // notify bus
+
 		super.clientDisconnected(client);
 	}
+
 
 
 
@@ -171,6 +177,8 @@ public class SimpleServer extends ObservableServer {
 				bus.publish(new AddCustomBouquetRequestEvent(rr, client));
 			} else if (msg instanceof CancelOrderRequest rr) {
 				bus.publish(new CancelOrderRequestEvent(rr, client));
+			} else if (msg instanceof FlowerUpdatedEvent rr) {
+				bus.publish(new SendToAllClientsEvent(rr));
 			} else if (msg instanceof GetComplaintsRequest rr) {
 				bus.publish(new ComplaintsFetchRequestedEvent(
 						rr.getStatus(),

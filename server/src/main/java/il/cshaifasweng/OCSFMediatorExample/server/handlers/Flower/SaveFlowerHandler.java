@@ -5,8 +5,10 @@ import il.cshaifasweng.OCSFMediatorExample.entities.domain.Flower;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.SaveFlowerRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.SaveFlowerResponse;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.FlowerDTO;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.FlowerUpdatedEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.ServerBus;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Flowers.SaveFlowerRequestEvent;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.SendToAllClientsEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.SendToClientEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.mapping.FlowerMapper;
 import il.cshaifasweng.OCSFMediatorExample.server.session.TX;
@@ -78,6 +80,9 @@ public class SaveFlowerHandler {
                 // ===== Send structured response to client =====
                 SaveFlowerResponse response = new SaveFlowerResponse(true, null, dto);
                 bus.publish(new SendToClientEvent(response, evt.client()));
+
+                // ===== Broadcast update to all connected clients =====
+                bus.publish(new SendToAllClientsEvent(new FlowerUpdatedEvent(dto)));
 
                 // (Optional) Broadcast update to all clients
                 // bus.publish(new SendToAllClientsEvent(new FlowerUpdatedEvent(dto)));
