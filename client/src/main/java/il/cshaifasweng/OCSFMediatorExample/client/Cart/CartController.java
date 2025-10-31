@@ -9,25 +9,32 @@ import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.*;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.CartItem;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.CartState;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.LoginResponse;
+
+// Catalog + Promotions DTOs (we only read them client-side)
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.FlowerDTO;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.GetCatalogRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.GetCatalogResponse;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.PromotionDTO;
+
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import javafx.scene.Parent;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.IOException;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Locale;
 
 public class CartController {
@@ -38,8 +45,13 @@ public class CartController {
     @FXML private Button CheckoutBtn;
     private Stage loginStage;
 
-    // Local mirror
+    // Server-cart mirror (raw prices from server)
     private final List<CartItem> cartItems = new ArrayList<>();
+
+    // SKU -> FlowerDTO (includes promotion + effectivePrice)
+    private final Map<String, FlowerDTO> flowerBySku = new ConcurrentHashMap<>();
+    private volatile boolean catalogRequested = false;
+
     private final NumberFormat currency = NumberFormat.getCurrencyInstance(Locale.US);
 
     @FXML
@@ -56,6 +68,8 @@ public class CartController {
         }
 
         requestCart();
+        // We need catalog to know which SKUs have active promotions
+        requestCatalogIfNeeded();
     }
 
     private void requestCart() {
@@ -65,7 +79,18 @@ public class CartController {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        updateTotal();
+        updateTotal(); // optimistic
+    }
+
+    private void requestCatalogIfNeeded() {
+        if (catalogRequested) return;
+        catalogRequested = true;
+        try {
+            // Pull the whole catalog once. It carries promotion + effectivePrice per SKU.
+            SimpleClient.getClient().sendToServer(new GetCatalogRequest(null, null, null, false));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void render() {
@@ -74,11 +99,15 @@ public class CartController {
 
         for (CartItem it : cartItems) {
             try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/il/cshaifasweng/OCSFMediatorExample/client/Cart/CartItemCard.fxml"));
+                FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                        "/il/cshaifasweng/OCSFMediatorExample/client/Cart/CartItemCard.fxml"));
                 Node card = loader.load();
                 CartItemCardController ctrl = loader.getController();
 
-                ctrl.setData(it,
+                // Clone with effective price (promotion-aware) for display
+                CartItem display = cloneWithEffectivePrice(it);
+
+                ctrl.setData(display,
                         // onDelete: optimistic remove (local list + UI), then re-sync
                         () -> {
                             cartItems.removeIf(ci -> ci.getSku().equals(it.getSku()));
@@ -88,7 +117,7 @@ public class CartController {
                             updateTotal();
                             Platform.runLater(this::requestCart);
                         },
-                        // onUpdate: just recompute totals immediately
+                        // onUpdate: totals should recompute immediately with promos
                         this::updateTotal);
 
                 ItemsBox.getChildren().add(card);
@@ -97,6 +126,51 @@ public class CartController {
             }
         }
         updateTotal();
+    }
+
+    private CartItem cloneWithEffectivePrice(CartItem src) {
+        CartItem dst = new CartItem();
+        dst.setSku(src.getSku());
+        dst.setName(src.getName());
+        dst.setPictureUrl(src.getPictureUrl());
+        dst.setQuantity(Math.max(0, src.getQuantity()));
+
+        double promoUnit = effectiveUnitPriceFor(src.getSku(), src.getUnitPrice());
+        dst.setUnitPrice(promoUnit);
+
+        return dst;
+    }
+
+    /**
+     * Decide the unit price the user should SEE:
+     * - If we know the FlowerDTO and it has an active promotion, prefer effectivePrice.
+     * - If effectivePrice wasn't filled for some reason, derive from PromotionDTO.
+     * - Else fall back to the item’s unit price from the server.
+     */
+    private double effectiveUnitPriceFor(String sku, double fallback) {
+        FlowerDTO f = flowerBySku.get(sku);
+        if (f == null) return fallback;
+
+        // 1) explicit effective price wins if > 0
+        double eff = f.getEffectivePrice();
+        if (eff > 0) return eff;
+
+        // 2) compute from embedded PromotionDTO if present and active
+        PromotionDTO p = f.getPromotion();
+        if (p != null && p.isActive()) {
+            String type = p.getType();
+            double amount = p.getAmount();
+            double base = f.getPrice() > 0 ? f.getPrice() : fallback;
+
+            if ("PERCENT".equalsIgnoreCase(type)) {
+                return Math.max(0.0, base * (1.0 - amount / 100.0));
+            } else { // FIXED
+                return Math.max(0.0, base - amount);
+            }
+        }
+
+        // 3) otherwise the normal price
+        return f.getPrice() > 0 ? f.getPrice() : fallback;
     }
 
     private void openLoginModal(Node owner) {
@@ -126,8 +200,15 @@ public class CartController {
     }
 
     private void updateTotal() {
-        double total = cartItems.stream().mapToDouble(CartItem::getSubtotal).sum();
+        // Promotion-aware total using the effective unit price per SKU
+        double total = 0.0;
+        for (CartItem it : cartItems) {
+            double unit = effectiveUnitPriceFor(it.getSku(), it.getUnitPrice());
+            total += unit * Math.max(0, it.getQuantity());
+        }
+
         if (TotalLabel != null) TotalLabel.setText("Total: " + currency.format(total));
+
         if (CheckoutBtn != null) {
             boolean loggedIn = ClientSession.getCustomerId() > 0;
             CheckoutBtn.setDisable(!loggedIn || cartItems.isEmpty());
@@ -160,6 +241,8 @@ public class CartController {
         Platform.runLater(() -> {
             cartItems.clear();
             if (s.getItems() != null) cartItems.addAll(s.getItems());
+            // Ensure we have promos context; if not, go get it and render anyway with fallback.
+            requestCatalogIfNeeded();
             render();
         });
     }
@@ -188,12 +271,28 @@ public class CartController {
                     loginStage.close();
                 }
                 requestCart();
+                requestCatalogIfNeeded();
             }
         });
     }
 
     @Subscribe
-    public void onAccount(AccountOverviewResponse res) { Platform.runLater(this::applySessionToUI); }
+    public void onAccount(AccountOverviewResponse res) {
+        Platform.runLater(this::applySessionToUI);
+    }
+
+    // Catalog arrives here; keep a quick lookup by SKU and refresh the cart view to apply promos
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onCatalog(GetCatalogResponse res) {
+        if (res == null || res.getFlowers() == null) return;
+
+        for (FlowerDTO f : res.getFlowers()) {
+            if (f == null || f.getSku() == null) continue;
+            flowerBySku.put(f.getSku(), f);
+        }
+        // Now we can recompute display prices with promotion applied
+        render();
+    }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onActive(ViewTracker.ActiveControllerChanged e) {
@@ -208,6 +307,7 @@ public class CartController {
             if (cartItems.isEmpty()) {
                 requestCart();
             }
+            requestCatalogIfNeeded();
         }
 
         applySessionToUI();
