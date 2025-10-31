@@ -3,6 +3,7 @@ package il.cshaifasweng.OCSFMediatorExample.client.HomePage;
 import il.cshaifasweng.OCSFMediatorExample.client.Catalog.ItemCardController;
 import il.cshaifasweng.OCSFMediatorExample.client.Catalog.ItemDetailsController;
 import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
+import il.cshaifasweng.OCSFMediatorExample.client.bus.events.FlowerUpdatedEvent;
 import il.cshaifasweng.OCSFMediatorExample.client.bus.events.UserLoggedInEvent;
 import il.cshaifasweng.OCSFMediatorExample.client.common.ClientSession;
 import il.cshaifasweng.OCSFMediatorExample.client.ui.Nav;
@@ -143,6 +144,17 @@ public class HomePageController {
                 SimpleClient.getClient().sendSafely(new GetCatalogRequest(null, null, null, false));
             } catch (IOException ex) {
                 ex.printStackTrace();
+            }
+        });
+    }
+
+    @Subscribe
+    public void onFlowerUpdated(FlowerUpdatedEvent evt) {
+        Platform.runLater(() -> {
+            try {
+                SimpleClient.getClient().sendSafely(new GetCatalogRequest(null, null, null, false));
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         });
     }

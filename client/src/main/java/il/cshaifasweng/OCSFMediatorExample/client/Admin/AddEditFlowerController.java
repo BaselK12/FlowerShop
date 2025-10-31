@@ -1,7 +1,9 @@
 package il.cshaifasweng.OCSFMediatorExample.client.Admin;
 
 import il.cshaifasweng.OCSFMediatorExample.client.App;
+import il.cshaifasweng.OCSFMediatorExample.client.bus.events.FlowerUpdatedEvent;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.SaveFlowerRequest;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.SaveFlowerResponse;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.CategoryDTO;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.FlowerDTO;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.GetCategoriesRequest;
@@ -178,6 +180,40 @@ public class AddEditFlowerController {
             showError("Failed to send flower to server: " + e.getMessage());
         }
     }
+
+    @Subscribe
+    public void onSaveFlowerResponse(SaveFlowerResponse res) {
+        Platform.runLater(() -> {
+            if (res.isSuccess()) {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Success");
+                alert.setHeaderText("Flower saved successfully!");
+                alert.setContentText(
+                        res.getUpdatedFlower() != null
+                                ? "Flower \"" + res.getUpdatedFlower().getName() + "\" was saved."
+                                : "Flower changes saved successfully."
+                );
+                alert.showAndWait();
+
+                // === Notify other parts of the app ===
+                EventBus.getDefault().post(new FlowerUpdatedEvent(res.getUpdatedFlower()));
+
+                // === Close this window ===
+                if (fromBox != null && fromBox.getScene() != null) {
+                    fromBox.getScene().getWindow().hide();
+                }
+
+                onClose(); // unregister EventBus listener
+            } else {
+                showError("Failed to save flower: " +
+                        (res.getError() != null ? res.getError() : "Unknown error"));
+            }
+        });
+    }
+
+
+
+
 
     // ====== Cancel ======
     @FXML
