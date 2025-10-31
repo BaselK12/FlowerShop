@@ -1,5 +1,7 @@
 package il.cshaifasweng.OCSFMediatorExample.server.handlers.Flower;
 
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.FlowerUpdatedEvent;
+import il.cshaifasweng.OCSFMediatorExample.server.bus.events.SendToAllClientsEvent;
 import org.hibernate.Session;
 import il.cshaifasweng.OCSFMediatorExample.entities.domain.Flower;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.DeleteFlowerResponse;
@@ -12,17 +14,25 @@ import jakarta.validation.ConstraintViolationException;
 public class DeleteFlowerHandler {
     public DeleteFlowerHandler(ServerBus bus) {
         bus.subscribe(DeleteFlowerRequestEvent.class, evt -> {
-            String sku = evt.request().getSku();   // The unique flower SKU
+            String sku = evt.request().getSku();
             System.out.printf("[FLOWER] Delete sku=%s%n", sku);
 
             try {
                 boolean deleted = TXDeleteFlower(sku);
 
                 if (deleted) {
+                    // === Send response back to requesting client ===
                     bus.publish(new SendToClientEvent(
                             new DeleteFlowerResponse(true, null),
                             evt.client()
                     ));
+
+                    // === Broadcast update to all connected clients ===
+                    bus.publish(new SendToAllClientsEvent(
+                            new FlowerUpdatedEvent(null)  // no DTO, just signal to refresh
+                    ));
+
+                    System.out.println("[FLOWER] Broadcasted FlowerUpdatedEvent (delete) to all clients");
                 } else {
                     bus.publish(new SendToClientEvent(
                             new DeleteFlowerResponse(false, "Flower not found"),
@@ -52,7 +62,7 @@ public class DeleteFlowerHandler {
         TX.run((Session s) -> {
             Flower f = s.get(Flower.class, sku);
             if (f != null) {
-                s.remove(f);     // Hibernate DELETE
+                s.remove(f);
                 removed[0] = true;
             }
         });

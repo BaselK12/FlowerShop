@@ -331,8 +331,6 @@ public class AdminDashboardController {
             } else {
                 showInfo("Deleted", "Flower was successfully removed.");
 
-                // Notify others (e.g. CatalogViewController) that a flower was changed
-                EventBus.getDefault().post(new FlowerUpdatedEvent(null));
 
                 // Refresh local admin table
                 requestFlowers();
