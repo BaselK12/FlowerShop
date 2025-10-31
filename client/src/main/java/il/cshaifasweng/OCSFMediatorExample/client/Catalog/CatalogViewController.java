@@ -1,6 +1,7 @@
 package il.cshaifasweng.OCSFMediatorExample.client.Catalog;
 
 import il.cshaifasweng.OCSFMediatorExample.client.App;
+import il.cshaifasweng.OCSFMediatorExample.client.bus.events.FlowerUpdatedEvent;
 import il.cshaifasweng.OCSFMediatorExample.client.bus.events.UserLoggedInEvent;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.AddToCartResponse;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.*;
@@ -277,6 +278,13 @@ public class CatalogViewController {
     }
 
     // ====================== Event-Bus Handlers (server msgs) ======================
+
+    @Subscribe
+    public void onFlowerUpdated(FlowerUpdatedEvent evt) {
+        Platform.runLater(() -> {
+            applyFilters();
+        });
+    }
 
     @Subscribe
     public void handleCategories(GetCategoriesResponse response) {

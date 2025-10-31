@@ -1,6 +1,7 @@
 package il.cshaifasweng.OCSFMediatorExample.client.Admin;
 
 import il.cshaifasweng.OCSFMediatorExample.client.App;
+import il.cshaifasweng.OCSFMediatorExample.client.bus.events.FlowerUpdatedEvent;
 import il.cshaifasweng.OCSFMediatorExample.client.ui.Nav;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.AddPromotionsRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.AdminDashboard.AddPromotionsResponse;
@@ -330,7 +331,12 @@ public class AdminDashboardController {
                 showError("Delete Failed", resp.getError());
             } else {
                 showInfo("Deleted", "Flower was successfully removed.");
-                requestFlowers(); // refresh list
+
+                // Notify others (e.g. CatalogViewController) that a flower was changed
+                EventBus.getDefault().post(new FlowerUpdatedEvent(null));
+
+                // Refresh local admin table
+                requestFlowers();
             }
         });
     }
