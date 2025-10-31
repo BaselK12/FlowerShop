@@ -3,7 +3,7 @@ package il.cshaifasweng.OCSFMediatorExample.client.HomePage;
 import il.cshaifasweng.OCSFMediatorExample.client.Catalog.ItemCardController;
 import il.cshaifasweng.OCSFMediatorExample.client.Catalog.ItemDetailsController;
 import il.cshaifasweng.OCSFMediatorExample.client.SimpleClient;
-import il.cshaifasweng.OCSFMediatorExample.client.bus.events.FlowerUpdatedEvent;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.FlowerUpdatedEvent;
 import il.cshaifasweng.OCSFMediatorExample.client.bus.events.UserLoggedInEvent;
 import il.cshaifasweng.OCSFMediatorExample.client.common.ClientSession;
 import il.cshaifasweng.OCSFMediatorExample.client.ui.Nav;

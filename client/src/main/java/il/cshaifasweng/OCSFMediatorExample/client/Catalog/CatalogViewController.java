@@ -1,7 +1,7 @@
 package il.cshaifasweng.OCSFMediatorExample.client.Catalog;
 
 import il.cshaifasweng.OCSFMediatorExample.client.App;
-import il.cshaifasweng.OCSFMediatorExample.client.bus.events.FlowerUpdatedEvent;
+import il.cshaifasweng.OCSFMediatorExample.entities.messages.FlowerUpdatedEvent;
 import il.cshaifasweng.OCSFMediatorExample.client.bus.events.UserLoggedInEvent;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Cart.AddToCartResponse;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Catalog.*;
@@ -37,7 +37,6 @@ import org.greenrobot.eventbus.Subscribe;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class CatalogViewController {
 
