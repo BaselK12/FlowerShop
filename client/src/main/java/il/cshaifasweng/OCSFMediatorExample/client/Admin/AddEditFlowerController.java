@@ -196,6 +196,7 @@ public class AddEditFlowerController {
                 alert.showAndWait();
 
                 // === Notify other parts of the app ===
+                System.out.println("Flower saved successfully! changing the price in catalog");
                 EventBus.getDefault().post(new FlowerUpdatedEvent(res.getUpdatedFlower()));
 
                 // === Close this window ===
