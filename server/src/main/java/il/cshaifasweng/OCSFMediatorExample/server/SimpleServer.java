@@ -97,6 +97,8 @@ public class SimpleServer extends ObservableServer {
 						0, 100,              // page, pageSize
 						client
 				));
+			} else if (msg instanceof SetPremiumRequest rr) {
+			bus.publish(new SetPremiumRequestedEvent(rr, client));
 			} else if (msg instanceof ValidateCouponRequest rr) {
 				bus.publish(new ValidateCouponRequestedEvent(rr, client));
 			} else if (msg instanceof RemoveFromCartRequest req) {
