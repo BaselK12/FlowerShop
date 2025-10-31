@@ -1,118 +1,141 @@
 /* =========================================================
    Home Page — Elegant & Romantic Unified Theme
-   IntelliJ-safe and gradient-safe
+   IntelliJ-safe | SceneBuilder-safe | No pseudo-selectors
    ========================================================= */
 
-/* ---------- Root Palette ---------- */
-.root, .catalog-root {
-    -blush:       #E8A7B3;
-    -mauve:       #D8A7B1;
-    -ivory:       #FFF9F9;
-    -beige:       #F5E2D3;
-    -rosewood:    #5A4E4E;
-    -headerText:  #FFF9F9;
-    -ink:         #3A2D2D;
+/* 1) Root + Palette */
+.root {
+    -blush:       #E8A7B3;   /* primary accent */
+    -mauve:       #D8A7B1;   /* secondary accent */
+    -ivory:       #FFF9F9;   /* base background */
+    -beige:       #F5E2D3;   /* warm tone */
+    -rosewood:    #5A4E4E;   /* dark accent */
+    -headerText:  #FFF9F9;   /* bright text */
+    -ink:         #3A2D2D;   /* normal text */
 
     -fx-background-color: linear-gradient(#FFF9F9, #F5E2D3);
     -fx-font-family: "Segoe UI", sans-serif;
     -fx-text-fill: -ink;
 }
 
-/* ---------- Header Bar ---------- */
-.toolbar {
+/* 2) Top navigation bar */
+.hbox {
     -fx-background-color: -ivory;
-    -fx-border-color: -mauve;
+    -fx-border-color: transparent transparent -mauve transparent;
     -fx-border-width: 0 0 1 0;
-    -fx-padding: 12;
+    -fx-padding: 12 16;
     -fx-spacing: 20;
+    -fx-alignment: CENTER_RIGHT;
 }
 
-/* Shop Title */
-#shopTitle {
-    -fx-text-fill: -blush;
-    -fx-font-weight: bold;
-    -fx-font-size: 20px;
-}
-
-/* ---------- Hero Section ---------- */
-.hero-section {
-    -fx-background-color: linear-gradient(#FFF9F9, #F5E2D3);
-    -fx-border-color: -mauve;
-    -fx-border-radius: 10;
-    -fx-background-radius: 10;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 6, 0, 0, 2);
-    -fx-alignment: center;
-    -fx-spacing: 20;
-    -fx-padding: 30;
-}
-
-/* Hero Title */
-#heroTitle {
-    -fx-text-fill: -blush;
-    -fx-font-size: 32px;
-    -fx-font-weight: bold;
-}
-
-/* Hero Subtitle */
-.hint {
-    -fx-text-fill: #6A5A5A;
-    -fx-font-size: 14px;
-    -fx-font-style: italic;
-    -fx-wrap-text: true;
-}
-
-/* ---------- Featured Section ---------- */
-#featuredTitle {
-    -fx-text-fill: -blush;
-    -fx-font-weight: bold;
+.hbox .label {
+    -fx-text-fill: -rosewood;
     -fx-font-size: 18px;
-}
-
-#featuredBox {
-    -fx-background-color: transparent;
-    -fx-spacing: 16;
-}
-
-/* ---------- Buttons ---------- */
-.button {
-    -fx-font-size: 13px;
     -fx-font-weight: bold;
+}
+
+/* Navigation buttons */
+.button {
     -fx-background-radius: 10;
     -fx-border-radius: 10;
     -fx-padding: 6 16;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
     -fx-cursor: hand;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 4, 0, 0, 1);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 3, 0, 0, 1);
 }
 
-/* Primary Button (Shop Now) */
-.btn-primary {
-    -fx-background-color: -blush;
+/* Home / Catalog / Cart / Account / Login / Admin buttons */
+#btnHome, #btnCatalog, #btnCart, #btnAccount, #btnLogin, #btnAdmin {
+    -fx-background-color: -mauve;
     -fx-text-fill: -headerText;
 }
+#btnHome:hover, #btnCatalog:hover, #btnCart:hover,
+#btnAccount:hover, #btnLogin:hover, #btnAdmin:hover {
+    -fx-background-color: -blush;
+}
 
-/* Plain Buttons (Navigation) */
-.btn-plain {
-    -fx-background-color: transparent;
-    -fx-text-fill: -rosewood;
+/* 3) Hero / Banner section */
+.hero-box {
+    -fx-background-color: linear-gradient(to bottom, -ivory, -beige);
+    -fx-border-color: -mauve;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 30;
+    -fx-alignment: CENTER;
+    -fx-spacing: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 6, 0, 0, 2);
+}
+
+.hero-title {
+    -fx-text-fill: -blush;
+    -fx-font-size: 28px;
     -fx-font-weight: bold;
+}
+
+.hero-subtitle {
+    -fx-text-fill: #7A6870;
     -fx-font-size: 14px;
 }
 
-/* Optional hovered visual (apply via pseudo-class in runtime if desired) */
-.button.hovered {
-    -fx-effect: dropshadow(gaussian, rgba(232,167,179,0.25), 4, 0, 0, 1);
+#btnShopNow {
+    -fx-background-color: -blush;
+    -fx-text-fill: -headerText;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-padding: 8 24;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 4, 0, 0, 1);
+}
+#btnShopNow:hover {
+    -fx-background-color: -mauve;
 }
 
-/* ---------- Status Bar ---------- */
-.status-bar {
+/* 4) Featured Flowers section */
+.featured-section {
+    -fx-spacing: 12;
+    -fx-alignment: TOP_CENTER;
+}
+
+.featured-title {
+    -fx-text-fill: -blush;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+#cardsRow1 {
+    -fx-spacing: 16;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 8;
+}
+
+/* 5) Footer */
+.border-pane > .bottom {
     -fx-background-color: -ivory;
-    -fx-border-color: -mauve;
+    -fx-border-color: -mauve transparent transparent transparent;
     -fx-border-width: 1 0 0 0;
-    -fx-alignment: center;
     -fx-padding: 10;
 }
 
-#footerText {
-    -fx-text-fill: -ink;
+.border-pane > .bottom .label {
+    -fx-text-fill: #8F7E84;
     -fx-font-size: 12px;
+}
+
+/* 6) General layout helpers */
+.vbox {
+    -fx-spacing: 24;
+}
+
+.stack-pane {
+    -fx-background-color: transparent;
+}
+
+/* 7) Soft label tone */
+.label-soft {
+    -fx-text-fill: #6A5A5A;
+    -fx-font-size: 12px;
+    -fx-font-style: italic;
 }
