@@ -282,6 +282,7 @@ public class CatalogViewController {
     @Subscribe
     public void onFlowerUpdated(FlowerUpdatedEvent evt) {
         Platform.runLater(() -> {
+            System.out.printf("Flower updated\n");
             applyFilters();
         });
     }
