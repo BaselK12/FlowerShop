@@ -10,10 +10,12 @@ import il.cshaifasweng.OCSFMediatorExample.server.bus.events.Flowers.SaveFlowerR
 import il.cshaifasweng.OCSFMediatorExample.server.bus.events.SendToClientEvent;
 import il.cshaifasweng.OCSFMediatorExample.server.mapping.FlowerMapper;
 import il.cshaifasweng.OCSFMediatorExample.server.session.TX;
+import org.hibernate.Hibernate;
 
 import java.util.List;
 
 public class SaveFlowerHandler {
+
     public SaveFlowerHandler(ServerBus bus) {
         bus.subscribe(SaveFlowerRequestEvent.class, evt -> {
             SaveFlowerRequest req = evt.request();
@@ -23,7 +25,7 @@ public class SaveFlowerHandler {
                 Flower saved = TX.call(s -> {
                     Flower f;
 
-                    // ====== Load or create entity ======
+                    // ===== Load or create entity =====
                     if (action == SaveFlowerRequest.ActionType.EDIT) {
                         f = s.get(Flower.class, req.getSku());
                         if (f == null) {
@@ -35,13 +37,13 @@ public class SaveFlowerHandler {
                         f.setSku(req.getSku());
                     }
 
-                    // ====== Common field updates ======
+                    // ===== Update common fields =====
                     f.setName(req.getName());
                     f.setDescription(req.getDescription());
                     f.setPrice(req.getPrice());
                     f.setImageUrl(req.getImageUrl());
 
-                    // ====== Handle categories (real relation) ======
+                    // ===== Update categories =====
                     List<String> categoryNames = req.getCategories();
                     if (categoryNames != null && !categoryNames.isEmpty()) {
                         List<Category> matched = s.createQuery(
@@ -56,41 +58,38 @@ public class SaveFlowerHandler {
                         f.setCategory(null);
                     }
 
-                    // ====== Persist or merge ======
+                    // ===== Persist or merge =====
                     if (action == SaveFlowerRequest.ActionType.ADD) {
                         s.persist(f);
                     } else {
                         s.merge(f);
                     }
 
+                    // ===== Initialize lazy fields before returning =====
+                    Hibernate.initialize(f.getPromotion());
+                    Hibernate.initialize(f.getCategory());
+
                     return f;
                 });
 
-                // ====== Map entity → DTO using your mapper ======
+                // ===== Map to DTO safely after transaction =====
                 FlowerDTO dto = FlowerMapper.toDTO(saved);
 
-                // ====== Build and send structured response ======
-                SaveFlowerResponse response = new SaveFlowerResponse(
-                        true,
-                        null,
-                        dto
-                );
-
+                // ===== Send structured response to client =====
+                SaveFlowerResponse response = new SaveFlowerResponse(true, null, dto);
                 bus.publish(new SendToClientEvent(response, evt.client()));
 
-                // (Optional) Notify all connected clients of change
+                // (Optional) Broadcast update to all clients
                 // bus.publish(new SendToAllClientsEvent(new FlowerUpdatedEvent(dto)));
 
             } catch (Exception ex) {
                 ex.printStackTrace();
-
                 SaveFlowerResponse response = new SaveFlowerResponse(
                         false,
                         "Failed to " + (req.getAction() == SaveFlowerRequest.ActionType.ADD ? "add" : "edit") +
                                 " flower: " + ex.getMessage(),
                         null
                 );
-
                 bus.publish(new SendToClientEvent(response, evt.client()));
             }
         });
