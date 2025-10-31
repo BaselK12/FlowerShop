@@ -13,6 +13,7 @@ import il.cshaifasweng.OCSFMediatorExample.entities.messages.CheckOut.*;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Reports.StoreOption;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Reports.GetStoresRequest;
 import il.cshaifasweng.OCSFMediatorExample.entities.messages.Reports.GetStoresResponse;
+import il.cshaifasweng.OCSFMediatorExample.client.ui.Nav;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -519,7 +520,7 @@ public class CheckoutController {
 
 
     // ---------- Step navigation handlers (match FXML onAction) ----------
-    @FXML private void handleBack1() { setStep(1); }
+    @FXML private void handleBack1() { Nav.go(Back1, "/il/cshaifasweng/OCSFMediatorExample/client/HomePage/HomePage.fxml"); }
     @FXML private void handleNext1() {
         if (validateMethodStep()) {
             setStep(2);
