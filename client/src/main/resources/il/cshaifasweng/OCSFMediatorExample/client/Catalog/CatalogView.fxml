@@ -17,11 +17,11 @@
 <BorderPane fx:id="Root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="700.0" prefWidth="1200.0" styleClass="catalog-root" stylesheets="@../../../../../Styles/CatalogView.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.Catalog.CatalogViewController">
 
    <top>
-      <VBox fx:id="topBox" prefHeight="336.0" prefWidth="1200.0" BorderPane.alignment="CENTER">
+      <VBox fx:id="topBox" prefHeight="442.0" prefWidth="1200.0" BorderPane.alignment="CENTER">
          <children>
 
             <!-- Header bar with Back (left) + Login (right) retained styling -->
-            <HBox fx:id="headerBar" alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="1200.0" spacing="12.0" styleClass="toolbar" stylesheets="@../../../../../Styles/CatalogView.css">
+            <HBox fx:id="headerBar" alignment="CENTER_LEFT" prefHeight="51.0" prefWidth="1200.0" spacing="12.0" styleClass="toolbar" stylesheets="@../../../../../Styles/CatalogView.css">
                <padding>
                   <Insets bottom="16.0" left="16.0" right="16.0" top="16.0" />
                </padding>
@@ -65,7 +65,7 @@
                </children>
             </HBox>
 
-            <HBox fx:id="toolbar" alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="16.0" styleClass="toolbar" stylesheets="@../../../../../Styles/CatalogView.css">
+            <HBox fx:id="toolbar" alignment="CENTER_LEFT" prefHeight="52.0" prefWidth="1200.0" spacing="16.0" styleClass="toolbar" stylesheets="@../../../../../Styles/CatalogView.css">
                <padding>
                   <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
                </padding>
@@ -87,7 +87,7 @@
                </children>
             </HBox>
 
-            <VBox fx:id="promotionsBox" prefHeight="269.0" prefWidth="1200.0" spacing="10.0" styleClass="promotions-box" stylesheets="@../../../../../Styles/CatalogView.css">
+            <VBox fx:id="promotionsBox" prefHeight="329.0" prefWidth="1200.0" spacing="10.0" styleClass="promotions-box" stylesheets="@../../../../../Styles/CatalogView.css">
                <padding>
                   <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
                </padding>
@@ -95,9 +95,9 @@
                   <Label fx:id="promotionsTitleLabel" text="🔥 Promotions" textFill="#ff7043">
                      <font><Font size="18.0" /></font>
                   </Label>
-                  <ScrollPane fx:id="promotionsScroll" fitToHeight="true" prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: white;" vbarPolicy="NEVER">
+                  <ScrollPane fx:id="promotionsScroll" fitToHeight="true" prefHeight="276.0" prefWidth="1180.0" style="-fx-background-color: white;" vbarPolicy="NEVER">
                      <content>
-                        <HBox fx:id="promotionsStrip" alignment="CENTER_LEFT" prefHeight="160.0" prefWidth="1175.0" spacing="12.0" styleClass="promo-row" stylesheets="@../../../../../Styles/CatalogView.css" />
+                        <HBox fx:id="promotionsStrip" alignment="CENTER_LEFT" prefHeight="237.0" prefWidth="1175.0" spacing="12.0" styleClass="promo-row" stylesheets="@../../../../../Styles/CatalogView.css" />
                      </content>
                   </ScrollPane>
                </children>
