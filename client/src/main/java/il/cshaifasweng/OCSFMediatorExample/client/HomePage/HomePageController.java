@@ -80,11 +80,10 @@ public class HomePageController {
 
         // Ask server for catalog (no special filter)
         try {
-            SimpleClient.getClient().sendToServer(new GetCatalogRequest(null, null, null, false));
+            SimpleClient.getClient().sendSafely(new GetCatalogRequest(null, null, null, false));
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         // Preload details popup into the stack
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
@@ -141,7 +140,7 @@ public class HomePageController {
             rebuildFeaturedCards(latestFlowers);
             // Optional: re-ask server in case user-specific pricing/promos exist
             try {
-                SimpleClient.getClient().sendToServer(new GetCatalogRequest(null, null, null, false));
+                SimpleClient.getClient().sendSafely(new GetCatalogRequest(null, null, null, false));
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
